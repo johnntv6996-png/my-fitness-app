@@ -112,18 +112,58 @@ const MODULE_REGISTRY = {
   'core': {
     name: 'Ядро системы',
     version: '1.0.0',
-    // ЗАМЕНИ 'ТВОЙ_НИК' и 'fitness-tracker' на свои данные!
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
     required: true,
     description: 'Базовый функционал: навигация, хранилище, утилиты'
   },
   'welcome': {
     name: 'Приветствие',
-    version: '1.0.0',
-    // ЗАМЕНИ 'ТВОЙ_НИК' и 'fitness-tracker' на свои данные!
+    version: '2.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
     required: false,
-    description: 'Экран приветствия с датой и статистикой'
+    description: 'Экран приветствия с кнопками Да/Позже/Нет'
+  },
+  'workouts': {
+    name: 'Тренировки',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workouts.js',
+    required: false,
+    description: 'План на сегодня, таймер упражнений'
+  },
+  'exercises': {
+    name: 'База упражнений',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
+    required: false,
+    description: 'CRUD упражнений с видео'
+  },
+  'plan': {
+    name: 'План тренировок',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
+    required: false,
+    description: 'Настройка плана на неделю'
+  },
+  'history': {
+    name: 'История',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/history.js',
+    required: false,
+    description: 'История завершённых тренировок'
+  },
+  'reminders': {
+    name: 'Напоминалки',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/reminders.js',
+    required: false,
+    description: 'Ежедневные напоминания'
+  },
+  'achievements': {
+    name: 'Достижения',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js',
+    required: false,
+    description: 'XP система и достижения'
   }
 };
 
@@ -139,7 +179,11 @@ class ModuleManager {
     Logger.log('🚀 Инициализация менеджера модулей...', 'info');
     await this.loadAllModules();
     this.renderModuleList();
-    this.initializeUserInterface();
+    
+    // Даем небольшую задержку, чтобы DOM точно был готов
+    setTimeout(() => {
+      this.initializeUserInterface();
+    }, 100);
   }
 
   async loadAllModules() {
@@ -187,19 +231,24 @@ class ModuleManager {
     this.renderModuleList();
   }
 
-  executeModule(id, code) {
-    try {
-      const moduleExports = {};
-      const moduleContext = { exports: moduleExports, module: { exports: moduleExports } };
-      const func = new Function('module', 'exports', 'require', 'Logger', code);
-      func.call(moduleContext, moduleContext.module, moduleContext.exports, this.require.bind(this), Logger);
-      this.loadedModules.set(id, moduleExports);
-      Logger.log(`📦 Модуль ${id} выполнен`, 'info');
-    } catch (error) {
-      Logger.log(`❌ Ошибка выполнения ${id}: ${error.message}`, 'error');
-      this.moduleStatus.set(id, 'error');
-    }
+executeModule(id, code) {
+  try {
+    const moduleExports = {};
+    const moduleContext = { 
+      exports: moduleExports, 
+      module: { exports: moduleExports } 
+    };
+    const func = new Function('module', 'exports', 'require', 'Logger', code);
+    func.call(moduleContext, moduleContext.module, moduleContext.exports, this.require.bind(this), Logger);
+    
+    // ВАЖНО: сохраняем module.exports, а не exports
+    this.loadedModules.set(id, moduleContext.module.exports);
+    Logger.log(`📦 Модуль ${id} выполнен`, 'info');
+  } catch (error) {
+    Logger.log(`❌ Ошибка выполнения ${id}: ${error.message}`, 'error');
+    this.moduleStatus.set(id, 'error');
   }
+}
 
   require(moduleId) {
     if (!this.loadedModules.has(moduleId)) throw new Error(`Модуль ${moduleId} не загружен`);
@@ -228,14 +277,20 @@ class ModuleManager {
   }
 
   initializeUserInterface() {
+    Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
+    
     this.loadedModules.forEach((module, id) => {
       if (module.init) {
         try {
+          Logger.log(`🔄 Вызов init() для модуля ${id}...`, 'info');
           module.init();
-          Logger.log(`🎨 Модуль ${id} инициализировал интерфейс`, 'info');
+          Logger.log(`✅ Модуль ${id} инициализирован`, 'info');
         } catch (error) {
           Logger.log(`❌ Ошибка инициализации ${id}: ${error.message}`, 'error');
+          console.error(`Error in module ${id}:`, error);
         }
+      } else {
+        Logger.log(`⚠️ Модуль ${id} не имеет метода init()`, 'warn');
       }
     });
   }
@@ -261,6 +316,7 @@ class ModuleManager {
   async checkAllModules() {
     Logger.log('🔄 Проверка обновлений...', 'info');
     await this.loadAllModules();
+    this.initializeUserInterface();
     alert('✅ Все модули проверены!');
   }
 
@@ -297,10 +353,10 @@ function showDevScreen(screenId) {
 function clearConsole() { Logger.clear(); }
 
 const moduleManager = new ModuleManager();
+
 document.addEventListener('DOMContentLoaded', async () => {
-  switchMode('user'); // По умолчанию режим пользователя
+  switchMode('user');
   await moduleManager.init();
 });
 </script>
-</body>
 </html>
