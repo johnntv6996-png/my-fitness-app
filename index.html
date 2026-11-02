@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Фитнес-трекер</title>
+<style>
+:root { --bg: #262626; --text: #FFFFCC; --card: #3D3D3D; --acc: #FFD700; --ok: #90EE90; --err: #e74c3c; --brd: #1A1A1A; --font-size: 16px; --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; --radius: 10px; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-family); font-size: var(--font-size); padding: 10px; }
+.container { max-width: 1100px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--card); border-radius: var(--radius); margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+.header h1 { margin: 0; font-size: 1.4em; color: var(--acc); }
+.mode-switcher { display: flex; gap: 10px; align-items: center; }
+.mode-btn { padding: 6px 12px; border: 1px solid var(--brd); border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; font-size: 0.85em; transition: all 0.15s; }
+.mode-btn:hover { background: var(--brd); }
+.mode-btn.active { background: var(--acc); color: #2c3e50; border-color: var(--acc); }
+.nav { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid var(--brd); overflow-x: auto; padding-bottom: 5px; }
+.nav-btn { background: transparent; border: none; color: var(--text); padding: 10px 12px; cursor: pointer; font-size: 0.95em; border-bottom: 3px solid transparent; margin-bottom: -2px; opacity: 0.7; font-weight: 600; white-space: nowrap; transition: all 0.15s; }
+.nav-btn:hover { opacity: 0.9; }
+.nav-btn.active { border-bottom-color: var(--acc); opacity: 1; color: var(--acc); }
+.screen { display: none; }
+.screen.active { display: block; }
+.dev-panel { background: var(--card); padding: 15px; border-radius: var(--radius); margin-bottom: 15px; border: 2px solid var(--acc); }
+.module-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 6px; margin-bottom: 8px; }
+.module-item.loaded { border-left: 3px solid var(--ok); }
+.module-item.loading { border-left: 3px solid var(--acc); }
+.module-item.error { border-left: 3px solid var(--err); }
+.btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.15s; margin-right: 5px; }
+.btn:active { transform: scale(0.95); }
+.btn-primary { background: var(--acc); color: #2c3e50; }
+.btn-secondary { background: var(--brd); color: var(--text); }
+.btn-danger { background: var(--err); color: #fff; }
+.console-log { background: #000; color: #0f0; padding: 15px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.85em; max-height: 300px; overflow-y: auto; margin-top: 15px; }
+.console-log .error { color: #f44; }
+.console-log .warn { color: #fa0; }
+.console-log .info { color: #8cf; }
+.loading { text-align: center; padding: 40px; opacity: 0.6; }
+.text-small { font-size: 0.85em; opacity: 0.7; }
+.stat-card { background: var(--bg); padding: 10px; border-radius: 6px; text-align: center; }
+.stat-label { font-size: 0.85em; opacity: 0.7; margin-bottom: 5px; }
+.stat-value { font-size: 1.5em; font-weight: bold; color: var(--acc); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>💪 Фитнес-трекер</h1>
+    <div class="mode-switcher">
+      <button class="mode-btn" id="userModeBtn" onclick="switchMode('user')">👤 Пользователь</button>
+      <button class="mode-btn" id="devModeBtn" onclick="switchMode('dev')">🛠 Разработчик</button>
+    </div>
+  </div>
+
+  <div id="userInterface">
+    <div class="nav" id="userNav"></div>
+    <div id="screen-welcome" class="screen active">
+      <div class="loading">
+        <div style="font-size:4em;margin-bottom:15px">💪</div>
+        <h2>Добро пожаловать!</h2>
+        <p class="text-small">Загрузка модулей...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="devInterface" style="display:none">
+    <div class="nav">
+      <button class="nav-btn active" onclick="showDevScreen('modules')">📦 Модули</button>
+      <button class="nav-btn" onclick="showDevScreen('console')">📋 Логи</button>
+    </div>
+    <div id="dev-screen-modules" class="screen active">
+      <div class="dev-panel">
+        <h3>📦 Управление модулями</h3>
+        <div id="moduleList"></div>
+        <div style="margin-top:15px">
+          <button class="btn btn-primary" onclick="moduleManager.checkAllModules()">🔄 Проверить обновления</button>
+          <button class="btn btn-danger" onclick="moduleManager.clearAllCache()">🗑️ Очистить кэш</button>
+        </div>
+      </div>
+    </div>
+    <div id="dev-screen-console" class="screen">
+      <div class="dev-panel">
+        <h3>📋 Системные логи</h3>
+        <div class="console-log" id="consoleLog"></div>
+        <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:10px">Очистить логи</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const Logger = {
+  logs: [],
+  log(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    this.logs.push({ timestamp, message, type });
+    if (type === 'error') console.error(`[${timestamp}] ${message}`);
+    else if (type === 'warn') console.warn(`[${timestamp}] ${message}`);
+    else console.log(`[${timestamp}] ${message}`);
+    this.renderConsole();
+  },
+  renderConsole() {
+    const container = document.getElementById('consoleLog');
+    if (!container) return;
+    container.innerHTML = this.logs.map(log => `<div class="${log.type}">[${log.timestamp}] ${log.message}</div>`).join('');
+    container.scrollTop = container.scrollHeight;
+  },
+  clear() { this.logs = []; this.renderConsole(); }
+};
+
+const MODULE_REGISTRY = {
+  'core': {
+    name: 'Ядро системы',
+    version: '1.0.0',
+    // ЗАМЕНИ 'ТВОЙ_НИК' и 'fitness-tracker' на свои данные!
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/fitness-tracker/main/modules/core.js',
+    required: true,
+    description: 'Базовый функционал: навигация, хранилище, утилиты'
+  },
+  'welcome': {
+    name: 'Приветствие',
+    version: '1.0.0',
+    // ЗАМЕНИ 'ТВОЙ_НИК' и 'fitness-tracker' на свои данные!
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/fitness-tracker/main/modules/welcome.js',
+    required: false,
+    description: 'Экран приветствия с датой и статистикой'
+  }
+};
+
+const STORAGE_PREFIX = 'ft_module_';
+
+class ModuleManager {
+  constructor() {
+    this.loadedModules = new Map();
+    this.moduleStatus = new Map();
+  }
+
+  async init() {
+    Logger.log('🚀 Инициализация менеджера модулей...', 'info');
+    await this.loadAllModules();
+    this.renderModuleList();
+    this.initializeUserInterface();
+  }
+
+  async loadAllModules() {
+    for (const [id, config] of Object.entries(MODULE_REGISTRY)) {
+      await this.loadModule(id, config);
+    }
+  }
+
+  async loadModule(id, config) {
+    const storageKey = STORAGE_PREFIX + id;
+    const cachedData = localStorage.getItem(storageKey);
+
+    if (cachedData) {
+      try {
+        const cached = JSON.parse(cachedData);
+        if (cached.version === config.version) {
+          Logger.log(`✅ Модуль ${id} актуален (v${cached.version})`, 'info');
+          this.executeModule(id, cached.code);
+          this.moduleStatus.set(id, 'loaded');
+          return;
+        }
+      } catch (e) {
+        Logger.log(`⚠️ Ошибка чтения кэша ${id}`, 'warn');
+      }
+    }
+
+    Logger.log(`⬇️ Загрузка модуля ${id}...`, 'info');
+    this.moduleStatus.set(id, 'loading');
+    this.renderModuleList();
+
+    try {
+      const response = await fetch(config.url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const code = await response.text();
+      
+      localStorage.setItem(storageKey, JSON.stringify({ version: config.version, code: code, loadedAt: Date.now() }));
+      Logger.log(`✅ Модуль ${id} загружен (v${config.version})`, 'info');
+      this.executeModule(id, code);
+      this.moduleStatus.set(id, 'loaded');
+    } catch (error) {
+      Logger.log(`❌ Ошибка загрузки ${id}: ${error.message}`, 'error');
+      this.moduleStatus.set(id, 'error');
+      if (config.required) alert(`Критическая ошибка: не удалось загрузить модуль "${config.name}"`);
+    }
+    this.renderModuleList();
+  }
+
+  executeModule(id, code) {
+    try {
+      const moduleExports = {};
+      const moduleContext = { exports: moduleExports, module: { exports: moduleExports } };
+      const func = new Function('module', 'exports', 'require', 'Logger', code);
+      func.call(moduleContext, moduleContext.module, moduleContext.exports, this.require.bind(this), Logger);
+      this.loadedModules.set(id, moduleExports);
+      Logger.log(`📦 Модуль ${id} выполнен`, 'info');
+    } catch (error) {
+      Logger.log(`❌ Ошибка выполнения ${id}: ${error.message}`, 'error');
+      this.moduleStatus.set(id, 'error');
+    }
+  }
+
+  require(moduleId) {
+    if (!this.loadedModules.has(moduleId)) throw new Error(`Модуль ${moduleId} не загружен`);
+    return this.loadedModules.get(moduleId);
+  }
+
+  renderModuleList() {
+    const container = document.getElementById('moduleList');
+    if (!container) return;
+    container.innerHTML = Object.entries(MODULE_REGISTRY).map(([id, config]) => {
+      const status = this.moduleStatus.get(id) || 'loading';
+      const statusText = { 'loaded': '✅ Загружен', 'loading': '⏳ Загрузка...', 'error': '❌ Ошибка' }[status];
+      return `
+        <div class="module-item ${status}">
+          <div style="flex:1">
+            <div style="font-weight:600">${config.name}</div>
+            <div class="text-small">${config.description}</div>
+            <div class="text-small">v${config.version} · ${statusText}</div>
+          </div>
+          <div>
+            ${status === 'error' ? `<button class="btn btn-secondary" onclick="moduleManager.retryModule('${id}')">🔄</button>` : ''}
+            <button class="btn btn-danger" onclick="moduleManager.clearModule('${id}')">🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  initializeUserInterface() {
+    this.loadedModules.forEach((module, id) => {
+      if (module.init) {
+        try {
+          module.init();
+          Logger.log(`🎨 Модуль ${id} инициализировал интерфейс`, 'info');
+        } catch (error) {
+          Logger.log(`❌ Ошибка инициализации ${id}: ${error.message}`, 'error');
+        }
+      }
+    });
+  }
+
+  async retryModule(id) {
+    const config = MODULE_REGISTRY[id];
+    if (config) {
+      localStorage.removeItem(STORAGE_PREFIX + id);
+      await this.loadModule(id, config);
+    }
+  }
+
+  clearModule(id) {
+    if (confirm(`Удалить модуль "${MODULE_REGISTRY[id].name}" из кэша?`)) {
+      localStorage.removeItem(STORAGE_PREFIX + id);
+      this.loadedModules.delete(id);
+      this.moduleStatus.delete(id);
+      this.renderModuleList();
+      Logger.log(`🗑️ Модуль ${id} удалён из кэша`, 'info');
+    }
+  }
+
+  async checkAllModules() {
+    Logger.log('🔄 Проверка обновлений...', 'info');
+    await this.loadAllModules();
+    alert('✅ Все модули проверены!');
+  }
+
+  clearAllCache() {
+    if (confirm('Удалить все модули из кэша?')) {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith(STORAGE_PREFIX)) localStorage.removeItem(key);
+      });
+      this.loadedModules.clear();
+      this.moduleStatus.clear();
+      this.renderModuleList();
+      location.reload();
+    }
+  }
+}
+
+let currentMode = 'user';
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('userInterface').style.display = mode === 'user' ? 'block' : 'none';
+  document.getElementById('devInterface').style.display = mode === 'dev' ? 'block' : 'none';
+  document.getElementById('userModeBtn').classList.toggle('active', mode === 'user');
+  document.getElementById('devModeBtn').classList.toggle('active', mode === 'dev');
+  Logger.log(`🔄 Переключено в режим: ${mode === 'user' ? 'Пользователь' : 'Разработчик'}`, 'info');
+}
+
+function showDevScreen(screenId) {
+  document.querySelectorAll('#devInterface .screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#devInterface .nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`dev-screen-${screenId}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function clearConsole() { Logger.clear(); }
+
+const moduleManager = new ModuleManager();
+document.addEventListener('DOMContentLoaded', async () => {
+  switchMode('user'); // По умолчанию режим пользователя
+  await moduleManager.init();
+});
+</script>
+</body>
+</html>
