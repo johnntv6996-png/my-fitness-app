@@ -93,10 +93,11 @@ const WelcomeModule = {
   },
 
   goToPlan: function() {
-    if (typeof Core !== 'undefined') {
+    // Проверяем, загружен ли модуль plan
+    if (typeof moduleManager !== 'undefined' && moduleManager.loadedModules && moduleManager.loadedModules.has('plan')) {
       Core.navigate('plan');
     } else {
-      alert('Модуль плана ещё не загружен!');
+      alert('📝 Модуль "План" ещё не добавлен.\n\nСледующим шагом мы его создадим!');
     }
   },
 
@@ -178,7 +179,6 @@ const WelcomeModule = {
   }
 };
 
-// ВАЖНО: делаем модуль доступным глобально для onclick
 window.WelcomeModule = WelcomeModule;
 
 module.exports = WelcomeModule;
