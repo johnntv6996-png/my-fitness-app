@@ -276,24 +276,28 @@ executeModule(id, code) {
     }).join('');
   }
 
-  initializeUserInterface() {
-    Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
-    
-    this.loadedModules.forEach((module, id) => {
-      if (module.init) {
-        try {
-          Logger.log(`🔄 Вызов init() для модуля ${id}...`, 'info');
-          module.init();
-          Logger.log(`✅ Модуль ${id} инициализирован`, 'info');
-        } catch (error) {
-          Logger.log(`❌ Ошибка инициализации ${id}: ${error.message}`, 'error');
-          console.error(`Error in module ${id}:`, error);
-        }
-      } else {
-        Logger.log(`⚠️ Модуль ${id} не имеет метода init()`, 'warn');
-      }
-    });
-  }
+	initializeUserInterface() {
+		Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
+		
+		// ОЧИЩАЕМ НАВИГАЦИЮ ПЕРЕД ДОБАВЛЕНИЕМ КНОПОК
+		const nav = document.getElementById('userNav');
+		if (nav) nav.innerHTML = '';
+		
+		this.loadedModules.forEach((module, id) => {
+			if (module.init) {
+				try {
+					Logger.log(`🔄 Вызов init() для модуля ${id}...`, 'info');
+					module.init();
+					Logger.log(`✅ Модуль ${id} инициализирован`, 'info');
+				} catch (error) {
+					Logger.log(`❌ Ошибка инициализации ${id}: ${error.message}`, 'error');
+					console.error(`Error in module ${id}:`, error);
+				}
+			} else {
+				Logger.log(`⚠️ Модуль ${id} не имеет метода init()`, 'warn');
+			}
+		});
+	}
 
   async retryModule(id) {
     const config = MODULE_REGISTRY[id];

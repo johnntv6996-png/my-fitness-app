@@ -43,7 +43,7 @@ const CoreModule = {
 
 		// Проверяем, нет ли уже такой кнопки
 		const existing = nav.querySelector(`[data-screen="${screenId}"]`);
-		if (existing) return; // Уже есть, не добавляем
+		if (existing) return;
 
 		const btn = document.createElement('button');
 		btn.className = 'nav-btn';
