@@ -16,7 +16,7 @@ const WelcomeModule = {
     this.createWelcomeScreen();
     
     if (typeof Core !== 'undefined') {
-      Core.addNavButton('Сегодня', 'todayPlan', '🏋️');
+      Core.addNavButton('Главная', 'welcome', '🏠');
     }
   },
 
@@ -31,10 +31,10 @@ const WelcomeModule = {
 
     const todayIdx = (new Date().getDay() + 6) % 7;
     const dayName = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][todayIdx];
-    const plan = FTStorage.get('plan') || [];
+    const plan = (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || [];
     const todayPlan = plan[todayIdx];
     const exCount = todayPlan ? todayPlan.exercises.length : 0;
-    const history = FTStorage.get('history') || [];
+    const history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
     const todayStr = new Date().toISOString().slice(0, 10);
     const todayRecord = history.find(h => h.date === todayStr && h.dayName === dayName);
 
@@ -55,7 +55,7 @@ const WelcomeModule = {
 
     const yesButton = exCount > 0 
       ? `<button class="btn btn-primary" style="width:100%;padding:15px;font-size:1.1em" onclick="WelcomeModule.handleAnswer('yes')">✅ Да, тренируемся!</button>`
-      : `<button class="btn btn-primary" style="width:100%;padding:15px;font-size:1.1em" onclick="Core.navigate('todayPlan')">📝 Составить план</button>`;
+      : `<button class="btn btn-primary" style="width:100%;padding:15px;font-size:1.1em" onclick="alert('Сначала добавь упражнения в план!')">📝 Сначала составь план</button>`;
 
     screen.innerHTML = `
       <div style="text-align:center;padding:30px 20px">
@@ -63,8 +63,8 @@ const WelcomeModule = {
         <h1 style="color:var(--acc);margin-bottom:10px">Привет!</h1>
         <p style="font-size:1.1em;margin-bottom:5px">Сегодня <strong>${dayName}</strong>.</p>
         ${exCount > 0 
-          ? `<p class="text-small" style="margin-bottom:20px">План: <strong>${FTUtils.escapeHtml(todayPlan.muscleGroup || 'тренировка')}</strong> · ${exCount} упр.</p>` 
-          : `<p class="text-small" style="margin-bottom:20px;color:var(--warn)">План пуст. Добавьте упражнения!</p>`
+          ? `<p class="text-small" style="margin-bottom:20px">План: <strong>${todayPlan.muscleGroup || 'тренировка'}</strong> · ${exCount} упр.</p>` 
+          : `<p class="text-small" style="margin-bottom:20px;color:var(--warn)">План пуст. Добавь упражнения!</p>`
         }
         <p style="font-size:1.2em;margin-bottom:25px">Позанимаемся?</p>
         
@@ -80,37 +80,49 @@ const WelcomeModule = {
   },
 
   handleAnswer(answer) {
-    const dayName = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][(new Date().getDay() + 6) % 7];
+    const todayIdx = (new Date().getDay() + 6) % 7;
+    const dayName = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][todayIdx];
     const todayStr = new Date().toISOString().slice(0, 10);
-    let stats = FTStorage.get('stats') || {yes:0,later:0,no:0,xp:0,level:1,streak:0};
-    let history = FTStorage.get('history') || [];
-    let plan = FTStorage.get('plan') || [];
+    
+    const stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0,later:0,no:0,xp:0,level:1,streak:0};
+    const history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
+    const plan = (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || [];
 
     if (answer === 'yes') {
-      history = history.filter(h => !(h.date === todayStr && h.dayName === dayName && h.skipped));
-      FTStorage.set('history', history);
+      const filtered = history.filter(h => !(h.date === todayStr && h.dayName === dayName && h.skipped));
+      if (typeof FTStorage !== 'undefined') FTStorage.set('history', filtered);
       stats.yes++;
       stats.streak = (stats.streak || 0) + 1;
-      FTStorage.set('stats', stats);
-      Core.navigate('todayPlan');
+      if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+      alert(`🎉 Отлично! Стрик: ${stats.streak} дней`);
+      this.createWelcomeScreen();
     } else if (answer === 'later') {
       stats.later++;
-      FTStorage.set('stats', stats);
+      if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
       alert('⏰ Хорошо, напомню позже!');
       this.createWelcomeScreen();
     } else if (answer === 'no') {
       stats.no++;
       stats.streak = 0;
-      FTStorage.set('stats', stats);
+      if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
       
       let dayRecord = history.find(h => h.date === todayStr && h.dayName === dayName);
       if (!dayRecord) {
-        dayRecord = { date: todayStr, dayName: dayName, muscleGroup: plan[(new Date().getDay()+6)%7]?.muscleGroup || '', exercises: [], details: [], duration: 0, skipped: true, timestamp: Date.now() };
+        dayRecord = { 
+          date: todayStr, 
+          dayName: dayName, 
+          muscleGroup: plan[todayIdx]?.muscleGroup || '', 
+          exercises: [], 
+          details: [], 
+          duration: 0, 
+          skipped: true, 
+          timestamp: Date.now() 
+        };
         history.push(dayRecord);
       } else {
         dayRecord.skipped = true;
       }
-      FTStorage.set('history', history);
+      if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
       alert('❌ Понял, день пропущен. Завтра новый шанс! 💪');
       this.createWelcomeScreen();
     }
