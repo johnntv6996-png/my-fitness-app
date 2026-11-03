@@ -134,9 +134,9 @@ const WelcomeModule = {
     // Кнопка "Да"
     var yesButton = '';
     if (exCount > 0) {
-      yesButton = '<button class="btn w-btn w-btn-yes" style="width:100%;padding:12px;font-size:1em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'yes\')">✅ Тренируемся!</button>';
+      yesButton = '<button class="btn w-btn" style="width:100%;padding:12px;font-size:1em;font-weight:700;background:linear-gradient(135deg, #90EE90 0%, #7FDD7F 100%);color:#1a3a1a;border:1px solid #90EE90" onclick="WelcomeModule.handleAnswer(\'yes\')">✅ Тренируемся!</button>';
     } else {
-      yesButton = '<button class="btn w-btn w-btn-plan" style="width:100%;padding:12px;font-size:1em;font-weight:700" onclick="WelcomeModule.goToPlan()">📝 Составить план</button>';
+      yesButton = '<button class="btn w-btn" style="width:100%;padding:12px;font-size:1em;font-weight:700;background:linear-gradient(135deg, #FFD700 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid #FFD700" onclick="WelcomeModule.goToPlan()">📝 Составить план</button>';
     }
 
     // НОВЫЙ ПОРЯДОК: Приветствие → XP бар → Кнопки → Статус → Статистика → Мотивация → Подсказка
@@ -173,8 +173,8 @@ const WelcomeModule = {
         '<div style="font-size:1.05em;margin-bottom:12px;font-weight:600">Позанимаемся?</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
           yesButton +
-          '<button class="btn w-btn w-btn-later" style="padding:12px;font-size:0.95em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
-          '<button class="btn w-btn w-btn-no" style="padding:12px;font-size:0.95em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
+					'<button class="btn w-btn" style="padding:12px;font-size:0.95em;font-weight:700;background:linear-gradient(135deg, #FFB347 0%, #FFC870 100%);color:#3a2a0a;border:1px solid #FFB347" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
+					'<button class="btn w-btn" style="padding:12px;font-size:0.95em;font-weight:700;background:linear-gradient(135deg, #e74c3c 0%, #FF7070 100%);color:#fff;border:1px solid #e74c3c" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
         '</div>' +
       '</div>' +
 
