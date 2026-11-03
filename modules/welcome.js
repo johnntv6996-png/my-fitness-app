@@ -37,7 +37,13 @@ const WelcomeModule = {
     if (streak < 60) return {text: 'Месяц! Ты легенда 👑', color: 'var(--acc)'};
     return {text: 'Ты непобедим ', color: 'var(--acc)'};
   },
-
+	getLevelEmoji: function(level) {
+		if (level < 5) return '⭐';
+		if (level < 10) return '🌟';
+		if (level < 20) return '🏆';
+		if (level < 50) return '👑';
+		return '💎';
+	},
   animateValue: function(element, start, end, duration) {
     var startTime = null;
     var range = end - start;
@@ -155,9 +161,10 @@ const WelcomeModule = {
       '<div class="w-fade w-delay-1" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:12px 15px;margin-bottom:10px;border:1px solid var(--acc)">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
           '<div style="display:flex;align-items:center;gap:8px">' +
-            '<div style="font-size:1.8em;font-weight:bold;color:var(--acc);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
-            '<div style="font-size:0.75em;opacity:0.7">уровень</div>' +
-          '</div>' +
+						'<div style="font-size:2em;line-height:1" class="w-pulse">' + levelEmoji + '</div>' +
+						'<div style="font-size:1.8em;font-weight:bold;color:var(--acc);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
+						'<div style="font-size:0.75em;opacity:0.7">уровень</div>' +
+					'</div>' +
           '<div style="text-align:right">' +
             '<div style="font-size:0.75em;opacity:0.7">XP</div>' +
             '<div style="font-size:1em;font-weight:bold;color:var(--text)"><span class="w-anim-xp">0</span><span style="font-size:0.7em;opacity:0.6">/' + xpNeeded + '</span></div>' +
