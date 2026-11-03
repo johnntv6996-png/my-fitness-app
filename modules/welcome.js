@@ -91,10 +91,8 @@ const WelcomeModule = {
     // CSS анимации
     var css = '<style>' +
       '@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }' +
-      '@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }' +
       '@keyframes fillBar { from { width:0%; } }' +
       '@keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.15); } }' +
-      '@keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }' +
       '@keyframes glow { 0%,100% { box-shadow:0 0 10px rgba(255,215,0,0.3); } 50% { box-shadow:0 0 25px rgba(255,215,0,0.6); } }' +
       '.w-fade { animation:fadeInUp 0.5s ease-out both; }' +
       '.w-delay-1 { animation-delay:0.1s; }' +
@@ -105,10 +103,9 @@ const WelcomeModule = {
       '.w-pulse { animation:pulse 2s ease-in-out infinite; display:inline-block; }' +
       '.w-glow { animation:glow 2s ease-in-out infinite; }' +
       '.w-xp-bar { animation:fillBar 1.2s ease-out both; }' +
-      '.w-shimmer { background:linear-gradient(90deg, var(--acc) 0%, #FFF8DC 50%, var(--acc) 100%); background-size:200% 100%; animation:shimmer 3s linear infinite; }' +
       '.w-card { transition:transform 0.2s, box-shadow 0.2s; }' +
       '.w-card:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,0.3); }' +
-      '.w-btn { transition:all 0.2s; position:relative; overflow:hidden; }' +
+      '.w-btn { transition:all 0.2s; }' +
       '.w-btn:hover { transform:translateY(-2px); filter:brightness(1.1); }' +
       '.w-btn:active { transform:scale(0.97); }' +
       '.w-btn-yes { background:linear-gradient(135deg, var(--ok) 0%, #7FDD7F 100%); color:#1a3a1a; }' +
@@ -144,29 +141,12 @@ const WelcomeModule = {
       yesButton = '<button class="btn w-btn w-btn-plan" style="width:100%;padding:12px;font-size:1em;font-weight:700" onclick="WelcomeModule.goToPlan()">📝 Составить план</button>';
     }
 
-    // НОВЫЙ ПОРЯДОК: Приветствие → Статус → Уровень → Статистика → Мотивация → Подсказка
+    // НОВЫЙ ПОРЯДОК: XP → Приветствие → Статус → Статистика → Мотивация → Подсказка
     screen.innerHTML = css +
       '<div style="padding:15px;max-width:500px;margin:0 auto">' +
       
-      // === 1. ПРИВЕТСТВИЕ + КНОПКИ (ТЕПЕРЬ СВЕРХУ) ===
-      '<div class="w-fade" style="background:var(--card);border-radius:10px;padding:18px 15px;text-align:center;border:1px solid var(--brd);margin-bottom:10px">' +
-        '<div style="font-size:2.5em;margin-bottom:5px">💪</div>' +
-        '<h1 style="color:var(--acc);margin:0 0 6px 0;font-size:1.4em">Привет!</h1>' +
-        '<div class="text-small" style="margin-bottom:8px">Сегодня <strong>' + dayName + '</strong></div>' +
-        planInfo +
-        '<div style="font-size:1.05em;margin:12px 0;font-weight:600">Позанимаемся?</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
-          yesButton +
-          '<button class="btn w-btn w-btn-later" style="padding:12px;font-size:0.95em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
-          '<button class="btn w-btn w-btn-no" style="padding:12px;font-size:0.95em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
-        '</div>' +
-      '</div>' +
-
-      // === 2. СТАТУС ДНЯ ===
-      statusHtml +
-
-      // === 3. УРОВЕНЬ + XP ===
-      '<div class="w-fade w-delay-1 w-glow" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:12px 15px;margin-bottom:10px;border:1px solid var(--acc)">' +
+      // === 1. УРОВЕНЬ + XP (СВЕРХУ) ===
+      '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:12px 15px;margin-bottom:10px;border:1px solid var(--acc)">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
           '<div style="display:flex;align-items:center;gap:8px">' +
             '<div style="font-size:1.8em;font-weight:bold;color:var(--acc);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
@@ -182,8 +162,25 @@ const WelcomeModule = {
         '</div>' +
       '</div>' +
 
+      // === 2. ПРИВЕТСТВИЕ + КНОПКИ ===
+      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:18px 15px;text-align:center;border:1px solid var(--brd);margin-bottom:10px">' +
+        '<div style="font-size:2.5em;margin-bottom:5px">💪</div>' +
+        '<h1 style="color:var(--acc);margin:0 0 6px 0;font-size:1.4em">Привет!</h1>' +
+        '<div class="text-small" style="margin-bottom:8px">Сегодня <strong>' + dayName + '</strong></div>' +
+        planInfo +
+        '<div style="font-size:1.05em;margin:12px 0;font-weight:600">Позанимаемся?</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
+          yesButton +
+          '<button class="btn w-btn w-btn-later" style="padding:12px;font-size:0.95em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
+          '<button class="btn w-btn w-btn-no" style="padding:12px;font-size:0.95em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
+        '</div>' +
+      '</div>' +
+
+      // === 3. СТАТУС ДНЯ ===
+      statusHtml +
+
       // === 4. ТРИ МИНИ-КАРТОЧКИ ===
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0">' +
         '<div class="w-card w-fade w-delay-2" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
           '<div class="w-pulse" style="font-size:1.5em">🔥</div>' +
           '<div style="font-size:1.4em;font-weight:bold;color:var(--warn);line-height:1.2"><span class="w-anim-streak">0</span></div>' +
