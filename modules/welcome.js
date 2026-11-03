@@ -178,4 +178,7 @@ const WelcomeModule = {
   }
 };
 
+// ВАЖНО: делаем модуль доступным глобально для onclick
+window.WelcomeModule = WelcomeModule;
+
 module.exports = WelcomeModule;
