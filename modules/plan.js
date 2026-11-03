@@ -14,9 +14,14 @@ const PlanModule = {
     }
   },
 
-  setup() {
-    this.createPlanScreen();
-  },
+	setup() {
+		this.createPlanScreen();
+		
+		// ДОБАВЬ ЭТИ СТРОКИ:
+		if (typeof Core !== 'undefined') {
+			Core.addNavButton('План', 'plan', '📝');
+		}
+	},
 
   createPlanScreen() {
     let screen = document.getElementById('screen-plan');

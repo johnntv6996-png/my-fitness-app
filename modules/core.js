@@ -37,16 +37,21 @@ const CoreModule = {
     if (activeBtn) activeBtn.classList.add('active');
   },
 
-  addNavButton(label, screenId, icon = '') {
-    const nav = document.getElementById('userNav');
-    if (!nav) return;
-    const btn = document.createElement('button');
-    btn.className = 'nav-btn';
-    btn.setAttribute('data-screen', screenId);
-    btn.innerHTML = `${icon} ${label}`;
-    btn.onclick = () => this.navigate(screenId);
-    nav.appendChild(btn);
-  },
+	addNavButton(label, screenId, icon = '') {
+		const nav = document.getElementById('userNav');
+		if (!nav) return;
+
+		// Проверяем, нет ли уже такой кнопки
+		const existing = nav.querySelector(`[data-screen="${screenId}"]`);
+		if (existing) return; // Уже есть, не добавляем
+
+		const btn = document.createElement('button');
+		btn.className = 'nav-btn';
+		btn.setAttribute('data-screen', screenId);
+		btn.innerHTML = `${icon} ${label}`;
+		btn.onclick = () => this.navigate(screenId);
+		nav.appendChild(btn);
+	},
 
   init() {
     console.log('⚙️ Core module initialized');

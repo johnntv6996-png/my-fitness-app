@@ -12,9 +12,14 @@ const RemindersModule = {
     }
   },
 
-  setup() {
-    this.createRemindersScreen();
-  },
+	setup() {
+		this.createRemindersScreen();
+		
+		// ДОБАВЬ ЭТИ СТРОКИ:
+		if (typeof Core !== 'undefined') {
+			Core.addNavButton('Напоминалки', 'reminders', '🔔');
+		}
+	},
 
   createRemindersScreen() {
     let screen = document.getElementById('screen-reminders');

@@ -12,9 +12,14 @@ const HistoryModule = {
     }
   },
 
-  setup() {
-    this.createHistoryScreen();
-  },
+	setup() {
+		this.createHistoryScreen();
+		
+		// ДОБАВЬ ЭТИ СТРОКИ:
+		if (typeof Core !== 'undefined') {
+			Core.addNavButton('История', 'history', '📋');
+		}
+	},
 
   createHistoryScreen() {
     let screen = document.getElementById('screen-history');

@@ -12,9 +12,14 @@ const AchievementsModule = {
     }
   },
 
-  setup() {
-    this.createAchievementsScreen();
-  },
+	setup() {
+		this.createAchievementsScreen();
+		
+		// ДОБАВЬ ЭТИ СТРОКИ:
+		if (typeof Core !== 'undefined') {
+			Core.addNavButton('Достижения', 'achievements', '🏆');
+		}
+	},
 
   createAchievementsScreen() {
     let screen = document.getElementById('screen-achievements');
