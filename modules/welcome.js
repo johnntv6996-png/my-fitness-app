@@ -33,9 +33,9 @@ const WelcomeModule = {
     if (streak < 3) return {text: 'Хорошее начало! Продолжай 🔥', color: 'var(--ok)'};
     if (streak < 7) return {text: 'Отличная серия! Ты на пути 🎯', color: 'var(--ok)'};
     if (streak < 14) return {text: 'Неделя силы! Ты машина 🚀', color: 'var(--acc)'};
-    if (streak < 30) return {text: 'Дисциплина — суперсила ⚡', color: 'var(--acc)'};
+    if (streak < 30) return {text: 'Дисциплина — суперсила ', color: 'var(--acc)'};
     if (streak < 60) return {text: 'Месяц! Ты легенда 👑', color: 'var(--acc)'};
-    return {text: 'Ты непобедим 🏆', color: 'var(--acc)'};
+    return {text: 'Ты непобедим ', color: 'var(--acc)'};
   },
 
   animateValue: function(element, start, end, duration) {
@@ -93,7 +93,6 @@ const WelcomeModule = {
       '@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }' +
       '@keyframes fillBar { from { width:0%; } }' +
       '@keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.15); } }' +
-      '@keyframes glow { 0%,100% { box-shadow:0 0 10px rgba(255,215,0,0.3); } 50% { box-shadow:0 0 25px rgba(255,215,0,0.6); } }' +
       '.w-fade { animation:fadeInUp 0.5s ease-out both; }' +
       '.w-delay-1 { animation-delay:0.1s; }' +
       '.w-delay-2 { animation-delay:0.2s; }' +
@@ -101,7 +100,6 @@ const WelcomeModule = {
       '.w-delay-4 { animation-delay:0.4s; }' +
       '.w-delay-5 { animation-delay:0.5s; }' +
       '.w-pulse { animation:pulse 2s ease-in-out infinite; display:inline-block; }' +
-      '.w-glow { animation:glow 2s ease-in-out infinite; }' +
       '.w-xp-bar { animation:fillBar 1.2s ease-out both; }' +
       '.w-card { transition:transform 0.2s, box-shadow 0.2s; }' +
       '.w-card:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,0.3); }' +
@@ -141,12 +139,20 @@ const WelcomeModule = {
       yesButton = '<button class="btn w-btn w-btn-plan" style="width:100%;padding:12px;font-size:1em;font-weight:700" onclick="WelcomeModule.goToPlan()">📝 Составить план</button>';
     }
 
-    // НОВЫЙ ПОРЯДОК: XP → Приветствие → Статус → Статистика → Мотивация → Подсказка
+    // НОВЫЙ ПОРЯДОК: Приветствие → XP бар → Кнопки → Статус → Статистика → Мотивация → Подсказка
     screen.innerHTML = css +
       '<div style="padding:15px;max-width:500px;margin:0 auto">' +
       
-      // === 1. УРОВЕНЬ + XP (СВЕРХУ) ===
-      '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:12px 15px;margin-bottom:10px;border:1px solid var(--acc)">' +
+      // === 1. ПРИВЕТСТВИЕ ===
+      '<div class="w-fade" style="text-align:center;margin-bottom:10px">' +
+        '<div style="font-size:2.5em;margin-bottom:5px">💪</div>' +
+        '<h1 style="color:var(--acc);margin:0 0 6px 0;font-size:1.4em">Привет!</h1>' +
+        '<div class="text-small" style="margin-bottom:8px">Сегодня <strong>' + dayName + '</strong></div>' +
+        planInfo +
+      '</div>' +
+
+      // === 2. XP БАР (ТЕПЕРЬ НАД КНОПКАМИ) ===
+      '<div class="w-fade w-delay-1" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:12px 15px;margin-bottom:10px;border:1px solid var(--acc)">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
           '<div style="display:flex;align-items:center;gap:8px">' +
             '<div style="font-size:1.8em;font-weight:bold;color:var(--acc);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
@@ -162,13 +168,9 @@ const WelcomeModule = {
         '</div>' +
       '</div>' +
 
-      // === 2. ПРИВЕТСТВИЕ + КНОПКИ ===
-      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:18px 15px;text-align:center;border:1px solid var(--brd);margin-bottom:10px">' +
-        '<div style="font-size:2.5em;margin-bottom:5px">💪</div>' +
-        '<h1 style="color:var(--acc);margin:0 0 6px 0;font-size:1.4em">Привет!</h1>' +
-        '<div class="text-small" style="margin-bottom:8px">Сегодня <strong>' + dayName + '</strong></div>' +
-        planInfo +
-        '<div style="font-size:1.05em;margin:12px 0;font-weight:600">Позанимаемся?</div>' +
+      // === 3. КНОПКИ (ТЕПЕРЬ ПОД XP БАРОМ) ===
+      '<div class="w-fade w-delay-2" style="background:var(--card);border-radius:10px;padding:18px 15px;text-align:center;border:1px solid var(--brd);margin-bottom:10px">' +
+        '<div style="font-size:1.05em;margin-bottom:12px;font-weight:600">Позанимаемся?</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
           yesButton +
           '<button class="btn w-btn w-btn-later" style="padding:12px;font-size:0.95em;font-weight:700" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
@@ -176,41 +178,41 @@ const WelcomeModule = {
         '</div>' +
       '</div>' +
 
-      // === 3. СТАТУС ДНЯ ===
+      // === 4. СТАТУС ДНЯ ===
       statusHtml +
 
-      // === 4. ТРИ МИНИ-КАРТОЧКИ ===
+      // === 5. ТРИ МИНИ-КАРТОЧКИ ===
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0">' +
-        '<div class="w-card w-fade w-delay-2" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+        '<div class="w-card w-fade w-delay-3" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
           '<div class="w-pulse" style="font-size:1.5em">🔥</div>' +
           '<div style="font-size:1.4em;font-weight:bold;color:var(--warn);line-height:1.2"><span class="w-anim-streak">0</span></div>' +
           '<div style="font-size:0.7em;opacity:0.7">стрик</div>' +
         '</div>' +
-        '<div class="w-card w-fade w-delay-3" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+        '<div class="w-card w-fade w-delay-4" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
           '<div style="font-size:1.5em">🏋️</div>' +
           '<div style="font-size:1.4em;font-weight:bold;color:var(--ok);line-height:1.2"><span class="w-anim-workouts">0</span></div>' +
           '<div style="font-size:0.7em;opacity:0.7">тренировок</div>' +
         '</div>' +
-        '<div class="w-card w-fade w-delay-4" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
-          '<div style="font-size:1.5em">⚡</div>' +
+        '<div class="w-card w-fade w-delay-5" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+          '<div style="font-size:1.5em"></div>' +
           '<div style="font-size:1.4em;font-weight:bold;color:var(--acc);line-height:1.2"><span class="w-anim-totalxp">0</span></div>' +
           '<div style="font-size:0.7em;opacity:0.7">всего XP</div>' +
         '</div>' +
       '</div>' +
 
-      // === 5. МОТИВАЦИЯ ===
-      '<div class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:8px 12px;margin-bottom:10px;border-left:3px solid ' + motivation.color + ';font-size:0.9em;text-align:center;color:' + motivation.color + ';font-weight:600">' +
+      // === 6. МОТИВАЦИЯ ===
+      '<div class="w-fade w-delay-5" style="background:var(--bg);border-radius:8px;padding:8px 12px;margin-bottom:10px;border-left:3px solid ' + motivation.color + ';font-size:0.9em;text-align:center;color:' + motivation.color + ';font-weight:600">' +
         motivation.text +
       '</div>' +
 
-      // === 6. ПОДСКАЗКА XP (свёрнутая) ===
-      '<details class="w-fade w-delay-5" style="background:var(--bg);border-radius:8px;padding:10px 12px;font-size:0.8em;opacity:0.85;cursor:pointer">' +
+      // === 7. ПОДСКАЗКА XP (свёрнутая) ===
+      '<details class="w-fade" style="background:var(--bg);border-radius:8px;padding:10px 12px;font-size:0.8em;opacity:0.85;cursor:pointer">' +
         '<summary style="font-weight:600;color:var(--acc);margin-bottom:6px">💡 Как получать XP</summary>' +
         '<div style="margin-top:6px;line-height:1.6">' +
           '<div>✅ Выполнение упражнения: <strong>+5 XP</strong></div>' +
           '<div>🏁 Завершение упражнения: <strong>+15 XP</strong></div>' +
           '<div>🎉 Завершение дня: <strong>+20 XP</strong></div>' +
-          '<div>📊 Запись данных: <strong>+10 XP</strong></div>' +
+          '<div> Запись данных: <strong>+10 XP</strong></div>' +
         '</div>' +
       '</details>' +
 
