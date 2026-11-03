@@ -10,6 +10,13 @@ const WelcomeModule = {
     } else {
       this.setup();
     }
+		goToPlan() {
+		if (typeof Core !== 'undefined') {
+			Core.navigate('plan');
+		} else {
+			alert('Модуль плана ещё не загружен!');
+		}
+	}
   },
 
   setup() {
@@ -53,9 +60,9 @@ const WelcomeModule = {
       }
     }
 
-    const yesButton = exCount > 0 
-      ? `<button class="btn btn-primary" style="width:100%;padding:15px;font-size:1.1em" onclick="WelcomeModule.handleAnswer('yes')">✅ Да, тренируемся!</button>`
-      : `<button class="btn btn-primary" style="width:100%;padding:15px;font-size:1.1em" onclick="alert('Сначала добавь упражнения в план!')">📝 Сначала составь план</button>`;
+		const yesButton = exCount > 0 
+			? `<button class="btn btn-primary" style="width:100%;padding:15px;font-size:1.1em" onclick="WelcomeModule.handleAnswer('yes')">✅ Да, тренируемся!</button>`
+			: `<button class="btn btn-primary" style="width:100%;padding:15px;font-size:1.1em" onclick="WelcomeModule.goToPlan()">📝 Составить план</button>`;
 
     screen.innerHTML = `
       <div style="text-align:center;padding:30px 20px">
