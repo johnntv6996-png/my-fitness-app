@@ -301,7 +301,8 @@ class ModuleManager {
     container.innerHTML = html;
   }
 
-  initializeUserInterface: function() {
+  // ИСПРАВЛЕНО: правильный синтаксис метода класса (без : function и без запятой в конце)
+  initializeUserInterface() {
     Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
     var nav = document.getElementById('userNav');
     if (nav) nav.innerHTML = '';
@@ -321,7 +322,7 @@ class ModuleManager {
     if (typeof Core !== 'undefined' && Core.enableDragReorder) {
       Core.enableDragReorder();
     }
-  }, // <--- ВОТ ЗДЕСЬ БЫЛА ДОБАВЛЕНА ЗАПЯТАЯ
+  }
 
   async retryModule(id) {
     var config = MODULE_REGISTRY[id];
