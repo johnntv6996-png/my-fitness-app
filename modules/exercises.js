@@ -132,7 +132,7 @@ const ExercisesModule = {
         '</div>' +
         
         '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Группа мышц:</label>' +
+          '<label style="display:block;margin-bottom:5px;font-weight:600">Категория:</label>' +
           '<input type="text" id="exMuscleGroup" value="' + (ex ? (ex.muscleGroup || '') : '') + '" placeholder="Например: Грудь, Спина, Ноги" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
           '<div class="hint">💡 Для фильтрации упражнений по категориям</div>' +
         '</div>' +
