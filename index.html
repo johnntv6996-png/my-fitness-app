@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FITNESS ELITE — Premium Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 <style>
 :root {
   --bg-primary: #0a0a0f;
@@ -108,6 +109,14 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header h1 i {
+  font-size: 1.2em;
+  -webkit-text-fill-color: var(--accent-gold);
 }
 
 .mode-switcher { 
@@ -129,6 +138,13 @@ body {
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mode-btn i {
+  font-size: 1.2em;
 }
 
 .mode-btn:hover { 
@@ -144,6 +160,10 @@ body {
   border-color: var(--accent-gold);
   font-weight: 600;
   box-shadow: var(--shadow-gold);
+}
+
+.mode-btn.active i {
+  color: #000;
 }
 
 /* NAVIGATION */
@@ -183,6 +203,14 @@ body {
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-btn i {
+  font-size: 1.2em;
+  transition: all var(--transition-fast);
 }
 
 .nav-btn::before {
@@ -210,6 +238,10 @@ body {
   color: var(--accent-gold);
   background: rgba(212, 175, 55, 0.1);
   font-weight: 600;
+}
+
+.nav-btn.active i {
+  color: var(--accent-gold);
 }
 
 .nav-btn.active::before {
@@ -275,6 +307,13 @@ body {
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn i {
+  font-size: 1.2em;
 }
 
 .btn::before {
@@ -367,6 +406,18 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.loading .icon-large {
+  font-size: 4em;
+  color: var(--accent-gold);
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
 .text-small { 
   font-size: 0.85em; 
   opacity: 0.7;
@@ -443,10 +494,14 @@ body {
 <div class="container">
 
   <div class="header">
-    <h1>FITNESS ELITE</h1>
+    <h1><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
     <div class="mode-switcher">
-      <button class="mode-btn" id="userModeBtn" onclick="switchMode('user')">Пользователь</button>
-      <button class="mode-btn" id="devModeBtn" onclick="switchMode('dev')">Разработчик</button>
+      <button class="mode-btn" id="userModeBtn" onclick="switchMode('user')">
+        <i class="ph ph-user"></i> Пользователь
+      </button>
+      <button class="mode-btn" id="devModeBtn" onclick="switchMode('dev')">
+        <i class="ph ph-wrench"></i> Разработчик
+      </button>
     </div>
   </div>
 
@@ -454,7 +509,7 @@ body {
     <div class="nav" id="userNav"></div>
     <div id="screen-welcome" class="screen active">
       <div class="loading">
-        <div style="font-size:5em;margin-bottom:20px;animation:pulse 2s infinite;color:var(--accent-gold)">◆</div>
+        <i class="ph ph-barbell icon-large"></i>
         <h2>Добро пожаловать</h2>
         <p class="text-small">Загрузка модулей...</p>
       </div>
@@ -463,24 +518,38 @@ body {
 
   <div id="devInterface" style="display:none">
     <div class="nav">
-      <button class="nav-btn active" onclick="showDevScreen('modules')">Модули</button>
-      <button class="nav-btn" onclick="showDevScreen('console')">Логи</button>
+      <button class="nav-btn active" onclick="showDevScreen('modules')">
+        <i class="ph ph-cube"></i> Модули
+      </button>
+      <button class="nav-btn" onclick="showDevScreen('console')">
+        <i class="ph ph-scroll"></i> Логи
+      </button>
     </div>
     <div id="dev-screen-modules" class="screen active">
       <div class="dev-panel">
-        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">Управление модулями</h3>
+        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold);display:flex;align-items:center;gap:12px">
+          <i class="ph ph-cube"></i> Управление модулями
+        </h3>
         <div id="moduleList"></div>
         <div style="margin-top:24px;display:flex;gap:16px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="moduleManager.checkAllModules()">Проверить обновления</button>
-          <button class="btn btn-danger" onclick="moduleManager.clearAllCache()">Очистить кэш</button>
+          <button class="btn btn-primary" onclick="moduleManager.checkAllModules()">
+            <i class="ph ph-arrows-clockwise"></i> Проверить обновления
+          </button>
+          <button class="btn btn-danger" onclick="moduleManager.clearAllCache()">
+            <i class="ph ph-trash"></i> Очистить кэш
+          </button>
         </div>
       </div>
     </div>
     <div id="dev-screen-console" class="screen">
       <div class="dev-panel">
-        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">Системные логи</h3>
+        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold);display:flex;align-items:center;gap:12px">
+          <i class="ph ph-scroll"></i> Системные логи
+        </h3>
         <div class="console-log" id="consoleLog"></div>
-        <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:20px">Очистить логи</button>
+        <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:20px">
+          <i class="ph ph-eraser"></i> Очистить логи
+        </button>
       </div>
     </div>
   </div>
@@ -648,8 +717,8 @@ class ModuleManager {
       html += '<div class="text-small" style="margin-top:4px">' + config.description + '</div>';
       html += '<div class="text-small" style="margin-top:4px">v' + config.version + ' · ' + statusText + '</div></div>';
       html += '<div style="display:flex;gap:8px">';
-      if (status === 'error') html += '<button class="btn btn-secondary" onclick="moduleManager.retryModule(\'' + id + '\')" style="padding:8px 16px">Повторить</button>';
-      html += '<button class="btn btn-danger" onclick="moduleManager.clearModule(\'' + id + '\')" style="padding:8px 16px">Удалить</button>';
+      if (status === 'error') html += '<button class="btn btn-secondary" onclick="moduleManager.retryModule(\'' + id + '\')" style="padding:8px 16px"><i class="ph ph-arrows-clockwise"></i> Повторить</button>';
+      html += '<button class="btn btn-danger" onclick="moduleManager.clearModule(\'' + id + '\')" style="padding:8px 16px"><i class="ph ph-trash"></i> Удалить</button>';
       html += '</div></div>';
     }
     container.innerHTML = html;
