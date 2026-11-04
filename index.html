@@ -108,6 +108,7 @@ const Logger = {
   clear() { this.logs = []; this.renderConsole(); }
 };
 
+
 const MODULE_REGISTRY = {
   'core': {
     name: 'Ядро системы',
@@ -118,10 +119,24 @@ const MODULE_REGISTRY = {
   },
   'welcome': {
     name: 'Приветствие',
-    version: '2.0.0',
+    version: '3.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
     required: false,
-    description: 'Экран приветствия с кнопками Да/Позже/Нет'
+    description: 'Экран приветствия с XP, статистикой и кнопками'
+  },
+  'exercises': {
+    name: 'База упражнений',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
+    required: false,
+    description: 'CRUD упражнений с видео и группами мышц'
+  },
+  'plan': {
+    name: 'План тренировок',
+    version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
+    required: false,
+    description: 'Настройка плана на неделю с упражнениями'
   }
 };
 
