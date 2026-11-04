@@ -128,15 +128,6 @@ const WelcomeModule = {
       }
     }
 
-    // План (компактно)
-    var planInfo = '';
-    if (exCount > 0) {
-      var muscleGroup = todayPlan.muscleGroup || 'тренировка';
-      planInfo = '<div style="font-size:0.8em;opacity:0.8;margin-bottom:8px">📋 <strong>' + muscleGroup + '</strong> · ' + exCount + ' упр.</div>';
-    } else {
-      planInfo = '<div style="font-size:0.8em;color:#FFB347;margin-bottom:8px">⚠️ План пуст</div>';
-    }
-
     // Кнопка "Да"
     var yesButton = '';
     if (exCount > 0) {
@@ -145,7 +136,7 @@ const WelcomeModule = {
       yesButton = '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFD700 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid #FFD700" onclick="WelcomeModule.goToPlan()">📝 План</button>';
     }
 
-    // НОВЫЙ ПОРЯДОК: XP-бар → Приветствие → Кнопки → Статус → Карточки → Мотивация → Подсказка
+    // ПОРЯДОК: XP-бар → Приветствие (компактное) → Кнопки → Статус → Карточки → Мотивация → Подсказка
     screen.innerHTML = css +
       '<div style="padding:12px;max-width:450px;margin:0 auto">' +
       
@@ -167,15 +158,19 @@ const WelcomeModule = {
         '</div>' +
       '</div>' +
 
-      // === 2. ПРИВЕТСТВИЕ (КОМПАКТНОЕ) ===
-      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:12px 15px;text-align:center;border:1px solid var(--brd);margin-bottom:10px">' +
-        '<div style="font-size:2em;margin-bottom:3px">💪</div>' +
-        '<h1 style="color:var(--acc);margin:0 0 4px 0;font-size:1.2em">Привет!</h1>' +
-        '<div style="font-size:0.85em;margin-bottom:6px">Сегодня <strong>' + dayName + '</strong></div>' +
-        planInfo +
+      // === 2. ПРИВЕТСТВИЕ (КОМПАКТНОЕ, В ОДНУ СТРОКУ) ===
+      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:8px 12px;border:1px solid var(--brd);margin-bottom:10px">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<div style="font-size:1.5em">💪</div>' +
+          '<div style="flex:1">' +
+            '<div style="font-size:1em;font-weight:bold;color:var(--acc);line-height:1.2">Привет!</div>' +
+            '<div style="font-size:0.75em;opacity:0.8">Сегодня <strong>' + dayName + '</strong></div>' +
+          '</div>' +
+          '<div style="font-size:0.75em;color:#FFB347">' + (exCount > 0 ? '📋 ' + exCount + ' упр.' : '⚠️ нет плана') + '</div>' +
+        '</div>' +
       '</div>' +
 
-      // === 3. КНОПКИ (КОМПАКТНЫЕ) ===
+      // === 3. КНОПКИ (В ОДНУ СТРОКУ) ===
       '<div class="w-fade w-delay-2" style="display:flex;gap:6px;margin-bottom:10px">' +
         yesButton +
         '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFB347 0%, #FFC870 100%);color:#3a2a0a;border:1px solid #FFB347" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
