@@ -2,7 +2,7 @@
 
 const WelcomeModule = {
   init: function() {
-    console.log('🎉 Welcome module initialized');
+    console.log('Welcome module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль приветствия инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { WelcomeModule.setup(); });
@@ -12,7 +12,7 @@ const WelcomeModule = {
   setup: function() {
     this.createWelcomeScreen();
     if (typeof Core !== 'undefined') {
-      Core.addNavButton('Главная', 'welcome', '🏠');
+      Core.addNavButton('Главная', 'welcome', '<i class="ph ph-house"></i>');
     }
   },
 
@@ -21,8 +21,8 @@ const WelcomeModule = {
     return '';
   },
   getUserAvatar: function() {
-    if (typeof FTStorage !== 'undefined') return FTStorage.get('user_avatar') || '💪';
-    return '💪';
+    if (typeof FTStorage !== 'undefined') return FTStorage.get('user_avatar') || 'ph-user-circle';
+    return 'ph-user-circle';
   },
   getStats: function() {
     if (typeof FTStorage !== 'undefined') return FTStorage.get('stats') || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
@@ -31,21 +31,21 @@ const WelcomeModule = {
 
   getMotivationalMessage: function(stats) {
     var streak = stats.streak || 0;
-    if (streak === 0) return {text: 'Начни свой путь сегодня! 💪', color: '#FFB347'};
-    if (streak < 3) return {text: 'Хорошее начало! Продолжай 🔥', color: '#90EE90'};
-    if (streak < 7) return {text: 'Отличная серия! Ты на пути 🎯', color: '#90EE90'};
-    if (streak < 14) return {text: 'Неделя силы! Ты машина 🚀', color: '#FFD700'};
-    if (streak < 30) return {text: 'Дисциплина — суперсила ⚡', color: '#FFD700'};
-    if (streak < 60) return {text: 'Месяц! Ты легенда 👑', color: '#FFD700'};
-    return {text: 'Ты непобедим 🏆', color: '#FFD700'};
+    if (streak === 0) return {text: 'Начни свой путь сегодня!', color: '#FFB347', icon: 'ph-rocket'};
+    if (streak < 3) return {text: 'Хорошее начало! Продолжай', color: '#90EE90', icon: 'ph-flame'};
+    if (streak < 7) return {text: 'Отличная серия! Ты на пути', color: '#90EE90', icon: 'ph-target'};
+    if (streak < 14) return {text: 'Неделя силы! Ты машина', color: '#FFD700', icon: 'ph-rocket'};
+    if (streak < 30) return {text: 'Дисциплина — суперсила', color: '#FFD700', icon: 'ph-lightning'};
+    if (streak < 60) return {text: 'Месяц! Ты легенда', color: '#FFD700', icon: 'ph-crown'};
+    return {text: 'Ты непобедим', color: '#FFD700', icon: 'ph-trophy'};
   },
 
   getLevelEmoji: function(level) {
-    if (level < 5) return '⭐';
-    if (level < 10) return '🌟';
-    if (level < 20) return '🏆';
-    if (level < 50) return '👑';
-    return '💎';
+    if (level < 5) return 'ph-star';
+    if (level < 10) return 'ph-star-four';
+    if (level < 20) return 'ph-trophy';
+    if (level < 50) return 'ph-crown';
+    return 'ph-diamond';
   },
 
   animateValue: function(element, start, end, duration) {
@@ -94,14 +94,14 @@ const WelcomeModule = {
     }
 
     var motivation = this.getMotivationalMessage(stats);
-    var levelEmoji = this.getLevelEmoji(stats.level);
+    var levelIcon = this.getLevelEmoji(stats.level);
     var totalXp = stats.xp + (stats.level - 1) * 100;
 
     var css = '<style>' +
       '@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }' +
       '@keyframes fillBar { from { width:0%; } }' +
       '@keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.15); } }' +
-      '@keyframes glow { 0%,100% { box-shadow:0 0 10px rgba(255,215,0,0.3); } 50% { box-shadow:0 0 25px rgba(255,215,0,0.6); } }' +
+      '@keyframes glow { 0%,100% { box-shadow:0 0 10px rgba(212,175,55,0.3); } 50% { box-shadow:0 0 25px rgba(212,175,55,0.6); } }' +
       '.w-fade { animation:fadeInUp 0.5s ease-out both; }' +
       '.w-delay-1 { animation-delay:0.1s; } .w-delay-2 { animation-delay:0.2s; }' +
       '.w-delay-3 { animation-delay:0.3s; } .w-delay-4 { animation-delay:0.4s; }' +
@@ -113,68 +113,83 @@ const WelcomeModule = {
       '.w-btn { transition:all 0.2s; cursor:pointer; }' +
       '.w-btn:hover { transform:translateY(-2px); filter:brightness(1.1); }' +
       '.w-btn:active { transform:scale(0.97); }' +
-      '.workout-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; display:flex; justify-content:center; align-items:flex-start; padding:10px; overflow-y:auto; }' +
-      '.workout-modal-content { background:var(--bg); border-radius:12px; width:100%; max-width:500px; margin:20px auto; }' +
+      '.w-icon { font-size:1.3em; color:var(--accent-gold); }' +
     '</style>';
 
     var statusHtml = '';
     if (todayRecord) {
       if (todayRecord.skipped) {
-        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(231,76,60,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #e74c3c;font-size:0.85em"><strong style="color:#e74c3c">❌ День пропущен</strong><span style="margin-left:8px;opacity:0.7">Можно передумать</span></div>';
+        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(255,51,102,0.1);padding:12px 16px;border-radius:12px;margin-top:12px;border-left:3px solid #ff3366;font-size:0.9em;display:flex;align-items:center;gap:10px"><i class="ph ph-x-circle" style="font-size:1.3em;color:#ff3366"></i><div><strong style="color:#ff3366">День пропущен</strong><div style="font-size:0.85em;opacity:0.7;margin-top:2px">Можно передумать</div></div></div>';
       } else if (todayRecord.exercises && todayRecord.exercises.length > 0) {
-        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(144,238,144,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #90EE90;font-size:0.85em"><strong style="color:#90EE90">✅ Тренировка проведена</strong><span style="margin-left:8px;opacity:0.7">' + todayRecord.exercises.length + '/' + exCount + '</span></div>';
+        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(0,255,136,0.1);padding:12px 16px;border-radius:12px;margin-top:12px;border-left:3px solid #00ff88;font-size:0.9em;display:flex;align-items:center;gap:10px"><i class="ph ph-check-circle" style="font-size:1.3em;color:#00ff88"></i><div><strong style="color:#00ff88">Тренировка проведена</strong><div style="font-size:0.85em;opacity:0.7;margin-top:2px">' + todayRecord.exercises.length + '/' + exCount + ' упражнений</div></div></div>';
       }
     }
 
     var yesButton = '';
     if (exCount > 0) {
-      yesButton = '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #90EE90 0%, #7FDD7F 100%);color:#1a3a1a;border:1px solid #90EE90" id="btnStartWorkout">✅ Да</button>';
+      yesButton = '<button class="btn w-btn" style="flex:1;padding:14px;font-size:0.95em;font-weight:600;background:linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);color:#000;border:none" id="btnStartWorkout"><i class="ph ph-play-circle"></i> Начать</button>';
     } else {
-      yesButton = '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFD700 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid #FFD700" onclick="WelcomeModule.goToPlan()">📝 План</button>';
+      yesButton = '<button class="btn w-btn" style="flex:1;padding:14px;font-size:0.95em;font-weight:600;background:linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%);color:#000;border:none" onclick="WelcomeModule.goToPlan()"><i class="ph ph-calendar-plus"></i> Составить план</button>';
     }
 
     screen.innerHTML = css +
-      '<div style="padding:12px;max-width:450px;margin:0 auto">' +
-      '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid var(--acc)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
-          '<div style="display:flex;align-items:center;gap:6px">' +
-            '<div style="font-size:1.5em;line-height:1" class="w-pulse">' + levelEmoji + '</div>' +
-            '<div style="font-size:1.5em;font-weight:bold;color:var(--acc);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
-            '<div style="font-size:0.7em;opacity:0.7">уровень</div>' +
+      '<div style="padding:16px;max-width:500px;margin:0 auto">' +
+      
+      '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #1a1a2e 0%, #151520 100%);border-radius:16px;padding:16px 20px;margin-bottom:16px;border:1px solid var(--border-gold)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+          '<div style="display:flex;align-items:center;gap:10px">' +
+            '<i class="ph ' + levelIcon + ' w-icon w-pulse" style="font-size:1.8em"></i>' +
+            '<div style="font-size:1.8em;font-weight:bold;color:var(--accent-gold);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
+            '<div style="font-size:0.75em;opacity:0.7">уровень</div>' +
           '</div>' +
-          '<div style="text-align:right"><div style="font-size:0.7em;opacity:0.7">XP</div><div style="font-size:0.9em;font-weight:bold"><span class="w-anim-xp">0</span><span style="font-size:0.7em;opacity:0.6">/' + xpNeeded + '</span></div></div>' +
+          '<div style="text-align:right"><div style="font-size:0.75em;opacity:0.7">XP</div><div style="font-size:1em;font-weight:bold"><span class="w-anim-xp">0</span><span style="font-size:0.7em;opacity:0.6">/' + xpNeeded + '</span></div></div>' +
         '</div>' +
-        '<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--brd)"><div class="w-xp-bar" style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--acc), var(--warn));border-radius:3px"></div></div>' +
+        '<div style="height:6px;background:var(--bg-primary);border-radius:3px;overflow:hidden;border:1px solid var(--border-subtle)"><div class="w-xp-bar" style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));border-radius:3px"></div></div>' +
       '</div>' +
-      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:12px 15px;border:1px solid var(--brd);margin-bottom:10px">' +
-        '<div style="display:flex;align-items:center;gap:10px">' +
-          '<div style="font-size:2em">' + userAvatar + '</div>' +
-          '<div style="flex:1"><div style="font-size:1.1em;font-weight:bold;color:var(--acc);line-height:1.2">' + greeting + '</div><div style="font-size:0.8em;opacity:0.8">Сегодня <strong>' + dayName + '</strong></div></div>' +
-          '<div style="font-size:0.75em;color:#FFB347;text-align:right">' + (exCount > 0 ? '📋 ' + exCount + ' упр.' : '⚠️ нет плана') + '</div>' +
+
+      '<div class="w-fade w-delay-1" style="background:var(--bg-card);border-radius:16px;padding:16px 20px;border:1px solid var(--border-subtle);margin-bottom:16px">' +
+        '<div style="display:flex;align-items:center;gap:12px">' +
+          '<i class="ph ' + userAvatar + '" style="font-size:2.2em;color:var(--accent-gold)"></i>' +
+          '<div style="flex:1"><div style="font-size:1.15em;font-weight:600;color:var(--accent-gold);line-height:1.2">' + greeting + '</div><div style="font-size:0.85em;opacity:0.7;margin-top:2px">Сегодня <strong>' + dayName + '</strong></div></div>' +
+          '<div style="font-size:0.8em;color:var(--accent-gold);text-align:right"><i class="ph ph-list-checks"></i> ' + (exCount > 0 ? exCount + ' упр.' : 'нет плана') + '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="w-fade w-delay-2" style="display:flex;gap:6px;margin-bottom:10px">' +
+
+      '<div class="w-fade w-delay-2" style="display:flex;gap:8px;margin-bottom:16px">' +
         yesButton +
-        '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFB347 0%, #FFC870 100%);color:#3a2a0a;border:1px solid #FFB347" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
-        '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #e74c3c 0%, #FF7070 100%);color:#fff;border:1px solid #e74c3c" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
+        '<button class="btn w-btn" style="flex:1;padding:14px;font-size:0.95em;font-weight:600;background:linear-gradient(135deg, #FFB347 0%, #FFC870 100%);color:#000;border:none" onclick="WelcomeModule.handleAnswer(\'later\')"><i class="ph ph-clock"></i> Позже</button>' +
+        '<button class="btn w-btn" style="flex:1;padding:14px;font-size:0.95em;font-weight:600;background:linear-gradient(135deg, #ff3366 0%, #ff5577 100%);color:#fff;border:none" onclick="WelcomeModule.handleAnswer(\'no\')"><i class="ph ph-x"></i> Пропустить</button>' +
       '</div>' +
+
       statusHtml +
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:10px 0">' +
-        '<div class="w-card w-fade w-delay-2" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd)"><div class="w-pulse" style="font-size:1.3em">🔥</div><div style="font-size:1.2em;font-weight:bold;color:#FFB347;line-height:1.2"><span class="w-anim-streak">0</span></div><div style="font-size:0.65em;opacity:0.7">стрик</div></div>' +
-        '<div class="w-card w-fade w-delay-3" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd)"><div style="font-size:1.3em">🏋️</div><div style="font-size:1.2em;font-weight:bold;color:#90EE90;line-height:1.2"><span class="w-anim-workouts">0</span></div><div style="font-size:0.65em;opacity:0.7">тренировок</div></div>' +
-        '<div class="w-card w-fade w-delay-4" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd)"><div style="font-size:1.3em">⚡</div><div style="font-size:1.2em;font-weight:bold;color:var(--acc);line-height:1.2"><span class="w-anim-totalxp">0</span></div><div style="font-size:0.65em;opacity:0.7">всего XP</div></div>' +
+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:16px 0">' +
+        '<div class="w-card w-fade w-delay-2" style="background:var(--bg-card);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-flame w-pulse" style="font-size:1.5em;color:#FFB347"></i><div style="font-size:1.3em;font-weight:bold;color:#FFB347;line-height:1.2;margin-top:4px"><span class="w-anim-streak">0</span></div><div style="font-size:0.7em;opacity:0.7">стрик</div></div>' +
+        '<div class="w-card w-fade w-delay-3" style="background:var(--bg-card);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-barbell" style="font-size:1.5em;color:#00ff88"></i><div style="font-size:1.3em;font-weight:bold;color:#00ff88;line-height:1.2;margin-top:4px"><span class="w-anim-workouts">0</span></div><div style="font-size:0.7em;opacity:0.7">тренировок</div></div>' +
+        '<div class="w-card w-fade w-delay-4" style="background:var(--bg-card);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-lightning" style="font-size:1.5em;color:var(--accent-gold)"></i><div style="font-size:1.3em;font-weight:bold;color:var(--accent-gold);line-height:1.2;margin-top:4px"><span class="w-anim-totalxp">0</span></div><div style="font-size:0.7em;opacity:0.7">всего XP</div></div>' +
       '</div>' +
-      '<div class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:6px 10px;margin-bottom:10px;border-left:3px solid ' + motivation.color + ';font-size:0.85em;text-align:center;color:' + motivation.color + ';font-weight:600">' + motivation.text + '</div>' +
-      '<details class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:8px 10px;font-size:0.75em;opacity:0.85;cursor:pointer"><summary style="font-weight:600;color:var(--acc);margin-bottom:4px">💡 Как получать XP</summary><div style="margin-top:4px;line-height:1.5"><div>✅ Упражнение: <strong>+5 XP</strong></div><div>🏁 Завершение: <strong>+15 XP</strong></div><div>🎉 День: <strong>+20 XP</strong></div><div>📊 Данные: <strong>+10 XP</strong></div></div></details>' +
+
+      '<div class="w-fade w-delay-4" style="background:var(--bg-card);border-radius:12px;padding:12px 16px;margin-bottom:16px;border-left:3px solid ' + motivation.color + ';font-size:0.9em;display:flex;align-items:center;gap:10px">' +
+        '<i class="ph ' + motivation.icon + '" style="font-size:1.3em;color:' + motivation.color + '"></i>' +
+        '<div style="color:' + motivation.color + ';font-weight:600">' + motivation.text + '</div>' +
+      '</div>' +
+
+      '<details class="w-fade w-delay-4" style="background:var(--bg-card);border-radius:12px;padding:12px 16px;font-size:0.8em;opacity:0.85;cursor:pointer;border:1px solid var(--border-subtle)">' +
+        '<summary style="font-weight:600;color:var(--accent-gold);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ph ph-info"></i> Как получать XP</summary>' +
+        '<div style="margin-top:8px;line-height:1.6">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><i class="ph ph-check" style="color:#00ff88"></i> Упражнение: <strong>+5 XP</strong></div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><i class="ph ph-flag-checkered" style="color:#00ff88"></i> Завершение: <strong>+15 XP</strong></div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><i class="ph ph-trophy" style="color:#00ff88"></i> День: <strong>+20 XP</strong></div>' +
+          '<div style="display:flex;align-items:center;gap:8px"><i class="ph ph-chart-bar" style="color:#00ff88"></i> Данные: <strong>+10 XP</strong></div>' +
+        '</div>' +
+      '</details>' +
+
       '</div>';
 
-    // Навесить обработчик на кнопку "Да" через addEventListener (надёжнее чем onclick)
     var self = this;
     setTimeout(function() {
       var btnStart = document.getElementById('btnStartWorkout');
-      if (btnStart) {
-        btnStart.onclick = function() { self.startWorkout(); };
-      }
+      if (btnStart) btnStart.onclick = function() { self.startWorkout(); };
       var levelEl = document.querySelector('.w-anim-level');
       var xpEl = document.querySelector('.w-anim-xp');
       var streakEl = document.querySelector('.w-anim-streak');
@@ -189,7 +204,6 @@ const WelcomeModule = {
   },
 
   startWorkout: function() {
-    // Обновить статистику "да"
     var todayIdx = (new Date().getDay() + 6) % 7;
     var days = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
     var dayName = days[todayIdx];
@@ -206,11 +220,10 @@ const WelcomeModule = {
     stats.streak = (stats.streak || 0) + 1;
     if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
 
-    // Открыть модалку тренировки
     if (typeof WorkoutModule !== 'undefined' && WorkoutModule.openWorkoutModal) {
       WorkoutModule.openWorkoutModal();
     } else {
-      alert('⚠️ Модуль тренировки ещё не загружен');
+      alert('Модуль тренировки ещё не загружен');
     }
   },
 
@@ -218,7 +231,7 @@ const WelcomeModule = {
     if (typeof moduleManager !== 'undefined' && moduleManager.loadedModules && moduleManager.loadedModules.has('plan')) {
       Core.navigate('plan');
     } else {
-      alert('📝 Модуль "План" ещё не добавлен.');
+      alert('Модуль "План" ещё не добавлен.');
     }
   },
 
@@ -236,7 +249,7 @@ const WelcomeModule = {
     if (answer === 'later') {
       stats.later++;
       if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
-      alert('⏰ Хорошо, напомню позже!');
+      alert('Хорошо, напомню позже!');
       this.createWelcomeScreen();
     } else if (answer === 'no') {
       stats.no++;
@@ -251,7 +264,7 @@ const WelcomeModule = {
         history.push(dayRecord);
       } else { dayRecord.skipped = true; }
       if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
-      alert('❌ Понял, день пропущен. Завтра новый шанс! 💪');
+      alert('Понял, день пропущен. Завтра новый шанс!');
       this.createWelcomeScreen();
     }
   }
