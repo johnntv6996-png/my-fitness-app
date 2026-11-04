@@ -62,6 +62,7 @@ const ExercisesModule = {
       '.ex-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.3); }' +
       '.ex-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; display:flex; justify-content:center; align-items:center; padding:15px; }' +
       '.ex-modal-content { background:var(--card); padding:20px; border-radius:12px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; }' +
+      '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
     '</style>';
 
     var filterHtml = '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:15px">';
@@ -111,7 +112,7 @@ const ExercisesModule = {
   openExForm: function(id) {
     this.editingId = id || null;
     var db = this.getDB();
-    var ex = id ? null : null;
+    var ex = null;
     for (var i = 0; i < db.length; i++) {
       if (db[i].id === id) { ex = db[i]; break; }
     }
@@ -123,22 +124,31 @@ const ExercisesModule = {
       '<div class="ex-modal-content">' +
         '<button style="float:right;background:transparent;border:none;color:var(--text);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exFormModal\').remove()">×</button>' +
         '<h2 style="color:var(--acc);margin-top:0">' + (id ? '✏️ Редактирование' : '➕ Новое упражнение') + '</h2>' +
+        
         '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Название:</label>' +
-          '<input type="text" id="exName" value="' + (ex ? ex.name : '') + '" placeholder="Например: Отжимания" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<label style="display:block;margin-bottom:5px;font-weight:600">Название: <span style="color:#e74c3c">*</span></label>' +
+          '<input type="text" id="exName" value="' + (ex ? ex.name : '') + '" placeholder="Например: Отжимания от пола" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<div class="hint">💡 Короткое и понятное название упражнения</div>' +
         '</div>' +
+        
         '<div style="margin-bottom:12px">' +
           '<label style="display:block;margin-bottom:5px;font-weight:600">Группа мышц:</label>' +
-          '<input type="text" id="exMuscleGroup" value="' + (ex ? (ex.muscleGroup || '') : '') + '" placeholder="Например: Грудь" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<input type="text" id="exMuscleGroup" value="' + (ex ? (ex.muscleGroup || '') : '') + '" placeholder="Например: Грудь, Спина, Ноги" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<div class="hint">💡 Для фильтрации упражнений по категориям</div>' +
         '</div>' +
+        
         '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Описание:</label>' +
-          '<textarea id="exDescription" rows="3" placeholder="Техника выполнения..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em;resize:vertical">' + (ex ? (ex.description || '') : '') + '</textarea>' +
+          '<label style="display:block;margin-bottom:5px;font-weight:600">Описание / техника:</label>' +
+          '<textarea id="exDescription" rows="3" placeholder="Опиши правильное выполнение, на что обратить внимание..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em;resize:vertical">' + (ex ? (ex.description || '') : '') + '</textarea>' +
+          '<div class="hint">💡 Пошаговая инструкция или ключевые моменты</div>' +
         '</div>' +
+        
         '<div style="margin-bottom:12px">' +
           '<label style="display:block;margin-bottom:5px;font-weight:600">Ссылка на видео:</label>' +
-          '<input type="text" id="exVideo" value="' + (ex ? (ex.videoUrl || '') : '') + '" placeholder="YouTube, VK, Rutube..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<input type="text" id="exVideo" value="' + (ex ? (ex.videoUrl || '') : '') + '" placeholder="https://youtube.com/watch?v=... или https://vk.com/video..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<div class="hint">💡 YouTube, VK Видео, Rutube, Vimeo или прямая ссылка на mp4</div>' +
         '</div>' +
+        
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
           '<button class="btn" style="padding:10px 20px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="document.getElementById(\'exFormModal\').remove()">Отмена</button>' +
           '<button class="btn" style="padding:10px 20px;background:var(--ok);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="ExercisesModule.saveExercise()">💾 Сохранить</button>' +
@@ -149,7 +159,7 @@ const ExercisesModule = {
 
   saveExercise: function() {
     var name = document.getElementById('exName').value.trim();
-    if (!name) { alert('Укажи название упражнения'); return; }
+    if (!name) { alert('⚠️ Укажи название упражнения'); return; }
 
     var db = this.getDB();
     var exData = {
@@ -184,7 +194,7 @@ const ExercisesModule = {
   },
 
   deleteExercise: function(id) {
-    if (!confirm('Удалить упражнение?')) return;
+    if (!confirm('🗑️ Удалить упражнение? Это действие нельзя отменить.')) return;
     var db = this.getDB();
     var newDb = [];
     for (var i = 0; i < db.length; i++) {
@@ -220,7 +230,7 @@ const ExercisesModule = {
         '<button style="float:right;background:transparent;border:none;color:var(--text);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exViewModal\').remove()">×</button>' +
         '<h2 style="color:var(--acc);margin-top:0">' + ex.name + '</h2>' +
         '<div style="font-size:0.9em;opacity:0.7;margin-bottom:15px">' + (ex.muscleGroup || '—') + '</div>' +
-        (ex.description ? '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0"><h3 style="color:var(--acc);margin:0 0 10px 0">📝 Описание</h3><p style="white-space:pre-wrap;margin:0">' + ex.description + '</p></div>' : '') +
+        (ex.description ? '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0"><h3 style="color:var(--acc);margin:0 0 10px 0">📝 Описание</h3><p style="white-space:pre-wrap;margin:0">' + ex.description + '</p></div>' : '<div style="opacity:0.6;font-style:italic">Описание не добавлено</div>') +
         videoHtml +
         '<div style="display:flex;gap:10px;margin-top:15px">' +
           '<button class="btn" style="padding:10px 20px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="document.getElementById(\'exViewModal\').remove()">Закрыть</button>' +
