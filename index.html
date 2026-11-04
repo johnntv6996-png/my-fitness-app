@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Фитнес-трекер Premium</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<title>FITNESS ELITE — Premium Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
+  --bg-secondary: #151520;
   --bg-card: rgba(255, 255, 255, 0.03);
   --bg-glass: rgba(255, 255, 255, 0.05);
   --text-primary: #ffffff;
@@ -22,9 +22,9 @@
   --accent-warning: #ffaa00;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-gold: rgba(212, 175, 55, 0.3);
-  --shadow-gold: 0 0 30px rgba(212, 175, 55, 0.15);
-  --shadow-neon: 0 0 20px rgba(0, 212, 255, 0.2);
-  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --shadow-gold: 0 0 40px rgba(212, 175, 55, 0.2);
+  --shadow-neon: 0 0 30px rgba(0, 212, 255, 0.3);
+  --font-primary: 'Inter', sans-serif;
   --font-display: 'Playfair Display', serif;
   --radius-sm: 8px;
   --radius-md: 16px;
@@ -32,7 +32,6 @@
   --radius-xl: 32px;
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 * { 
@@ -51,8 +50,8 @@ body {
   padding: 20px;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.03) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
 }
 
 .container { 
@@ -66,17 +65,18 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* HEADER */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 32px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: 28px 36px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(0, 212, 255, 0.05) 100%);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   border-radius: var(--radius-lg);
-  margin-bottom: 24px;
-  border: 1px solid var(--border-subtle);
+  margin-bottom: 28px;
+  border: 1px solid var(--border-gold);
   box-shadow: var(--shadow-gold);
   position: relative;
   overflow: hidden;
@@ -88,15 +88,20 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
+  height: 2px;
   background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
-  opacity: 0.5;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 .header h1 { 
   margin: 0; 
   font-family: var(--font-display);
-  font-size: 1.8em;
+  font-size: 2em;
   font-weight: 900;
   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 50%, var(--accent-gold) 100%);
   -webkit-background-clip: text;
@@ -112,7 +117,7 @@ body {
 }
 
 .mode-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--bg-glass);
@@ -141,10 +146,11 @@ body {
   box-shadow: var(--shadow-gold);
 }
 
+/* NAVIGATION */
 .nav {
   display: flex;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   padding: 8px;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
@@ -168,7 +174,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  padding: 12px 20px;
+  padding: 14px 24px;
   cursor: pointer;
   font-size: 0.95em;
   font-weight: 500;
@@ -210,6 +216,7 @@ body {
   width: 100%;
 }
 
+/* SCREENS */
 .screen { 
   display: none;
   animation: slideIn 0.4s ease-out;
@@ -224,12 +231,13 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* DEV PANELS */
 .dev-panel {
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
-  padding: 24px;
+  padding: 28px;
   border-radius: var(--radius-lg);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
@@ -238,10 +246,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 20px 24px;
   background: var(--bg-card);
   border-radius: var(--radius-md);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   border: 1px solid var(--border-subtle);
   transition: all var(--transition-fast);
 }
@@ -249,14 +257,16 @@ body {
 .module-item:hover {
   background: rgba(255, 255, 255, 0.05);
   transform: translateX(4px);
+  border-color: var(--border-gold);
 }
 
 .module-item.loaded { border-left: 3px solid var(--accent-success); }
 .module-item.loading { border-left: 3px solid var(--accent-gold); }
 .module-item.error { border-left: 3px solid var(--accent-error); }
 
+/* BUTTONS */
 .btn {
-  padding: 12px 24px;
+  padding: 14px 28px;
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -322,16 +332,17 @@ body {
   box-shadow: 0 8px 30px rgba(255, 51, 102, 0.5);
 }
 
+/* CONSOLE */
 .console-log {
   background: #000;
   color: var(--accent-success);
-  padding: 20px;
+  padding: 24px;
   border-radius: var(--radius-md);
   font-family: 'Courier New', monospace;
   font-size: 0.85em;
   max-height: 400px;
   overflow-y: auto;
-  margin-top: 16px;
+  margin-top: 20px;
   border: 1px solid var(--border-subtle);
   box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
 }
@@ -340,16 +351,17 @@ body {
 .console-log .warn { color: var(--accent-warning); }
 .console-log .info { color: var(--accent-neon); }
 
+/* LOADING */
 .loading { 
   text-align: center; 
-  padding: 60px 40px;
+  padding: 80px 40px;
   opacity: 0.6;
 }
 
 .loading h2 {
   font-family: var(--font-display);
-  font-size: 2em;
-  margin-bottom: 16px;
+  font-size: 2.5em;
+  margin-bottom: 20px;
   background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -361,15 +373,15 @@ body {
   color: var(--text-secondary);
 }
 
-/* Модальные окна */
+/* MODALS */
 .workout-modal, .survey-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(15px);
   z-index: 2000;
   display: flex;
   justify-content: center;
@@ -380,7 +392,7 @@ body {
 
 .workout-modal-content, .survey-modal-content {
   background: var(--bg-secondary);
-  padding: 32px;
+  padding: 40px;
   border-radius: var(--radius-xl);
   width: 100%;
   max-width: 500px;
@@ -396,7 +408,7 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 
-/* Скроллбар */
+/* SCROLLBAR */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -415,14 +427,15 @@ body {
   background: var(--accent-gold-light);
 }
 
-/* Адаптивность */
+/* RESPONSIVE */
 @media (max-width: 768px) {
-  body { padding: 10px; }
-  .header { padding: 16px 20px; }
-  .header h1 { font-size: 1.4em; }
-  .mode-btn { padding: 8px 16px; font-size: 0.85em; }
+  body { padding: 12px; }
+  .header { padding: 20px 24px; flex-direction: column; gap: 16px; }
+  .header h1 { font-size: 1.6em; }
+  .mode-btn { padding: 10px 18px; font-size: 0.85em; }
   .nav { padding: 6px; }
-  .nav-btn { padding: 10px 16px; font-size: 0.9em; }
+  .nav-btn { padding: 12px 18px; font-size: 0.9em; }
+  .dev-panel { padding: 20px; }
 }
 </style>
 </head>
@@ -430,7 +443,7 @@ body {
 <div class="container">
 
   <div class="header">
-    <h1>💪 Фитнес-трекер</h1>
+    <h1>💪 FITNESS ELITE</h1>
     <div class="mode-switcher">
       <button class="mode-btn" id="userModeBtn" onclick="switchMode('user')">👤 Пользователь</button>
       <button class="mode-btn" id="devModeBtn" onclick="switchMode('dev')">🛠 Разработчик</button>
@@ -455,9 +468,9 @@ body {
     </div>
     <div id="dev-screen-modules" class="screen active">
       <div class="dev-panel">
-        <h3 style="font-family:var(--font-display);font-size:1.5em;margin-bottom:20px;color:var(--accent-gold)">📦 Управление модулями</h3>
+        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">📦 Управление модулями</h3>
         <div id="moduleList"></div>
-        <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+        <div style="margin-top:24px;display:flex;gap:16px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="moduleManager.checkAllModules()">🔄 Проверить обновления</button>
           <button class="btn btn-danger" onclick="moduleManager.clearAllCache()">🗑️ Очистить кэш</button>
         </div>
@@ -465,9 +478,9 @@ body {
     </div>
     <div id="dev-screen-console" class="screen">
       <div class="dev-panel">
-        <h3 style="font-family:var(--font-display);font-size:1.5em;margin-bottom:20px;color:var(--accent-gold)">📋 Системные логи</h3>
+        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">📋 Системные логи</h3>
         <div class="console-log" id="consoleLog"></div>
-        <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:16px">Очистить логи</button>
+        <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:20px">Очистить логи</button>
       </div>
     </div>
   </div>
