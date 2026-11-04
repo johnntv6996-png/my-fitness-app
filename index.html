@@ -443,10 +443,10 @@ body {
 <div class="container">
 
   <div class="header">
-    <h1>💪 FITNESS ELITE</h1>
+    <h1>FITNESS ELITE</h1>
     <div class="mode-switcher">
-      <button class="mode-btn" id="userModeBtn" onclick="switchMode('user')">👤 Пользователь</button>
-      <button class="mode-btn" id="devModeBtn" onclick="switchMode('dev')">🛠 Разработчик</button>
+      <button class="mode-btn" id="userModeBtn" onclick="switchMode('user')">Пользователь</button>
+      <button class="mode-btn" id="devModeBtn" onclick="switchMode('dev')">Разработчик</button>
     </div>
   </div>
 
@@ -454,8 +454,8 @@ body {
     <div class="nav" id="userNav"></div>
     <div id="screen-welcome" class="screen active">
       <div class="loading">
-        <div style="font-size:5em;margin-bottom:20px;animation:pulse 2s infinite">💪</div>
-        <h2>Добро пожаловать!</h2>
+        <div style="font-size:5em;margin-bottom:20px;animation:pulse 2s infinite;color:var(--accent-gold)">◆</div>
+        <h2>Добро пожаловать</h2>
         <p class="text-small">Загрузка модулей...</p>
       </div>
     </div>
@@ -463,22 +463,22 @@ body {
 
   <div id="devInterface" style="display:none">
     <div class="nav">
-      <button class="nav-btn active" onclick="showDevScreen('modules')">📦 Модули</button>
-      <button class="nav-btn" onclick="showDevScreen('console')">📋 Логи</button>
+      <button class="nav-btn active" onclick="showDevScreen('modules')">Модули</button>
+      <button class="nav-btn" onclick="showDevScreen('console')">Логи</button>
     </div>
     <div id="dev-screen-modules" class="screen active">
       <div class="dev-panel">
-        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">📦 Управление модулями</h3>
+        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">Управление модулями</h3>
         <div id="moduleList"></div>
         <div style="margin-top:24px;display:flex;gap:16px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="moduleManager.checkAllModules()">🔄 Проверить обновления</button>
-          <button class="btn btn-danger" onclick="moduleManager.clearAllCache()">🗑️ Очистить кэш</button>
+          <button class="btn btn-primary" onclick="moduleManager.checkAllModules()">Проверить обновления</button>
+          <button class="btn btn-danger" onclick="moduleManager.clearAllCache()">Очистить кэш</button>
         </div>
       </div>
     </div>
     <div id="dev-screen-console" class="screen">
       <div class="dev-panel">
-        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">📋 Системные логи</h3>
+        <h3 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:24px;color:var(--accent-gold)">Системные логи</h3>
         <div class="console-log" id="consoleLog"></div>
         <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:20px">Очистить логи</button>
       </div>
@@ -565,7 +565,7 @@ class ModuleManager {
   }
 
   async init() {
-    Logger.log('🚀 Инициализация менеджера модулей...', 'info');
+    Logger.log('Инициализация менеджера модулей...', 'info');
     await this.loadAllModules();
     this.renderModuleList();
     var self = this;
@@ -586,17 +586,17 @@ class ModuleManager {
       try {
         var cached = JSON.parse(cachedData);
         if (cached.version === config.version) {
-          Logger.log('✅ Модуль ' + id + ' актуален (v' + cached.version + ')', 'info');
+          Logger.log('Модуль ' + id + ' актуален (v' + cached.version + ')', 'info');
           this.executeModule(id, cached.code);
           this.moduleStatus.set(id, 'loaded');
           return;
         }
       } catch (e) {
-        Logger.log('⚠️ Ошибка чтения кэша ' + id, 'warn');
+        Logger.log('Ошибка чтения кэша ' + id, 'warn');
       }
     }
 
-    Logger.log('⬇️ Загрузка модуля ' + id + '...', 'info');
+    Logger.log('Загрузка модуля ' + id + '...', 'info');
     this.moduleStatus.set(id, 'loading');
     this.renderModuleList();
 
@@ -605,11 +605,11 @@ class ModuleManager {
       if (!response.ok) throw new Error('HTTP ' + response.status);
       var code = await response.text();
       localStorage.setItem(storageKey, JSON.stringify({ version: config.version, code: code, loadedAt: Date.now() }));
-      Logger.log('✅ Модуль ' + id + ' загружен (v' + config.version + ')', 'info');
+      Logger.log('Модуль ' + id + ' загружен (v' + config.version + ')', 'info');
       this.executeModule(id, code);
       this.moduleStatus.set(id, 'loaded');
     } catch (error) {
-      Logger.log('❌ Ошибка загрузки ' + id + ': ' + error.message, 'error');
+      Logger.log('Ошибка загрузки ' + id + ': ' + error.message, 'error');
       this.moduleStatus.set(id, 'error');
       if (config.required) alert('Критическая ошибка: не удалось загрузить модуль "' + config.name + '"');
     }
@@ -623,9 +623,9 @@ class ModuleManager {
       var func = new Function('module', 'exports', 'require', 'Logger', code);
       func.call(moduleContext, moduleContext.module, moduleContext.exports, this.require.bind(this), Logger);
       this.loadedModules.set(id, moduleContext.module.exports);
-      Logger.log('📦 Модуль ' + id + ' выполнен', 'info');
+      Logger.log('Модуль ' + id + ' выполнен', 'info');
     } catch (error) {
-      Logger.log('❌ Ошибка выполнения ' + id + ': ' + error.message, 'error');
+      Logger.log('Ошибка выполнения ' + id + ': ' + error.message, 'error');
       this.moduleStatus.set(id, 'error');
     }
   }
@@ -642,31 +642,31 @@ class ModuleManager {
     for (var id in MODULE_REGISTRY) {
       var config = MODULE_REGISTRY[id];
       var status = this.moduleStatus.get(id) || 'loading';
-      var statusText = { 'loaded': '✅ Загружен', 'loading': '⏳ Загрузка...', 'error': '❌ Ошибка' }[status];
+      var statusText = { 'loaded': 'Загружен', 'loading': 'Загрузка...', 'error': 'Ошибка' }[status];
       html += '<div class="module-item ' + status + '">';
       html += '<div style="flex:1"><div style="font-weight:600;font-size:1.1em">' + config.name + '</div>';
       html += '<div class="text-small" style="margin-top:4px">' + config.description + '</div>';
       html += '<div class="text-small" style="margin-top:4px">v' + config.version + ' · ' + statusText + '</div></div>';
       html += '<div style="display:flex;gap:8px">';
-      if (status === 'error') html += '<button class="btn btn-secondary" onclick="moduleManager.retryModule(\'' + id + '\')" style="padding:8px 16px">🔄</button>';
-      html += '<button class="btn btn-danger" onclick="moduleManager.clearModule(\'' + id + '\')" style="padding:8px 16px">🗑️</button>';
+      if (status === 'error') html += '<button class="btn btn-secondary" onclick="moduleManager.retryModule(\'' + id + '\')" style="padding:8px 16px">Повторить</button>';
+      html += '<button class="btn btn-danger" onclick="moduleManager.clearModule(\'' + id + '\')" style="padding:8px 16px">Удалить</button>';
       html += '</div></div>';
     }
     container.innerHTML = html;
   }
 
   initializeUserInterface() {
-    Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
+    Logger.log('Инициализация пользовательского интерфейса...', 'info');
     var nav = document.getElementById('userNav');
     if (nav) nav.innerHTML = '';
     this.loadedModules.forEach(function(module, id) {
       if (module && module.init) {
         try {
-          Logger.log('🔄 Вызов init() для модуля ' + id + '...', 'info');
+          Logger.log('Вызов init() для модуля ' + id + '...', 'info');
           module.init();
-          Logger.log('✅ Модуль ' + id + ' инициализирован', 'info');
+          Logger.log('Модуль ' + id + ' инициализирован', 'info');
         } catch (error) {
-          Logger.log('❌ Ошибка инициализации ' + id + ': ' + error.message, 'error');
+          Logger.log('Ошибка инициализации ' + id + ': ' + error.message, 'error');
           console.error('Error in module ' + id + ':', error);
         }
       }
@@ -690,15 +690,15 @@ class ModuleManager {
       this.loadedModules.delete(id);
       this.moduleStatus.delete(id);
       this.renderModuleList();
-      Logger.log('🗑️ Модуль ' + id + ' удалён из кэша', 'info');
+      Logger.log('Модуль ' + id + ' удалён из кэша', 'info');
     }
   }
 
   async checkAllModules() {
-    Logger.log('🔄 Проверка обновлений...', 'info');
+    Logger.log('Проверка обновлений...', 'info');
     await this.loadAllModules();
     this.initializeUserInterface();
-    alert('✅ Все модули проверены!');
+    alert('Все модули проверены!');
   }
 
   clearAllCache() {
@@ -721,7 +721,7 @@ function switchMode(mode) {
   document.getElementById('devInterface').style.display = mode === 'dev' ? 'block' : 'none';
   document.getElementById('userModeBtn').classList.toggle('active', mode === 'user');
   document.getElementById('devModeBtn').classList.toggle('active', mode === 'dev');
-  Logger.log('🔄 Переключено в режим: ' + (mode === 'user' ? 'Пользователь' : 'Разработчик'), 'info');
+  Logger.log('Переключено в режим: ' + (mode === 'user' ? 'Пользователь' : 'Разработчик'), 'info');
 }
 
 function showDevScreen(screenId) {
