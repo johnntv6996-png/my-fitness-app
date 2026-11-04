@@ -3,6 +3,7 @@
 const ExercisesModule = {
   editingId: null,
   currentFilter: 'all',
+  categoryScrollOffset: 0,
 
   init: function() {
     console.log('Exercises module initialized');
@@ -14,18 +15,12 @@ const ExercisesModule = {
 
   setup: function() {
     this.createExercisesScreen();
-    if (typeof Core !== 'undefined') Core.addNavButton('База', 'exercises', '<i class="ph ph-books"></i>');
+    if (typeof Core !== 'undefined') Core.addNavButton('База упражнений', 'exercises', '<i class="ph ph-books"></i>');
   },
 
-  getDB: function() {
-    if (typeof FTStorage !== 'undefined') return FTStorage.get('db') || [];
-    return [];
-  },
+  getDB: function() { if (typeof FTStorage !== 'undefined') return FTStorage.get('db') || []; return []; },
   saveDB: function(db) { if (typeof FTStorage !== 'undefined') FTStorage.set('db', db); },
-  getCategories: function() {
-    if (typeof FTStorage !== 'undefined') return FTStorage.get('categories') || [];
-    return [];
-  },
+  getCategories: function() { if (typeof FTStorage !== 'undefined') return FTStorage.get('categories') || []; return []; },
   saveCategories: function(c) { if (typeof FTStorage !== 'undefined') FTStorage.set('categories', c); },
 
   getDefaultExercise: function() {
@@ -34,8 +29,23 @@ const ExercisesModule = {
 
   renderStars: function(count) {
     var s = '';
-    for (var i = 1; i <= 5; i++) s += i <= count ? '<i class="ph-fill ph-star" style="color:var(--accent-gold)"></i>' : '<i class="ph ph-star" style="color:var(--text-muted)"></i>';
+    for (var i = 1; i <= 5; i++) s += i <= count ? '<i class="ph-fill ph-star" style="color:var(--accent-gold)"></i>' : '<i class="ph ph-star" style="color:var(--text-secondary);opacity:0.3"></i>';
     return s;
+  },
+
+  parseVideoUrl: function(url) {
+    if (!url) return null;
+    url = url.trim();
+    var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (m) return { type: 'iframe', embedUrl: 'https://www.youtube.com/embed/' + m[1] };
+    m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (m) return { type: 'iframe', embedUrl: 'https://player.vimeo.com/video/' + m[1] };
+    m = url.match(/rutube\.ru\/(?:video|play\/embed)\/([a-zA-Z0-9]+)/);
+    if (m) return { type: 'iframe', embedUrl: 'https://rutube.ru/play/embed/' + m[1] };
+    m = url.match(/(?:vk\.com|vkvideo\.ru)\/video(?:_?)(-?\d+)_(\d+)/);
+    if (m) return { type: 'iframe', embedUrl: 'https://vk.com/video_ext.php?oid=' + m[1] + '&id=' + m[2] + '&hd=2' };
+    if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) return { type: 'video', directUrl: url };
+    return null;
   },
 
   createExercisesScreen: function() {
@@ -64,35 +74,65 @@ const ExercisesModule = {
       '.ex-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:1000; display:flex; justify-content:center; align-items:center; padding:15px; }' +
       '.ex-modal-content { background:var(--bg-secondary); padding:28px; border-radius:24px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
-      '.cat-btn { padding:8px 14px; font-size:0.85em; border:1px solid var(--border-subtle); border-radius:8px; cursor:pointer; transition:all 0.2s; background:var(--bg-card); color:var(--text-secondary); display:inline-flex; align-items:center; gap:6px; }' +
+      '.cat-scroll-wrapper { position:relative; }' +
+      '.cat-scroll-btn { position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; background:var(--bg-secondary); border:1px solid var(--border-gold); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--accent-gold); z-index:10; transition:all 0.2s; }' +
+      '.cat-scroll-btn:hover { background:var(--accent-gold); color:#000; }' +
+      '.cat-scroll-btn.left { left:0; }' +
+      '.cat-scroll-btn.right { right:0; }' +
+      '.cat-scroll-container { display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:8px 4px; scrollbar-width:none; }' +
+      '.cat-scroll-container::-webkit-scrollbar { display:none; }' +
+      '.cat-btn { padding:8px 14px; font-size:0.85em; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; transition:all 0.2s; background:var(--bg-card); color:var(--text-secondary); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0; }' +
       '.cat-btn.active { background:linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); color:#000; border-color:var(--accent-gold); font-weight:600; }' +
       '.cat-btn:not(.active):hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }' +
-      '.stars { color:var(--accent-gold); letter-spacing:2px; }' +
     '</style>';
 
-    var toolbarHtml = '<div style="background:var(--bg-card);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
-    toolbarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">';
-    toolbarHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
-    toolbarHtml += '<button class="btn btn-primary" style="padding:8px 16px;font-size:0.85em" onclick="ExercisesModule.openCategoryForm()"><i class="ph ph-plus"></i> Добавить</button>';
-    toolbarHtml += '</div>';
-    toolbarHtml += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">';
-    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все</button>';
-    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
-    for (var i = 0; i < categories.length; i++) {
-      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')" title="Фильтр: ' + categories[i] + '"><i class="ph ph-tag"></i> ' + categories[i] + '</button>';
+    // Навигация по категориям с прокруткой
+    var catNavHtml = '<div style="background:var(--bg-card);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
+    catNavHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+    catNavHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
+    catNavHtml += '<button class="btn btn-primary" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.openCategoryForm()"><i class="ph ph-plus"></i> Добавить</button>';
+    catNavHtml += '</div>';
+    
+    if (categories.length > 4) {
+      catNavHtml += '<div class="cat-scroll-wrapper">';
+      catNavHtml += '<button class="cat-scroll-btn left" onclick="ExercisesModule.scrollCategories(-150)"><i class="ph ph-caret-left"></i></button>';
+      catNavHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
+      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
+      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
+      for (var i = 0; i < categories.length; i++) {
+        var count = 0;
+        for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
+        catNavHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
+      }
+      catNavHtml += '</div>';
+      catNavHtml += '<button class="cat-scroll-btn right" onclick="ExercisesModule.scrollCategories(150)"><i class="ph ph-caret-right"></i></button>';
+      catNavHtml += '</div>';
+    } else {
+      catNavHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
+      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
+      for (var i = 0; i < categories.length; i++) {
+        var count = 0;
+        for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
+        catNavHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
+      }
+      catNavHtml += '</div>';
     }
-    toolbarHtml += '</div>';
-    toolbarHtml += '<div class="hint" style="margin-top:8px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Кликни на категорию для фильтрации. Выбрав её, справа появятся кнопки редактирования и удаления.</div>';
-    toolbarHtml += '</div>';
+    
+    catNavHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Кликни на категорию для фильтрации. Выбрав её, справа появятся кнопки управления.</div>';
+    catNavHtml += '</div>';
 
     var isRegular = this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized';
     if (isRegular) {
-      toolbarHtml = toolbarHtml.replace('</div></div>', '<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-secondary" style="padding:6px 12px;font-size:0.8em" onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')"><i class="ph ph-pencil-simple"></i> Редактировать</button><button class="btn btn-danger" style="padding:6px 12px;font-size:0.8em" onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')"><i class="ph ph-trash"></i> Удалить</button></div></div></div>');
+      catNavHtml += '<div style="display:flex;gap:8px;margin-bottom:16px">';
+      catNavHtml += '<button class="btn btn-secondary" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')"><i class="ph ph-pencil-simple"></i> Редактировать "' + this.currentFilter + '"</button>';
+      catNavHtml += '<button class="btn btn-danger" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')"><i class="ph ph-trash"></i> Удалить категорию</button>';
+      catNavHtml += '</div>';
     }
 
     var listHtml = '';
     if (filtered.length === 0) {
-      listHtml = '<div style="text-align:center;padding:40px;opacity:0.6"><i class="ph ph-books" style="font-size:3em;color:var(--accent-gold);margin-bottom:10px;display:block"></i><p>База пуста. Добавь первое упражнение!</p></div>';
+      listHtml = '<div style="text-align:center;padding:40px;opacity:0.6"><i class="ph ph-books" style="font-size:3em;color:var(--accent-gold);margin-bottom:10px;display:block"></i><p>Ничего не найдено</p></div>';
     } else {
       for (var i = 0; i < filtered.length; i++) {
         var ex = filtered[i];
@@ -101,14 +141,14 @@ const ExercisesModule = {
         listHtml += '<div class="ex-card" onclick="ExercisesModule.viewExercise(\'' + ex.id + '\')">';
         listHtml += '<div style="display:flex;justify-content:space-between;align-items:start">';
         listHtml += '<div style="flex:1">';
-        listHtml += '<h4 style="margin:0 0 6px 0;color:var(--accent-gold);font-size:1.05em;display:flex;align-items:center;gap:8px">' + ex.name;
-        if (ex.videoUrl) listHtml += '<i class="ph ph-video-camera" style="color:var(--accent-neon)"></i>';
-        if (ex.imageUrl) listHtml += '<i class="ph ph-image" style="color:var(--accent-neon)"></i>';
+        listHtml += '<h4 style="margin:0 0 6px 0;color:var(--accent-gold);font-size:1.05em;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + ex.name;
+        if (ex.videoUrl) listHtml += '<i class="ph ph-video-camera" style="color:var(--accent-neon)" title="Есть видео"></i>';
+        if (ex.imageUrl) listHtml += '<i class="ph ph-image" style="color:var(--accent-neon)" title="Есть изображение"></i>';
         listHtml += '</h4>';
-        listHtml += '<div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag" style="font-size:0.9em"></i> ' + (ex.muscleGroup || 'Без категории') + '</div>';
+        listHtml += '<div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + '</div>';
         listHtml += '<div style="font-size:0.8em;opacity:0.7;display:flex;gap:16px;flex-wrap:wrap">';
-        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> Сложность: ' + this.renderStars(diff) + '</span>';
-        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-target" style="color:var(--accent-success)"></i> Эффективность: ' + this.renderStars(eff) + '</span>';
+        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> ' + this.renderStars(diff) + '</span>';
+        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-target" style="color:var(--accent-success)"></i> ' + this.renderStars(eff) + '</span>';
         listHtml += '</div>';
         listHtml += '</div>';
         listHtml += '<div style="display:flex;gap:6px;margin-left:10px">';
@@ -119,11 +159,16 @@ const ExercisesModule = {
     }
 
     screen.innerHTML = css +
-      '<div style="padding:16px;max-width:700px;margin:0 auto">' +
-        '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-books"></i> База упражнений</h2>' +
-        '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:20px" onclick="ExercisesModule.openExForm()"><i class="ph ph-plus-circle"></i> Добавить упражнение</button>' +
-        toolbarHtml + listHtml +
+      '<div style="padding:8px;max-width:700px;margin:0 auto">' +
+        '<h2 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:16px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-books"></i> База упражнений</h2>' +
+        '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:16px" onclick="ExercisesModule.openExForm()"><i class="ph ph-plus-circle"></i> Добавить упражнение</button>' +
+        catNavHtml + listHtml +
       '</div>';
+  },
+
+  scrollCategories: function(delta) {
+    var container = document.getElementById('catScrollContainer');
+    if (container) container.scrollBy({ left: delta, behavior: 'smooth' });
   },
 
   setFilter: function(f) { this.currentFilter = f; this.createExercisesScreen(); },
@@ -136,10 +181,10 @@ const ExercisesModule = {
     modal.innerHTML =
       '<div class="ex-modal-content" style="max-width:400px">' +
         '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'catFormModal\').remove()"><i class="ph ph-x"></i></button>' +
-        '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px">' + (isEdit ? '<i class="ph ph-pencil-simple"></i> Редактировать категорию' : '<i class="ph ph-plus-circle"></i> Новая категория') + '</h2>' +
+        '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px">' + (isEdit ? '<i class="ph ph-pencil-simple"></i> Редактировать' : '<i class="ph ph-plus-circle"></i> Новая категория') + '</h2>' +
         '<div style="margin-bottom:16px">' +
           '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Название:</label>' +
-          '<input type="text" id="catName" value="' + (isEdit ? oldName : '') + '" placeholder="Например: Грудь, Спина" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
+          '<input type="text" id="catName" value="' + (isEdit ? oldName : '') + '" placeholder="Например: Грудь" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
           '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Короткое название группы мышц</div>' +
         '</div>' +
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
@@ -152,7 +197,7 @@ const ExercisesModule = {
 
   saveCategory: function(oldName) {
     var newName = document.getElementById('catName').value.trim();
-    if (!newName) { alert('Введи название категории'); return; }
+    if (!newName) { alert('Введи название'); return; }
     var categories = this.getCategories();
     for (var i = 0; i < categories.length; i++) {
       if (categories[i] === newName && categories[i] !== oldName) { alert('Такая категория уже существует'); return; }
@@ -163,9 +208,7 @@ const ExercisesModule = {
       for (var i = 0; i < db.length; i++) if (db[i].muscleGroup === oldName) db[i].muscleGroup = newName;
       this.saveDB(db);
       if (this.currentFilter === oldName) this.currentFilter = newName;
-    } else {
-      categories.push(newName);
-    }
+    } else { categories.push(newName); }
     this.saveCategories(categories);
     document.getElementById('catFormModal').remove();
     this.createExercisesScreen();
@@ -205,7 +248,7 @@ const ExercisesModule = {
         '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exFormModal\').remove()"><i class="ph ph-x"></i></button>' +
         '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px">' + (id ? '<i class="ph ph-pencil-simple"></i> Редактирование' : '<i class="ph ph-plus-circle"></i> Новое упражнение') + '</h2>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Название: <span style="color:var(--accent-error)">*</span></label>' +
-          '<input type="text" id="exName" value="' + ex.name + '" placeholder="Например: Отжимания от пола" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
+          '<input type="text" id="exName" value="' + ex.name + '" placeholder="Например: Отжимания" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Категория:</label>' +
           '<select id="exMuscleGroup" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' + optionsHtml + '</select></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">' +
@@ -227,13 +270,11 @@ const ExercisesModule = {
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-text-t"></i> Описание:</label>' +
           '<textarea id="exDescription" rows="3" placeholder="Техника выполнения..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical">' + ex.description + '</textarea></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-image"></i> Картинка (URL):</label>' +
-          '<input type="text" id="exImage" value="' + ex.imageUrl + '" placeholder="https://example.com/image.jpg" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
-          '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Прямая ссылка на изображение</div></div>' +
+          '<input type="text" id="exImage" value="' + ex.imageUrl + '" placeholder="https://example.com/image.jpg" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-video-camera"></i> Видео (URL):</label>' +
           '<input type="text" id="exVideo" value="' + ex.videoUrl + '" placeholder="YouTube, VK, Rutube..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-backpack"></i> Инвентарь:</label>' +
-          '<input type="text" id="exInventory" value="' + ex.inventory + '" placeholder="гантели 10кг, коврик..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
-          '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Что понадобится</div></div>' +
+          '<input type="text" id="exInventory" value="' + ex.inventory + '" placeholder="гантели 10кг, коврик..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-push-pin"></i> Заметки:</label>' +
           '<textarea id="exNotes" rows="2" placeholder="Личные заметки..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical">' + ex.notes + '</textarea></div>' +
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
@@ -290,15 +331,37 @@ const ExercisesModule = {
     for (var i = 0; i < db.length; i++) if (db[i].id === id) { ex = db[i]; break; }
     if (!ex) return;
 
+    // Исправлено: картинка с правильным обработчиком ошибок
     var imageHtml = '';
     if (ex.imageUrl) {
-      imageHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0"><h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-image"></i> Изображение</h3>' +
-        '<img src="' + ex.imageUrl + '" alt="' + ex.name + '" style="width:100%;border-radius:8px;max-height:300px;object-fit:cover" onerror="this.parentElement.innerHTML=\'<em style="opacity:0.6">Не удалось загрузить изображение</em>\'"></div>';
+      imageHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
+        '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-image"></i> Изображение</h3>' +
+        '<div style="position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:100px">' +
+          '<img src="' + ex.imageUrl + '" alt="' + ex.name + '" style="width:100%;max-height:300px;object-fit:contain;display:block" onload="this.style.opacity=1" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:30px;text-align:center;opacity:0.6\\\'><i class=\\\'ph ph-image-broken\\\' style=\\\'font-size:2em;color:var(--accent-warning)\\\'></i><div style=\\\'margin-top:8px;font-size:0.9em\\\'">Не удалось загрузить изображение</div></div>\'">' +
+        '</div></div>';
     }
+
+    // Видео как полноценный плеер
     var videoHtml = '';
     if (ex.videoUrl) {
-      videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0"><h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
-        '<a href="' + ex.videoUrl + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--bg-card);border-radius:8px;color:var(--accent-neon);text-decoration:none;font-weight:500"><i class="ph ph-play-circle" style="font-size:1.2em"></i> Открыть видео</a></div>';
+      var videoInfo = this.parseVideoUrl(ex.videoUrl);
+      if (videoInfo) {
+        if (videoInfo.type === 'iframe') {
+          videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
+            '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
+            '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;background:#000">' +
+              '<iframe src="' + videoInfo.embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>' +
+            '</div></div>';
+        } else if (videoInfo.type === 'video') {
+          videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
+            '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
+            '<video controls style="width:100%;border-radius:8px;background:#000"><source src="' + videoInfo.directUrl + '"></video></div>';
+        }
+      } else {
+        videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
+          '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
+          '<a href="' + ex.videoUrl + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--bg-card);border-radius:8px;color:var(--accent-neon);text-decoration:none;border:1px solid var(--border-subtle)"><i class="ph ph-external-link"></i> Открыть внешнее видео</a></div>';
+      }
     }
 
     var modal = document.createElement('div');

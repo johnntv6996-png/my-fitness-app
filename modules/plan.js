@@ -2,7 +2,7 @@
 
 const PlanModule = {
   pickingForDay: null,
-  currentDay: 0,
+  expandedDay: null,
 
   init: function() {
     console.log('Plan module initialized');
@@ -14,13 +14,10 @@ const PlanModule = {
 
   setup: function() {
     this.createPlanScreen();
-    if (typeof Core !== 'undefined') Core.addNavButton('План', 'plan', '<i class="ph ph-calendar"></i>');
+    if (typeof Core !== 'undefined') Core.addNavButton('План тренировок', 'plan', '<i class="ph ph-calendar"></i>');
   },
 
-  getPlan: function() {
-    if (typeof FTStorage !== 'undefined') return FTStorage.get('plan') || [];
-    return [];
-  },
+  getPlan: function() { if (typeof FTStorage !== 'undefined') return FTStorage.get('plan') || []; return []; },
   savePlan: function(p) { if (typeof FTStorage !== 'undefined') FTStorage.set('plan', p); },
   getTodayIndex: function() { return (new Date().getDay() + 6) % 7; },
 
@@ -46,85 +43,103 @@ const PlanModule = {
     }
 
     var css = '<style>' +
-      '.plan-day-tab { padding:12px 16px; font-size:0.9em; border:1px solid var(--border-subtle); border-radius:10px 10px 0 0; cursor:pointer; transition:all 0.2s; font-weight:500; background:var(--bg-card); color:var(--text-secondary); display:inline-flex; align-items:center; gap:6px; }' +
-      '.plan-day-tab.active { background:var(--bg-secondary); color:var(--accent-gold); border-color:var(--border-gold); border-bottom:2px solid var(--bg-secondary); font-weight:600; }' +
-      '.plan-day-tab:not(.active):hover { background:rgba(255,255,255,0.05); color:var(--text-primary); }' +
-      '.plan-day-tab.today { position:relative; }' +
-      '.plan-day-tab.today::after { content:""; position:absolute; top:6px; right:6px; width:6px; height:6px; background:var(--accent-success); border-radius:50%; }' +
+      '.plan-day-card { background:var(--bg-card); border-radius:14px; margin-bottom:12px; border:1px solid var(--border-subtle); overflow:hidden; transition:all 0.3s; }' +
+      '.plan-day-card:hover { border-color:var(--border-gold); }' +
+      '.plan-day-card.today { border-color:var(--accent-gold); box-shadow:0 0 20px rgba(212,175,55,0.15); }' +
+      '.plan-day-header { padding:16px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; }' +
+      '.plan-day-header:hover { background:rgba(255,255,255,0.03); }' +
+      '.plan-day-header.active { background:rgba(212,175,55,0.08); border-bottom:1px solid var(--border-subtle); }' +
+      '.plan-day-body { padding:20px; display:none; }' +
+      '.plan-day-body.active { display:block; animation:fadeIn 0.3s ease-out; }' +
       '.plan-ex { background:var(--bg-primary); padding:12px 14px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; border-left:3px solid var(--accent-gold); }' +
+      '.day-badge { display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:24px; padding:2px 8px; border-radius:12px; font-size:0.75em; font-weight:700; background:var(--accent-gold); color:#000; }' +
+      '.today-dot { width:8px; height:8px; background:var(--accent-success); border-radius:50%; display:inline-block; margin-left:8px; box-shadow:0 0 8px var(--accent-success); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
-      '.day-indicator { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:2px 6px; border-radius:10px; font-size:0.75em; font-weight:700; background:var(--accent-gold); color:#000; }' +
     '</style>';
 
-    var tabsHtml = '<div style="display:flex;gap:4px;margin-bottom:0;overflow-x:auto;padding-bottom:2px">';
-    for (var i = 0; i < 7; i++) {
-      var isActive = this.currentDay === i;
-      var isToday = i === todayIdx;
-      var exCount = plan[i] ? plan[i].exercises.length : 0;
-      var indicator = exCount > 0 ? '<span class="day-indicator">' + exCount + '</span>' : '';
-      tabsHtml += '<button class="plan-day-tab ' + (isActive ? 'active' : '') + (isToday ? ' today' : '') + '" onclick="PlanModule.switchDay(' + i + ')" title="' + DAYS[i] + (isToday ? ' (сегодня)' : '') + '"><i class="ph ph-calendar-blank"></i> ' + DAYS_SHORT[i] + indicator + '</button>';
-    }
-    tabsHtml += '</div>';
+    var html = css + '<div style="padding:8px;max-width:700px;margin:0 auto">';
+    html += '<h2 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-calendar"></i> План тренировок</h2>';
+    html += '<div class="hint" style="margin-bottom:18px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Нажми на день, чтобы раскрыть и настроить упражнения</div>';
 
-    var day = plan[this.currentDay];
-    var isToday = this.currentDay === todayIdx;
-    var dayLabel = isToday ? day.dayName + ' (сегодня)' : day.dayName;
+    for (var dayIdx = 0; dayIdx < 7; dayIdx++) {
+      var day = plan[dayIdx];
+      var isToday = dayIdx === todayIdx;
+      var isExpanded = this.expandedDay === dayIdx;
+      var exCount = day.exercises.length;
 
-    var contentHtml = '<div style="background:var(--bg-secondary);border-radius:0 0 16px 16px;padding:20px;border:1px solid var(--border-subtle);border-top:none">';
-    contentHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">';
-    contentHtml += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0;font-size:1.4em;display:flex;align-items:center;gap:10px"><i class="ph ph-calendar-check"></i> ' + dayLabel + '</h3>';
-    contentHtml += '<div style="font-size:0.85em;opacity:0.7;display:flex;align-items:center;gap:6px"><i class="ph ph-list-dashes"></i> ' + day.exercises.length + ' упражнений</div>';
-    contentHtml += '</div>';
+      html += '<div class="plan-day-card ' + (isToday ? 'today' : '') + '">';
+      html += '<div class="plan-day-header ' + (isExpanded ? 'active' : '') + '" onclick="PlanModule.toggleDay(' + dayIdx + ')">';
+      html += '<div style="display:flex;align-items:center;gap:12px;flex:1">';
+      html += '<div style="width:44px;height:44px;border-radius:10px;background:' + (isToday ? 'linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light))' : 'var(--bg-primary)') + ';color:' + (isToday ? '#000' : 'var(--accent-gold)') + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9em;border:1px solid ' + (isToday ? 'var(--accent-gold)' : 'var(--border-subtle)') + '">' + DAYS_SHORT[dayIdx] + '</div>';
+      html += '<div style="flex:1">';
+      html += '<div style="font-weight:600;font-size:1em;display:flex;align-items:center;gap:6px">' + day.dayName;
+      if (isToday) html += '<span class="today-dot" title="Сегодня"></span>';
+      html += '</div>';
+      html += '<div style="font-size:0.8em;opacity:0.7;margin-top:2px;display:flex;align-items:center;gap:6px">';
+      if (day.muscleGroup) html += '<i class="ph ph-tag"></i> ' + day.muscleGroup;
+      if (exCount > 0) html += ' · <i class="ph ph-list-dashes"></i> ' + exCount + ' упр.';
+      if (!day.muscleGroup && exCount === 0) html += '<i class="ph ph-info"></i> Не настроено';
+      html += '</div>';
+      html += '</div></div>';
+      html += '<i class="ph ' + (isExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="font-size:1.3em;color:var(--accent-gold)"></i>';
+      html += '</div>';
 
-    contentHtml += '<div style="margin-bottom:18px">';
-    contentHtml += '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em;display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-gold)"></i> Группа мышц:</label>';
-    contentHtml += '<input type="text" value="' + (day.muscleGroup || '') + '" placeholder="Например: Грудь + Трицепс" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.95em" oninput="PlanModule.updateMuscleGroup(' + this.currentDay + ',this.value)">';
-    contentHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Какая группа мышц тренируется в этот день</div>';
-    contentHtml += '</div>';
+      if (isExpanded) {
+        html += '<div class="plan-day-body active">';
+        html += '<div style="margin-bottom:16px">';
+        html += '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em;display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-gold)"></i> Группа мышц:</label>';
+        html += '<input type="text" value="' + (day.muscleGroup || '') + '" placeholder="Например: Грудь + Трицепс" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.95em" oninput="PlanModule.updateMuscleGroup(' + dayIdx + ',this.value)">';
+        html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Какая группа мышц тренируется</div>';
+        html += '</div>';
 
-    contentHtml += '<div><label style="display:block;margin-bottom:10px;font-weight:600;font-size:0.9em;display:flex;align-items:center;gap:6px"><i class="ph ph-barbell" style="color:var(--accent-gold)"></i> Упражнения:</label>';
-    if (day.exercises.length === 0) {
-      contentHtml += '<div style="text-align:center;padding:24px;opacity:0.6;font-style:italic;display:flex;flex-direction:column;align-items:center;gap:8px"><i class="ph ph-dumbbell" style="font-size:2em;color:var(--accent-gold)"></i>Нет упражнений. Добавь первое!</div>';
-    } else {
-      for (var exIdx = 0; exIdx < day.exercises.length; exIdx++) {
-        var exRef = day.exercises[exIdx];
-        var ex = null;
-        for (var i = 0; i < db.length; i++) if (db[i].id === exRef.id) { ex = db[i]; break; }
-        var name = ex ? ex.name : '(удалено из базы)';
-        var category = ex && ex.muscleGroup ? ex.muscleGroup : 'Без категории';
-        contentHtml += '<div class="plan-ex">';
-        contentHtml += '<div style="flex:1;min-width:150px">';
-        contentHtml += '<div style="font-weight:600;font-size:0.95em;margin-bottom:4px;display:flex;align-items:center;gap:6px"><span style="color:var(--accent-gold);font-weight:700">' + (exIdx + 1) + '.</span> ' + name + '</div>';
-        contentHtml += '<div style="font-size:0.75em;opacity:0.6;margin-bottom:6px;display:flex;align-items:center;gap:4px"><i class="ph ph-tag"></i> ' + category + '</div>';
-        contentHtml += '<input type="text" value="' + (exRef.sets || '') + '" placeholder="3×10 или 4×8" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:0.85em" oninput="PlanModule.updateSets(' + this.currentDay + ',' + exIdx + ',this.value)">';
-        contentHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Подходы × Повторы</div>';
-        contentHtml += '</div>';
-        contentHtml += '<div style="display:flex;gap:6px">';
-        contentHtml += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" ' + (exIdx === 0 ? 'disabled style="opacity:0.3"' : '') + ' onclick="PlanModule.movePlanEx(' + this.currentDay + ',' + exIdx + ',-1)" title="Вверх"><i class="ph ph-arrow-up"></i></button>';
-        contentHtml += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" ' + (exIdx === day.exercises.length - 1 ? 'disabled style="opacity:0.3"' : '') + ' onclick="PlanModule.movePlanEx(' + this.currentDay + ',' + exIdx + ',1)" title="Вниз"><i class="ph ph-arrow-down"></i></button>';
-        contentHtml += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="PlanModule.removePlanEx(' + this.currentDay + ',' + exIdx + ')" title="Удалить"><i class="ph ph-trash"></i></button>';
-        contentHtml += '</div></div>';
+        html += '<div><label style="display:block;margin-bottom:10px;font-weight:600;font-size:0.9em;display:flex;align-items:center;gap:6px"><i class="ph ph-barbell" style="color:var(--accent-gold)"></i> Упражнения:</label>';
+        if (day.exercises.length === 0) {
+          html += '<div style="text-align:center;padding:24px;opacity:0.6;font-style:italic;display:flex;flex-direction:column;align-items:center;gap:8px"><i class="ph ph-dumbbell" style="font-size:2em;color:var(--accent-gold)"></i>Нет упражнений. Добавь первое!</div>';
+        } else {
+          for (var exIdx = 0; exIdx < day.exercises.length; exIdx++) {
+            var exRef = day.exercises[exIdx];
+            var ex = null;
+            for (var i = 0; i < db.length; i++) if (db[i].id === exRef.id) { ex = db[i]; break; }
+            var name = ex ? ex.name : '(удалено из базы)';
+            var category = ex && ex.muscleGroup ? ex.muscleGroup : 'Без категории';
+            html += '<div class="plan-ex">';
+            html += '<div style="flex:1;min-width:150px">';
+            html += '<div style="font-weight:600;font-size:0.95em;margin-bottom:4px;display:flex;align-items:center;gap:6px"><span style="color:var(--accent-gold);font-weight:700">' + (exIdx + 1) + '.</span> ' + name + '</div>';
+            html += '<div style="font-size:0.75em;opacity:0.6;margin-bottom:6px;display:flex;align-items:center;gap:4px"><i class="ph ph-tag"></i> ' + category + '</div>';
+            html += '<input type="text" value="' + (exRef.sets || '') + '" placeholder="3×10 или 4×8" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:0.85em" oninput="PlanModule.updateSets(' + dayIdx + ',' + exIdx + ',this.value)">';
+            html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Подходы × Повторы</div>';
+            html += '</div>';
+            html += '<div style="display:flex;gap:6px">';
+            html += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" ' + (exIdx === 0 ? 'disabled style="opacity:0.3"' : '') + ' onclick="PlanModule.movePlanEx(' + dayIdx + ',' + exIdx + ',-1)"><i class="ph ph-arrow-up"></i></button>';
+            html += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" ' + (exIdx === day.exercises.length - 1 ? 'disabled style="opacity:0.3"' : '') + ' onclick="PlanModule.movePlanEx(' + dayIdx + ',' + exIdx + ',1)"><i class="ph ph-arrow-down"></i></button>';
+            html += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="PlanModule.removePlanEx(' + dayIdx + ',' + exIdx + ')"><i class="ph ph-trash"></i></button>';
+            html += '</div></div>';
+          }
+        }
+        html += '</div>';
+
+        html += '<div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">';
+        html += '<button class="btn btn-primary" style="flex:1;padding:12px;font-size:0.95em" onclick="PlanModule.openPickEx(' + dayIdx + ')"><i class="ph ph-plus-circle"></i> Добавить из базы</button>';
+        if (day.exercises.length > 0) {
+          html += '<button class="btn btn-secondary" style="padding:12px 16px;font-size:0.95em" onclick="PlanModule.clearDay(' + dayIdx + ')"><i class="ph ph-trash"></i> Очистить день</button>';
+        }
+        html += '</div></div>';
       }
-    }
-    contentHtml += '</div>';
 
-    contentHtml += '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">';
-    contentHtml += '<button class="btn btn-primary" style="flex:1;padding:12px;font-size:0.95em" onclick="PlanModule.openPickEx(' + this.currentDay + ')"><i class="ph ph-plus-circle"></i> Добавить из базы</button>';
-    if (day.exercises.length > 0) {
-      contentHtml += '<button class="btn btn-secondary" style="padding:12px 16px;font-size:0.95em" onclick="PlanModule.clearDay(' + this.currentDay + ')" title="Очистить день"><i class="ph ph-trash"></i> Очистить</button>';
+      html += '</div>';
     }
-    contentHtml += '</div></div>';
 
-    screen.innerHTML = css +
-      '<div style="padding:16px;max-width:700px;margin:0 auto">' +
-        '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-calendar"></i> План тренировок</h2>' +
-        '<div class="hint" style="margin-bottom:18px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Настрой тренировки на каждый день. Зелёная точка = сегодня.</div>' +
-        tabsHtml + contentHtml +
-        '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-top:18px" onclick="PlanModule.savePlanData()"><i class="ph ph-floppy-disk"></i> Сохранить план</button>' +
-      '</div>';
+    html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-top:16px" onclick="PlanModule.savePlanData()"><i class="ph ph-floppy-disk"></i> Сохранить план</button>';
+    html += '</div>';
+
+    screen.innerHTML = html;
   },
 
-  switchDay: function(i) { this.currentDay = i; this.createPlanScreen(); },
+  toggleDay: function(dayIdx) {
+    this.expandedDay = this.expandedDay === dayIdx ? null : dayIdx;
+    this.createPlanScreen();
+  },
+
   updateSets: function(d, e, v) { var p = this.getPlan(); if (p[d] && p[d].exercises[e]) { p[d].exercises[e].sets = v; this.savePlan(p); } },
   updateMuscleGroup: function(d, v) { var p = this.getPlan(); if (p[d]) { p[d].muscleGroup = v; this.savePlan(p); } },
   movePlanEx: function(d, e, dir) {
