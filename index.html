@@ -5,45 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Фитнес-трекер</title>
 <style>
-:root { --bg: #262626; --text: #FFFFCC; --card: #3D3D3D; --acc: #FFD700; --ok: #90EE90; --err: #e74c3c; --brd: #1A1A1A; --font-size: 16px; --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; --radius: 10px; }
+:root {
+  --bg: #262626;
+  --text: #FFFFCC;
+  --card: #3D3D3D;
+  --acc: #FFD700;
+  --ok: #90EE90;
+  --err: #e74c3c;
+  --brd: #1A1A1A;
+  --inp: #2a2a2a;
+  --warn: #FFB347;
+  --lnk: #87CEEB;
+  --font-size: 16px;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --radius: 10px;
+}
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-family); font-size: var(--font-size); padding: 10px; }
+body {
+  margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+  font-family: var(--font-family); font-size: var(--font-size); padding: 10px;
+}
 .container { max-width: 1100px; margin: 0 auto; }
-.header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--card); border-radius: var(--radius); margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
-.header h1 { margin: 0; font-size: 1.4em; color: var(--acc); }
-.mode-switcher { display: flex; gap: 10px; align-items: center; }
-.mode-btn { padding: 6px 12px; border: 1px solid var(--brd); border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; font-size: 0.85em; transition: all 0.15s; }
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 18px; background: var(--card); border-radius: var(--radius);
+  margin-bottom: 15px; flex-wrap: wrap; gap: 10px;
+}
+.header h1 { margin: 0; font-size: 1.3em; color: var(--acc); }
+.mode-switcher { display: flex; gap: 8px; align-items: center; }
+.mode-btn {
+  padding: 6px 12px; border: 1px solid var(--brd); border-radius: 6px;
+  background: transparent; color: var(--text); cursor: pointer; font-size: 0.85em;
+  transition: all 0.15s;
+}
 .mode-btn:hover { background: var(--brd); }
 .mode-btn.active { background: var(--acc); color: #2c3e50; border-color: var(--acc); }
-.nav { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid var(--brd); overflow-x: auto; padding-bottom: 5px; }
-.nav-btn { background: transparent; border: none; color: var(--text); padding: 10px 12px; cursor: pointer; font-size: 0.95em; border-bottom: 3px solid transparent; margin-bottom: -2px; opacity: 0.7; font-weight: 600; white-space: nowrap; transition: all 0.15s; }
+.nav {
+  display: flex; gap: 4px; margin-bottom: 15px; border-bottom: 2px solid var(--brd);
+  overflow-x: auto; padding-bottom: 5px;
+}
+.nav-btn {
+  background: transparent; border: none; color: var(--text); padding: 8px 10px;
+  cursor: pointer; font-size: 0.9em; border-bottom: 3px solid transparent;
+  margin-bottom: -2px; opacity: 0.7; font-weight: 600; white-space: nowrap;
+  transition: all 0.15s;
+}
 .nav-btn:hover { opacity: 0.9; }
 .nav-btn.active { border-bottom-color: var(--acc); opacity: 1; color: var(--acc); }
 .screen { display: none; }
 .screen.active { display: block; }
-.dev-panel { background: var(--card); padding: 15px; border-radius: var(--radius); margin-bottom: 15px; border: 2px solid var(--acc); }
-.module-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 6px; margin-bottom: 8px; }
+.dev-panel {
+  background: var(--card); padding: 15px; border-radius: var(--radius);
+  margin-bottom: 15px; border: 2px solid var(--acc);
+}
+.module-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px; background: var(--bg); border-radius: 6px; margin-bottom: 8px;
+}
 .module-item.loaded { border-left: 3px solid var(--ok); }
 .module-item.loading { border-left: 3px solid var(--acc); }
 .module-item.error { border-left: 3px solid var(--err); }
-.btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.15s; margin-right: 5px; }
+.btn {
+  padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer;
+  font-weight: 600; transition: all 0.15s; margin-right: 5px;
+}
 .btn:active { transform: scale(0.95); }
 .btn-primary { background: var(--acc); color: #2c3e50; }
 .btn-secondary { background: var(--brd); color: var(--text); }
 .btn-danger { background: var(--err); color: #fff; }
-.console-log { background: #000; color: #0f0; padding: 15px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.85em; max-height: 300px; overflow-y: auto; margin-top: 15px; }
+.console-log {
+  background: #000; color: #0f0; padding: 12px; border-radius: 6px;
+  font-family: 'Courier New', monospace; font-size: 0.85em;
+  max-height: 300px; overflow-y: auto; margin-top: 12px;
+}
 .console-log .error { color: #f44; }
 .console-log .warn { color: #fa0; }
 .console-log .info { color: #8cf; }
 .loading { text-align: center; padding: 40px; opacity: 0.6; }
 .text-small { font-size: 0.85em; opacity: 0.7; }
-.stat-card { background: var(--bg); padding: 10px; border-radius: 6px; text-align: center; }
-.stat-label { font-size: 0.85em; opacity: 0.7; margin-bottom: 5px; }
-.stat-value { font-size: 1.5em; font-weight: bold; color: var(--acc); }
 </style>
 </head>
 <body>
 <div class="container">
+
   <div class="header">
     <h1>💪 Фитнес-трекер</h1>
     <div class="mode-switcher">
@@ -86,64 +130,75 @@ body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); 
       </div>
     </div>
   </div>
+
 </div>
 
 <script>
 const Logger = {
   logs: [],
-  log(message, type = 'info') {
-    const timestamp = new Date().toLocaleTimeString();
-    this.logs.push({ timestamp, message, type });
-    if (type === 'error') console.error(`[${timestamp}] ${message}`);
-    else if (type === 'warn') console.warn(`[${timestamp}] ${message}`);
-    else console.log(`[${timestamp}] ${message}`);
+  log: function(message, type) {
+    type = type || 'info';
+    var timestamp = new Date().toLocaleTimeString();
+    this.logs.push({ timestamp: timestamp, message: message, type: type });
+    if (type === 'error') console.error('[' + timestamp + '] ' + message);
+    else if (type === 'warn') console.warn('[' + timestamp + '] ' + message);
+    else console.log('[' + timestamp + '] ' + message);
     this.renderConsole();
   },
-  renderConsole() {
-    const container = document.getElementById('consoleLog');
+  renderConsole: function() {
+    var container = document.getElementById('consoleLog');
     if (!container) return;
-    container.innerHTML = this.logs.map(log => `<div class="${log.type}">[${log.timestamp}] ${log.message}</div>`).join('');
+    var html = '';
+    for (var i = 0; i < this.logs.length; i++) {
+      var log = this.logs[i];
+      html += '<div class="' + log.type + '">[' + log.timestamp + '] ' + log.message + '</div>';
+    }
+    container.innerHTML = html;
     container.scrollTop = container.scrollHeight;
   },
-  clear() { this.logs = []; this.renderConsole(); }
+  clear: function() { this.logs = []; this.renderConsole(); }
 };
-
 
 const MODULE_REGISTRY = {
   'core': {
-    name: 'Ядро системы',
-    version: '1.0.0',
+    name: 'Ядро системы', version: '1.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
-    required: true,
-    description: 'Базовый функционал: навигация, хранилище, утилиты'
+    required: true, description: 'Базовый функционал: навигация, хранилище, утилиты'
   },
   'welcome': {
-    name: 'Приветствие',
-    version: '3.0.0',
+    name: 'Приветствие', version: '4.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
-    required: false,
-    description: 'Экран приветствия с XP, статистикой и кнопками'
+    required: false, description: 'Экран приветствия с именем пользователя'
   },
   'exercises': {
-    name: 'База упражнений',
-    version: '2.0.0',
+    name: 'База упражнений', version: '3.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
-    required: false,
-    description: 'CRUD упражнений с категориями и видео'
+    required: false, description: 'CRUD упражнений с категориями, звёздами, картинками'
   },
   'plan': {
-    name: 'План тренировок',
-    version: '2.0.0',
+    name: 'План тренировок', version: '2.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
-    required: false,
-    description: 'Настройка плана на неделю с табами'
+    required: false, description: 'Настройка плана на неделю с табами'
+  },
+  'workout': {
+    name: 'Тренировка', version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js',
+    required: false, description: 'Главный экран тренировки с подходами и мини-опросом'
   },
   'stats': {
-    name: 'Статистика',
-    version: '1.0.0',
+    name: 'Статистика', version: '1.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js',
-    required: false,
-    description: 'Графики, тепловая карта, стрики'
+    required: false, description: 'Графики, тепловая карта, стрики'
+  },
+  'survey': {
+    name: 'Опросы', version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js',
+    required: false, description: 'Конструктор опросов и финальный опрос после тренировки'
+  },
+  'settings': {
+    name: 'Настройки', version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js',
+    required: false, description: 'Имя, аватар, общие настройки'
   }
 };
 
@@ -159,128 +214,113 @@ class ModuleManager {
     Logger.log('🚀 Инициализация менеджера модулей...', 'info');
     await this.loadAllModules();
     this.renderModuleList();
-    
-    // Даем небольшую задержку, чтобы DOM точно был готов
-    setTimeout(() => {
-      this.initializeUserInterface();
-    }, 100);
+    var self = this;
+    setTimeout(function() { self.initializeUserInterface(); }, 100);
   }
 
   async loadAllModules() {
-    for (const [id, config] of Object.entries(MODULE_REGISTRY)) {
-      await this.loadModule(id, config);
+    for (var id in MODULE_REGISTRY) {
+      await this.loadModule(id, MODULE_REGISTRY[id]);
     }
   }
 
   async loadModule(id, config) {
-    const storageKey = STORAGE_PREFIX + id;
-    const cachedData = localStorage.getItem(storageKey);
+    var storageKey = STORAGE_PREFIX + id;
+    var cachedData = localStorage.getItem(storageKey);
 
     if (cachedData) {
       try {
-        const cached = JSON.parse(cachedData);
+        var cached = JSON.parse(cachedData);
         if (cached.version === config.version) {
-          Logger.log(`✅ Модуль ${id} актуален (v${cached.version})`, 'info');
+          Logger.log('✅ Модуль ' + id + ' актуален (v' + cached.version + ')', 'info');
           this.executeModule(id, cached.code);
           this.moduleStatus.set(id, 'loaded');
           return;
         }
       } catch (e) {
-        Logger.log(`⚠️ Ошибка чтения кэша ${id}`, 'warn');
+        Logger.log('⚠️ Ошибка чтения кэша ' + id, 'warn');
       }
     }
 
-    Logger.log(`⬇️ Загрузка модуля ${id}...`, 'info');
+    Logger.log('⬇️ Загрузка модуля ' + id + '...', 'info');
     this.moduleStatus.set(id, 'loading');
     this.renderModuleList();
 
     try {
-      const response = await fetch(config.url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const code = await response.text();
-      
+      var response = await fetch(config.url);
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      var code = await response.text();
       localStorage.setItem(storageKey, JSON.stringify({ version: config.version, code: code, loadedAt: Date.now() }));
-      Logger.log(`✅ Модуль ${id} загружен (v${config.version})`, 'info');
+      Logger.log('✅ Модуль ' + id + ' загружен (v' + config.version + ')', 'info');
       this.executeModule(id, code);
       this.moduleStatus.set(id, 'loaded');
     } catch (error) {
-      Logger.log(`❌ Ошибка загрузки ${id}: ${error.message}`, 'error');
+      Logger.log('❌ Ошибка загрузки ' + id + ': ' + error.message, 'error');
       this.moduleStatus.set(id, 'error');
-      if (config.required) alert(`Критическая ошибка: не удалось загрузить модуль "${config.name}"`);
+      if (config.required) alert('Критическая ошибка: не удалось загрузить модуль "' + config.name + '"');
     }
     this.renderModuleList();
   }
 
-executeModule(id, code) {
-  try {
-    const moduleExports = {};
-    const moduleContext = { 
-      exports: moduleExports, 
-      module: { exports: moduleExports } 
-    };
-    const func = new Function('module', 'exports', 'require', 'Logger', code);
-    func.call(moduleContext, moduleContext.module, moduleContext.exports, this.require.bind(this), Logger);
-    
-    // ВАЖНО: сохраняем module.exports, а не exports
-    this.loadedModules.set(id, moduleContext.module.exports);
-    Logger.log(`📦 Модуль ${id} выполнен`, 'info');
-  } catch (error) {
-    Logger.log(`❌ Ошибка выполнения ${id}: ${error.message}`, 'error');
-    this.moduleStatus.set(id, 'error');
+  executeModule(id, code) {
+    try {
+      var moduleExports = {};
+      var moduleContext = { exports: moduleExports, module: { exports: moduleExports } };
+      var func = new Function('module', 'exports', 'require', 'Logger', code);
+      func.call(moduleContext, moduleContext.module, moduleContext.exports, this.require.bind(this), Logger);
+      this.loadedModules.set(id, moduleContext.module.exports);
+      Logger.log('📦 Модуль ' + id + ' выполнен', 'info');
+    } catch (error) {
+      Logger.log('❌ Ошибка выполнения ' + id + ': ' + error.message, 'error');
+      this.moduleStatus.set(id, 'error');
+    }
   }
-}
 
   require(moduleId) {
-    if (!this.loadedModules.has(moduleId)) throw new Error(`Модуль ${moduleId} не загружен`);
+    if (!this.loadedModules.has(moduleId)) throw new Error('Модуль ' + moduleId + ' не загружен');
     return this.loadedModules.get(moduleId);
   }
 
   renderModuleList() {
-    const container = document.getElementById('moduleList');
+    var container = document.getElementById('moduleList');
     if (!container) return;
-    container.innerHTML = Object.entries(MODULE_REGISTRY).map(([id, config]) => {
-      const status = this.moduleStatus.get(id) || 'loading';
-      const statusText = { 'loaded': '✅ Загружен', 'loading': '⏳ Загрузка...', 'error': '❌ Ошибка' }[status];
-      return `
-        <div class="module-item ${status}">
-          <div style="flex:1">
-            <div style="font-weight:600">${config.name}</div>
-            <div class="text-small">${config.description}</div>
-            <div class="text-small">v${config.version} · ${statusText}</div>
-          </div>
-          <div>
-            ${status === 'error' ? `<button class="btn btn-secondary" onclick="moduleManager.retryModule('${id}')">🔄</button>` : ''}
-            <button class="btn btn-danger" onclick="moduleManager.clearModule('${id}')">🗑️</button>
-          </div>
-        </div>`;
-    }).join('');
+    var html = '';
+    for (var id in MODULE_REGISTRY) {
+      var config = MODULE_REGISTRY[id];
+      var status = this.moduleStatus.get(id) || 'loading';
+      var statusText = { 'loaded': '✅ Загружен', 'loading': '⏳ Загрузка...', 'error': '❌ Ошибка' }[status];
+      html += '<div class="module-item ' + status + '">';
+      html += '<div style="flex:1"><div style="font-weight:600">' + config.name + '</div>';
+      html += '<div class="text-small">' + config.description + '</div>';
+      html += '<div class="text-small">v' + config.version + ' · ' + statusText + '</div></div>';
+      html += '<div>';
+      if (status === 'error') html += '<button class="btn btn-secondary" onclick="moduleManager.retryModule(\'' + id + '\')">🔄</button>';
+      html += '<button class="btn btn-danger" onclick="moduleManager.clearModule(\'' + id + '\')">🗑️</button>';
+      html += '</div></div>';
+    }
+    container.innerHTML = html;
   }
 
-	initializeUserInterface() {
-		Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
-		
-		// ОЧИЩАЕМ НАВИГАЦИЮ ПЕРЕД ДОБАВЛЕНИЕМ КНОПОК
-		const nav = document.getElementById('userNav');
-		if (nav) nav.innerHTML = '';
-		
-		this.loadedModules.forEach((module, id) => {
-			if (module.init) {
-				try {
-					Logger.log(`🔄 Вызов init() для модуля ${id}...`, 'info');
-					module.init();
-					Logger.log(`✅ Модуль ${id} инициализирован`, 'info');
-				} catch (error) {
-					Logger.log(`❌ Ошибка инициализации ${id}: ${error.message}`, 'error');
-					console.error(`Error in module ${id}:`, error);
-				}
-			} else {
-				Logger.log(`⚠️ Модуль ${id} не имеет метода init()`, 'warn');
-			}
-		});
-	}
+  initializeUserInterface() {
+    Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
+    var nav = document.getElementById('userNav');
+    if (nav) nav.innerHTML = '';
+    this.loadedModules.forEach(function(module, id) {
+      if (module && module.init) {
+        try {
+          Logger.log('🔄 Вызов init() для модуля ' + id + '...', 'info');
+          module.init();
+          Logger.log('✅ Модуль ' + id + ' инициализирован', 'info');
+        } catch (error) {
+          Logger.log('❌ Ошибка инициализации ' + id + ': ' + error.message, 'error');
+          console.error('Error in module ' + id + ':', error);
+        }
+      }
+    });
+  }
 
   async retryModule(id) {
-    const config = MODULE_REGISTRY[id];
+    var config = MODULE_REGISTRY[id];
     if (config) {
       localStorage.removeItem(STORAGE_PREFIX + id);
       await this.loadModule(id, config);
@@ -288,12 +328,12 @@ executeModule(id, code) {
   }
 
   clearModule(id) {
-    if (confirm(`Удалить модуль "${MODULE_REGISTRY[id].name}" из кэша?`)) {
+    if (confirm('Удалить модуль "' + MODULE_REGISTRY[id].name + '" из кэша?')) {
       localStorage.removeItem(STORAGE_PREFIX + id);
       this.loadedModules.delete(id);
       this.moduleStatus.delete(id);
       this.renderModuleList();
-      Logger.log(`🗑️ Модуль ${id} удалён из кэша`, 'info');
+      Logger.log('🗑️ Модуль ' + id + ' удалён из кэша', 'info');
     }
   }
 
@@ -306,7 +346,7 @@ executeModule(id, code) {
 
   clearAllCache() {
     if (confirm('Удалить все модули из кэша?')) {
-      Object.keys(localStorage).forEach(key => {
+      Object.keys(localStorage).forEach(function(key) {
         if (key.startsWith(STORAGE_PREFIX)) localStorage.removeItem(key);
       });
       this.loadedModules.clear();
@@ -317,30 +357,30 @@ executeModule(id, code) {
   }
 }
 
-let currentMode = 'user';
+var currentMode = 'user';
 function switchMode(mode) {
   currentMode = mode;
   document.getElementById('userInterface').style.display = mode === 'user' ? 'block' : 'none';
   document.getElementById('devInterface').style.display = mode === 'dev' ? 'block' : 'none';
   document.getElementById('userModeBtn').classList.toggle('active', mode === 'user');
   document.getElementById('devModeBtn').classList.toggle('active', mode === 'dev');
-  Logger.log(`🔄 Переключено в режим: ${mode === 'user' ? 'Пользователь' : 'Разработчик'}`, 'info');
+  Logger.log('🔄 Переключено в режим: ' + (mode === 'user' ? 'Пользователь' : 'Разработчик'), 'info');
 }
 
 function showDevScreen(screenId) {
-  document.querySelectorAll('#devInterface .screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('#devInterface .nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`dev-screen-${screenId}`).classList.add('active');
-  event.target.classList.add('active');
+  document.querySelectorAll('#devInterface .screen').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('#devInterface .nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('dev-screen-' + screenId).classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
 }
 
 function clearConsole() { Logger.clear(); }
 
-const moduleManager = new ModuleManager();
-
-document.addEventListener('DOMContentLoaded', async () => {
+var moduleManager = new ModuleManager();
+document.addEventListener('DOMContentLoaded', function() {
   switchMode('user');
-  await moduleManager.init();
+  moduleManager.init();
 });
 </script>
+</body>
 </html>

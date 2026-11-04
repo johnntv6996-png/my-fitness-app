@@ -4,7 +4,6 @@ const WelcomeModule = {
   init: function() {
     console.log('🎉 Welcome module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль приветствия инициализирован', 'info');
-    
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { WelcomeModule.setup(); });
     } else {
@@ -14,16 +13,23 @@ const WelcomeModule = {
 
   setup: function() {
     this.createWelcomeScreen();
-    
     if (typeof Core !== 'undefined') {
       Core.addNavButton('Главная', 'welcome', '🏠');
     }
   },
 
+  getUserName: function() {
+    if (typeof FTStorage !== 'undefined') return FTStorage.get('user_name') || '';
+    return '';
+  },
+
+  getUserAvatar: function() {
+    if (typeof FTStorage !== 'undefined') return FTStorage.get('user_avatar') || '💪';
+    return '💪';
+  },
+
   getStats: function() {
-    if (typeof FTStorage !== 'undefined') {
-      return FTStorage.get('stats') || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
-    }
+    if (typeof FTStorage !== 'undefined') return FTStorage.get('stats') || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
     return {yes:0, later:0, no:0, xp:0, level:1, streak:0};
   },
 
@@ -54,9 +60,7 @@ const WelcomeModule = {
       var progress = Math.min((timestamp - startTime) / duration, 1);
       var eased = 1 - Math.pow(1 - progress, 3);
       element.textContent = Math.floor(start + range * eased);
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
+      if (progress < 1) window.requestAnimationFrame(step);
     };
     window.requestAnimationFrame(step);
   },
@@ -70,26 +74,28 @@ const WelcomeModule = {
       document.getElementById('userInterface').appendChild(screen);
     }
 
+    var userName = this.getUserName();
+    var userAvatar = this.getUserAvatar();
+    var greeting = userName ? 'Привет, ' + userName + '!' : 'Привет!';
     var stats = this.getStats();
     var xpNeeded = stats.level * 100;
     var xpPercent = Math.min(100, Math.round((stats.xp / xpNeeded) * 100));
     var todayIdx = (new Date().getDay() + 6) % 7;
     var days = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
     var dayName = days[todayIdx];
-    
+
     var plan = [];
     if (typeof FTStorage !== 'undefined') plan = FTStorage.get('plan') || [];
     var todayPlan = plan[todayIdx] || null;
     var exCount = todayPlan ? todayPlan.exercises.length : 0;
-    
+
     var history = [];
     if (typeof FTStorage !== 'undefined') history = FTStorage.get('history') || [];
     var todayStr = new Date().toISOString().slice(0, 10);
     var todayRecord = null;
     for (var i = 0; i < history.length; i++) {
       if (history[i].date === todayStr && history[i].dayName === dayName) {
-        todayRecord = history[i];
-        break;
+        todayRecord = history[i]; break;
       }
     }
 
@@ -97,7 +103,6 @@ const WelcomeModule = {
     var levelEmoji = this.getLevelEmoji(stats.level);
     var totalXp = stats.xp + (stats.level - 1) * 100;
 
-    // CSS анимации
     var css = '<style>' +
       '@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }' +
       '@keyframes fillBar { from { width:0%; } }' +
@@ -118,17 +123,15 @@ const WelcomeModule = {
       '.w-btn:active { transform:scale(0.97); }' +
     '</style>';
 
-    // Статус дня
     var statusHtml = '';
     if (todayRecord) {
       if (todayRecord.skipped) {
-        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(231,76,60,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #e74c3c;font-size:0.85em"><strong style="color:#e74c3c">❌ День пропущен</strong><span class="text-small" style="margin-left:8px">Можно передумать</span></div>';
+        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(231,76,60,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #e74c3c;font-size:0.85em"><strong style="color:#e74c3c">❌ День пропущен</strong><span style="margin-left:8px;opacity:0.7">Можно передумать</span></div>';
       } else if (todayRecord.exercises && todayRecord.exercises.length > 0) {
-        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(144,238,144,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #90EE90;font-size:0.85em"><strong style="color:#90EE90">✅ Тренировка проведена</strong><span class="text-small" style="margin-left:8px">' + todayRecord.exercises.length + '/' + exCount + '</span></div>';
+        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(144,238,144,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #90EE90;font-size:0.85em"><strong style="color:#90EE90">✅ Тренировка проведена</strong><span style="margin-left:8px;opacity:0.7">' + todayRecord.exercises.length + '/' + exCount + '</span></div>';
       }
     }
 
-    // Кнопка "Да"
     var yesButton = '';
     if (exCount > 0) {
       yesButton = '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #90EE90 0%, #7FDD7F 100%);color:#1a3a1a;border:1px solid #90EE90" onclick="WelcomeModule.handleAnswer(\'yes\')">✅ Да</button>';
@@ -136,11 +139,10 @@ const WelcomeModule = {
       yesButton = '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFD700 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid #FFD700" onclick="WelcomeModule.goToPlan()">📝 План</button>';
     }
 
-    // ПОРЯДОК: XP-бар → Приветствие (компактное) → Кнопки → Статус → Карточки → Мотивация → Подсказка
     screen.innerHTML = css +
       '<div style="padding:12px;max-width:450px;margin:0 auto">' +
-      
-      // === 1. XP-БАР (САМЫЙ ВЕРХ) ===
+
+      // XP-бар
       '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid var(--acc)">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
           '<div style="display:flex;align-items:center;gap:6px">' +
@@ -158,53 +160,54 @@ const WelcomeModule = {
         '</div>' +
       '</div>' +
 
-      // === 2. ПРИВЕТСТВИЕ (КОМПАКТНОЕ, В ОДНУ СТРОКУ) ===
-      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:8px 12px;border:1px solid var(--brd);margin-bottom:10px">' +
-        '<div style="display:flex;align-items:center;gap:8px">' +
-          '<div style="font-size:1.5em">💪</div>' +
+      // Приветствие с именем
+      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:12px 15px;border:1px solid var(--brd);margin-bottom:10px">' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          '<div style="font-size:2em">' + userAvatar + '</div>' +
           '<div style="flex:1">' +
-            '<div style="font-size:1em;font-weight:bold;color:var(--acc);line-height:1.2">Привет!</div>' +
-            '<div style="font-size:0.75em;opacity:0.8">Сегодня <strong>' + dayName + '</strong></div>' +
+            '<div style="font-size:1.1em;font-weight:bold;color:var(--acc);line-height:1.2">' + greeting + '</div>' +
+            '<div style="font-size:0.8em;opacity:0.8">Сегодня <strong>' + dayName + '</strong></div>' +
           '</div>' +
-          '<div style="font-size:0.75em;color:#FFB347">' + (exCount > 0 ? '📋 ' + exCount + ' упр.' : '⚠️ нет плана') + '</div>' +
+          '<div style="font-size:0.75em;color:#FFB347;text-align:right">' +
+            (exCount > 0 ? '📋 ' + exCount + ' упр.' : '⚠️ нет плана') +
+          '</div>' +
         '</div>' +
       '</div>' +
 
-      // === 3. КНОПКИ (В ОДНУ СТРОКУ) ===
+      // Кнопки
       '<div class="w-fade w-delay-2" style="display:flex;gap:6px;margin-bottom:10px">' +
         yesButton +
         '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFB347 0%, #FFC870 100%);color:#3a2a0a;border:1px solid #FFB347" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
         '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #e74c3c 0%, #FF7070 100%);color:#fff;border:1px solid #e74c3c" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
       '</div>' +
 
-      // === 4. СТАТУС ДНЯ ===
       statusHtml +
 
-      // === 5. ТРИ МИНИ-КАРТОЧКИ ===
+      // Карточки
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:10px 0">' +
-        '<div class="w-card w-fade w-delay-2" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+        '<div class="w-card w-fade w-delay-2" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd)">' +
           '<div class="w-pulse" style="font-size:1.3em">🔥</div>' +
           '<div style="font-size:1.2em;font-weight:bold;color:#FFB347;line-height:1.2"><span class="w-anim-streak">0</span></div>' +
           '<div style="font-size:0.65em;opacity:0.7">стрик</div>' +
         '</div>' +
-        '<div class="w-card w-fade w-delay-3" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+        '<div class="w-card w-fade w-delay-3" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd)">' +
           '<div style="font-size:1.3em">🏋️</div>' +
           '<div style="font-size:1.2em;font-weight:bold;color:#90EE90;line-height:1.2"><span class="w-anim-workouts">0</span></div>' +
           '<div style="font-size:0.65em;opacity:0.7">тренировок</div>' +
         '</div>' +
-        '<div class="w-card w-fade w-delay-4" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+        '<div class="w-card w-fade w-delay-4" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd)">' +
           '<div style="font-size:1.3em">⚡</div>' +
           '<div style="font-size:1.2em;font-weight:bold;color:var(--acc);line-height:1.2"><span class="w-anim-totalxp">0</span></div>' +
           '<div style="font-size:0.65em;opacity:0.7">всего XP</div>' +
         '</div>' +
       '</div>' +
 
-      // === 6. МОТИВАЦИЯ ===
+      // Мотивация
       '<div class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:6px 10px;margin-bottom:10px;border-left:3px solid ' + motivation.color + ';font-size:0.85em;text-align:center;color:' + motivation.color + ';font-weight:600">' +
         motivation.text +
       '</div>' +
 
-      // === 7. ПОДСКАЗКА XP (свёрнутая) ===
+      // Подсказка XP
       '<details class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:8px 10px;font-size:0.75em;opacity:0.85;cursor:pointer">' +
         '<summary style="font-weight:600;color:var(--acc);margin-bottom:4px">💡 Как получать XP</summary>' +
         '<div style="margin-top:4px;line-height:1.5">' +
@@ -217,7 +220,6 @@ const WelcomeModule = {
 
       '</div>';
 
-    // Запуск анимации счётчиков
     var self = this;
     setTimeout(function() {
       var levelEl = document.querySelector('.w-anim-level');
@@ -225,7 +227,6 @@ const WelcomeModule = {
       var streakEl = document.querySelector('.w-anim-streak');
       var workoutsEl = document.querySelector('.w-anim-workouts');
       var totalXpEl = document.querySelector('.w-anim-totalxp');
-      
       if (levelEl) self.animateValue(levelEl, 0, stats.level, 800);
       if (xpEl) self.animateValue(xpEl, 0, stats.xp, 1000);
       if (streakEl) self.animateValue(streakEl, 0, stats.streak || 0, 800);
@@ -238,7 +239,7 @@ const WelcomeModule = {
     if (typeof moduleManager !== 'undefined' && moduleManager.loadedModules && moduleManager.loadedModules.has('plan')) {
       Core.navigate('plan');
     } else {
-      alert('📝 Модуль "План" ещё не добавлен.\n\nСледующим шагом мы его создадим!');
+      alert('📝 Модуль "План" ещё не добавлен.');
     }
   },
 
@@ -247,7 +248,7 @@ const WelcomeModule = {
     var days = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
     var dayName = days[todayIdx];
     var todayStr = new Date().toISOString().slice(0, 10);
-    
+
     var stats = this.getStats();
     var history = [];
     if (typeof FTStorage !== 'undefined') history = FTStorage.get('history') || [];
@@ -276,22 +277,14 @@ const WelcomeModule = {
       stats.no++;
       stats.streak = 0;
       if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
-      
       var dayRecord = null;
       for (var i = 0; i < history.length; i++) {
-        if (history[i].date === todayStr && history[i].dayName === dayName) {
-          dayRecord = history[i];
-          break;
-        }
+        if (history[i].date === todayStr && history[i].dayName === dayName) { dayRecord = history[i]; break; }
       }
-      
       if (!dayRecord) {
         var muscleGroup = '';
         if (plan[todayIdx] && plan[todayIdx].muscleGroup) muscleGroup = plan[todayIdx].muscleGroup;
-        dayRecord = { 
-          date: todayStr, dayName: dayName, muscleGroup: muscleGroup, 
-          exercises: [], details: [], duration: 0, skipped: true, timestamp: Date.now() 
-        };
+        dayRecord = { date: todayStr, dayName: dayName, muscleGroup: muscleGroup, exercises: [], details: [], duration: 0, skipped: true, timestamp: Date.now() };
         history.push(dayRecord);
       } else {
         dayRecord.skipped = true;

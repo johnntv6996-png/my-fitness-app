@@ -7,38 +7,39 @@ const ExercisesModule = {
   init: function() {
     console.log('📚 Exercises module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль базы упражнений инициализирован', 'info');
-    
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { ExercisesModule.setup(); });
-    } else {
-      this.setup();
-    }
+    } else { this.setup(); }
   },
 
   setup: function() {
     this.createExercisesScreen();
-    
-    if (typeof Core !== 'undefined') {
-      Core.addNavButton('База', 'exercises', '📚');
-    }
+    if (typeof Core !== 'undefined') Core.addNavButton('База', 'exercises', '📚');
   },
 
   getDB: function() {
     if (typeof FTStorage !== 'undefined') return FTStorage.get('db') || [];
     return [];
   },
-
   saveDB: function(db) {
     if (typeof FTStorage !== 'undefined') FTStorage.set('db', db);
   },
-
   getCategories: function() {
     if (typeof FTStorage !== 'undefined') return FTStorage.get('categories') || [];
     return [];
   },
+  saveCategories: function(c) {
+    if (typeof FTStorage !== 'undefined') FTStorage.set('categories', c);
+  },
 
-  saveCategories: function(categories) {
-    if (typeof FTStorage !== 'undefined') FTStorage.set('categories', categories);
+  getDefaultExercise: function() {
+    return { name: '', muscleGroup: '', description: '', videoUrl: '', imageUrl: '', notes: '', inventory: '', difficulty: 3, effectiveness: 3 };
+  },
+
+  renderStars: function(count) {
+    var s = '';
+    for (var i = 1; i <= 5; i++) s += i <= count ? '★' : '☆';
+    return s;
   },
 
   createExercisesScreen: function() {
@@ -52,18 +53,13 @@ const ExercisesModule = {
 
     var db = this.getDB();
     var categories = this.getCategories();
-
     var filtered = db;
     if (this.currentFilter === 'uncategorized') {
       filtered = [];
-      for (var i = 0; i < db.length; i++) {
-        if (!db[i].muscleGroup || db[i].muscleGroup === '') filtered.push(db[i]);
-      }
+      for (var i = 0; i < db.length; i++) if (!db[i].muscleGroup || db[i].muscleGroup === '') filtered.push(db[i]);
     } else if (this.currentFilter !== 'all') {
       filtered = [];
-      for (var i = 0; i < db.length; i++) {
-        if (db[i].muscleGroup === this.currentFilter) filtered.push(db[i]);
-      }
+      for (var i = 0; i < db.length; i++) if (db[i].muscleGroup === this.currentFilter) filtered.push(db[i]);
     }
 
     var css = '<style>' +
@@ -73,84 +69,57 @@ const ExercisesModule = {
       '.ex-modal-content { background:var(--card); padding:20px; border-radius:12px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
       '.cat-btn { padding:6px 12px; font-size:0.85em; border:none; border-radius:6px; cursor:pointer; transition:all 0.2s; }' +
-      '.cat-btn:hover { transform:translateY(-1px); }' +
       '.cat-btn.active { background:var(--acc); color:#2c3e50; font-weight:700; }' +
       '.cat-btn:not(.active) { background:var(--brd); color:var(--text); }' +
-      '.cat-edit-btn { padding:4px 8px; font-size:0.75em; background:transparent; border:1px solid var(--brd); border-radius:4px; cursor:pointer; color:var(--text); margin-left:4px; }' +
-      '.cat-edit-btn:hover { background:var(--brd); }' +
-      '.cat-delete-btn { padding:4px 8px; font-size:0.75em; background:transparent; border:1px solid #e74c3c; border-radius:4px; cursor:pointer; color:#e74c3c; margin-left:4px; }' +
-      '.cat-delete-btn:hover { background:#e74c3c; color:#fff; }' +
+      '.stars { color:var(--acc); letter-spacing:2px; }' +
     '</style>';
 
-    // Тулбар категорий
+    // Тулбар
     var toolbarHtml = '<div style="background:var(--card);border-radius:8px;padding:10px;margin-bottom:15px;border:1px solid var(--brd)">';
     toolbarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">';
-    
-    // Левая часть: кнопки фильтрации
     toolbarHtml += '<div style="display:flex;gap:5px;flex-wrap:wrap;flex:1">';
-    
-    // Кнопка "Все"
-    var isAll = this.currentFilter === 'all';
-    toolbarHtml += '<button class="cat-btn ' + (isAll ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')">Все</button>';
-    
-    // Кнопка "Без категории"
-    var isUncat = this.currentFilter === 'uncategorized';
-    toolbarHtml += '<button class="cat-btn ' + (isUncat ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')">❓ Без категории</button>';
-    
-    // Кнопки категорий (только для фильтрации, без кнопок действий)
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')">Все</button>';
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')">❓ Без категории</button>';
     for (var i = 0; i < categories.length; i++) {
-      var isActive = this.currentFilter === categories[i];
-      toolbarHtml += '<button class="cat-btn ' + (isActive ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')" title="Фильтр: ' + categories[i] + '">' + categories[i] + '</button>';
+      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')" title="Фильтр: ' + categories[i] + '">' + categories[i] + '</button>';
     }
-    
     toolbarHtml += '</div>';
-    
-    // Правая часть: действия
     toolbarHtml += '<div style="display:flex;gap:5px;align-items:center">';
-    
-    // Кнопки редактирования и удаления (только если выбрана обычная категория)
-    var isRegularCategory = this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized';
-    if (isRegularCategory) {
-      toolbarHtml += '<button class="btn" style="padding:6px 10px;font-size:0.8em;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Редактировать: ' + this.currentFilter + '">✏️</button>';
-      toolbarHtml += '<button class="btn" style="padding:6px 10px;font-size:0.8em;background:#e74c3c;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Удалить: ' + this.currentFilter + '">🗑️</button>';
+    var isRegular = this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized';
+    if (isRegular) {
+      toolbarHtml += '<button class="btn" style="padding:6px 10px;font-size:0.8em;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Редактировать">✏️</button>';
+      toolbarHtml += '<button class="btn" style="padding:6px 10px;font-size:0.8em;background:#e74c3c;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Удалить">🗑️</button>';
     } else {
       toolbarHtml += '<span style="font-size:0.75em;opacity:0.5;margin-right:5px">Выбери категорию</span>';
     }
-    
-    // Кнопка добавления новой категории
     toolbarHtml += '<button class="btn" style="padding:6px 12px;font-size:0.8em;background:var(--acc);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="ExercisesModule.openCategoryForm()">➕ Добавить</button>';
-    toolbarHtml += '</div>';
-    
-    toolbarHtml += '</div>';
-    toolbarHtml += '<div class="hint" style="margin-top:6px">💡 Кликни на категорию для фильтрации. Выбрав её, справа появятся кнопки ✏️ и 🗑️. ➕ — создать новую категорию.</div>';
+    toolbarHtml += '</div></div>';
+    toolbarHtml += '<div class="hint" style="margin-top:6px">💡 Кликни на категорию для фильтрации. Выбрав её, справа появятся ✏️ и 🗑️.</div>';
     toolbarHtml += '</div>';
 
-    // Список упражнений
+    // Список
     var listHtml = '';
     if (filtered.length === 0) {
-      if (this.currentFilter === 'uncategorized') {
-        listHtml = '<div style="text-align:center;padding:30px;opacity:0.6"><div style="font-size:3em;margin-bottom:10px">❓</div><p>Нет упражнений без категории</p></div>';
-      } else if (this.currentFilter !== 'all') {
-        listHtml = '<div style="text-align:center;padding:30px;opacity:0.6"><div style="font-size:3em;margin-bottom:10px">📂</div><p>В этой категории пока нет упражнений</p></div>';
-      } else {
-        listHtml = '<div style="text-align:center;padding:30px;opacity:0.6"><div style="font-size:3em;margin-bottom:10px">📚</div><p>База пуста. Добавь первое упражнение!</p></div>';
-      }
+      listHtml = '<div style="text-align:center;padding:30px;opacity:0.6"><div style="font-size:3em;margin-bottom:10px">📚</div><p>База пуста. Добавь первое упражнение!</p></div>';
     } else {
       for (var i = 0; i < filtered.length; i++) {
         var ex = filtered[i];
-        listHtml += '<div class="ex-card" onclick="ExercisesModule.viewExercise(\'' + ex.id + '\')">' +
-          '<div style="display:flex;justify-content:space-between;align-items:start">' +
-            '<div style="flex:1">' +
-              '<h4 style="margin:0 0 5px 0;color:var(--acc)">' + ex.name + (ex.videoUrl ? ' 📺' : '') + '</h4>' +
-              '<div style="font-size:0.8em;opacity:0.7;margin-bottom:5px">' + (ex.muscleGroup || '❓ Без категории') + '</div>' +
-              (ex.description ? '<div style="font-size:0.85em;opacity:0.85">' + ex.description.substring(0, 100) + (ex.description.length > 100 ? '...' : '') + '</div>' : '') +
-            '</div>' +
-            '<div style="display:flex;gap:5px;margin-left:10px">' +
-              '<button class="btn" style="padding:4px 8px;font-size:0.8em;background:var(--brd);color:var(--text);border:none;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();ExercisesModule.editExercise(\'' + ex.id + '\')">✏️</button>' +
-              '<button class="btn" style="padding:4px 8px;font-size:0.8em;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();ExercisesModule.deleteExercise(\'' + ex.id + '\')">🗑️</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
+        var diff = ex.difficulty || 3;
+        var eff = ex.effectiveness || 3;
+        listHtml += '<div class="ex-card" onclick="ExercisesModule.viewExercise(\'' + ex.id + '\')">';
+        listHtml += '<div style="display:flex;justify-content:space-between;align-items:start">';
+        listHtml += '<div style="flex:1">';
+        listHtml += '<h4 style="margin:0 0 5px 0;color:var(--acc)">' + ex.name;
+        if (ex.videoUrl) listHtml += ' 📺';
+        if (ex.imageUrl) listHtml += ' 🖼️';
+        listHtml += '</h4>';
+        listHtml += '<div style="font-size:0.8em;opacity:0.7;margin-bottom:5px">' + (ex.muscleGroup || '❓ Без категории') + '</div>';
+        listHtml += '<div style="font-size:0.75em;opacity:0.6">Сложность: <span class="stars">' + this.renderStars(diff) + '</span> · Эффективность: <span class="stars">' + this.renderStars(eff) + '</span></div>';
+        listHtml += '</div>';
+        listHtml += '<div style="display:flex;gap:5px;margin-left:10px">';
+        listHtml += '<button class="btn" style="padding:4px 8px;font-size:0.8em;background:var(--brd);color:var(--text);border:none;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();ExercisesModule.editExercise(\'' + ex.id + '\')">✏️</button>';
+        listHtml += '<button class="btn" style="padding:4px 8px;font-size:0.8em;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();ExercisesModule.deleteExercise(\'' + ex.id + '\')">🗑️</button>';
+        listHtml += '</div></div></div>';
       }
     }
 
@@ -158,22 +127,14 @@ const ExercisesModule = {
       '<div style="padding:15px;max-width:600px;margin:0 auto">' +
         '<h2 style="color:var(--acc);margin-top:0">📚 База упражнений</h2>' +
         '<button class="btn" style="width:100%;padding:12px;font-size:1em;font-weight:700;background:linear-gradient(135deg, var(--acc) 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid var(--acc);border-radius:8px;cursor:pointer;margin-bottom:15px" onclick="ExercisesModule.openExForm()">➕ Добавить упражнение</button>' +
-        toolbarHtml +
-        listHtml +
+        toolbarHtml + listHtml +
       '</div>';
   },
 
-  setFilter: function(filter) {
-    this.currentFilter = filter;
-    this.createExercisesScreen();
-  },
+  setFilter: function(f) { this.currentFilter = f; this.createExercisesScreen(); },
 
-  // === УПРАВЛЕНИЕ КАТЕГОРИЯМИ ===
-  
   openCategoryForm: function(oldName) {
-    var categories = this.getCategories();
     var isEdit = oldName ? true : false;
-    
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'catFormModal';
@@ -182,9 +143,9 @@ const ExercisesModule = {
         '<button style="float:right;background:transparent;border:none;color:var(--text);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'catFormModal\').remove()">×</button>' +
         '<h2 style="color:var(--acc);margin-top:0">' + (isEdit ? '✏️ Редактировать категорию' : '➕ Новая категория') + '</h2>' +
         '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Название категории:</label>' +
-          '<input type="text" id="catName" value="' + (isEdit ? oldName : '') + '" placeholder="Например: Грудь, Спина, Ноги..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
-          '<div class="hint">💡 Короткое название группы мышц или типа тренировки</div>' +
+          '<label style="display:block;margin-bottom:5px;font-weight:600">Название:</label>' +
+          '<input type="text" id="catName" value="' + (isEdit ? oldName : '') + '" placeholder="Например: Грудь, Спина" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<div class="hint">💡 Короткое название группы мышц</div>' +
         '</div>' +
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
           '<button class="btn" style="padding:10px 20px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="document.getElementById(\'catFormModal\').remove()">Отмена</button>' +
@@ -197,90 +158,48 @@ const ExercisesModule = {
   saveCategory: function(oldName) {
     var newName = document.getElementById('catName').value.trim();
     if (!newName) { alert('⚠️ Введи название категории'); return; }
-    
     var categories = this.getCategories();
-    
-    // Проверка на дубликат
     for (var i = 0; i < categories.length; i++) {
-      if (categories[i] === newName && categories[i] !== oldName) {
-        alert('⚠️ Такая категория уже существует');
-        return;
-      }
+      if (categories[i] === newName && categories[i] !== oldName) { alert('⚠️ Такая категория уже существует'); return; }
     }
-    
     if (oldName) {
-      // Редактирование: переименовать
-      for (var i = 0; i < categories.length; i++) {
-        if (categories[i] === oldName) {
-          categories[i] = newName;
-          break;
-        }
-      }
-      // Обновить все упражнения с этой категорией
+      for (var i = 0; i < categories.length; i++) if (categories[i] === oldName) { categories[i] = newName; break; }
       var db = this.getDB();
-      for (var i = 0; i < db.length; i++) {
-        if (db[i].muscleGroup === oldName) {
-          db[i].muscleGroup = newName;
-        }
-      }
+      for (var i = 0; i < db.length; i++) if (db[i].muscleGroup === oldName) db[i].muscleGroup = newName;
       this.saveDB(db);
-      
-      // Если сейчас фильтруем по старой категории, переключить на новую
-      if (this.currentFilter === oldName) {
-        this.currentFilter = newName;
-      }
+      if (this.currentFilter === oldName) this.currentFilter = newName;
     } else {
-      // Добавление новой
       categories.push(newName);
     }
-    
     this.saveCategories(categories);
     document.getElementById('catFormModal').remove();
     this.createExercisesScreen();
   },
 
   deleteCategory: function(name) {
-    if (!confirm('🗑️ Удалить категорию "' + name + '"?\n\nУпражнения из этой категории станут "Без категории".')) return;
-    
+    if (!confirm('🗑️ Удалить категорию "' + name + '"?\n\nУпражнения станут "Без категории".')) return;
     var categories = this.getCategories();
-    var newCategories = [];
-    for (var i = 0; i < categories.length; i++) {
-      if (categories[i] !== name) newCategories.push(categories[i]);
-    }
-    this.saveCategories(newCategories);
-    
-    // Убрать категорию у всех упражнений
+    var newC = [];
+    for (var i = 0; i < categories.length; i++) if (categories[i] !== name) newC.push(categories[i]);
+    this.saveCategories(newC);
     var db = this.getDB();
-    for (var i = 0; i < db.length; i++) {
-      if (db[i].muscleGroup === name) {
-        db[i].muscleGroup = '';
-      }
-    }
+    for (var i = 0; i < db.length; i++) if (db[i].muscleGroup === name) db[i].muscleGroup = '';
     this.saveDB(db);
-    
-    if (this.currentFilter === name) {
-      this.currentFilter = 'all';
-    }
-    
+    if (this.currentFilter === name) this.currentFilter = 'all';
     this.createExercisesScreen();
   },
-
-  // === УПРАВЛЕНИЕ УПРАЖНЕНИЯМИ ===
 
   openExForm: function(id) {
     this.editingId = id || null;
     var db = this.getDB();
     var categories = this.getCategories();
     var ex = null;
-    for (var i = 0; i < db.length; i++) {
-      if (db[i].id === id) { ex = db[i]; break; }
-    }
+    for (var i = 0; i < db.length; i++) if (db[i].id === id) { ex = db[i]; break; }
+    if (!ex) ex = this.getDefaultExercise();
 
-    // Строим options для combobox
     var optionsHtml = '<option value="">❓ Без категории</option>';
     for (var i = 0; i < categories.length; i++) {
-      var selected = (ex && ex.muscleGroup === categories[i]) ? 'selected' : '';
-      optionsHtml += '<option value="' + categories[i] + '" ' + selected + '>' + categories[i] + '</option>';
+      optionsHtml += '<option value="' + categories[i] + '" ' + (ex.muscleGroup === categories[i] ? 'selected' : '') + '>' + categories[i] + '</option>';
     }
 
     var modal = document.createElement('div');
@@ -290,33 +209,38 @@ const ExercisesModule = {
       '<div class="ex-modal-content">' +
         '<button style="float:right;background:transparent;border:none;color:var(--text);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exFormModal\').remove()">×</button>' +
         '<h2 style="color:var(--acc);margin-top:0">' + (id ? '✏️ Редактирование' : '➕ Новое упражнение') + '</h2>' +
-        
-        '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Название: <span style="color:#e74c3c">*</span></label>' +
-          '<input type="text" id="exName" value="' + (ex ? ex.name : '') + '" placeholder="Например: Отжимания от пола" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
-          '<div class="hint">💡 Короткое и понятное название упражнения</div>' +
+        '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:5px;font-weight:600">Название: <span style="color:#e74c3c">*</span></label>' +
+          '<input type="text" id="exName" value="' + ex.name + '" placeholder="Например: Отжимания от пола" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em"></div>' +
+        '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:5px;font-weight:600">Категория:</label>' +
+          '<select id="exMuscleGroup" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' + optionsHtml + '</select></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">' +
+          '<div><label style="display:block;margin-bottom:5px;font-weight:600">⭐ Сложность:</label>' +
+            '<select id="exDifficulty" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+            '<option value="1" ' + (ex.difficulty==1?'selected':'') + '>1 — Очень легко</option>' +
+            '<option value="2" ' + (ex.difficulty==2?'selected':'') + '>2 — Легко</option>' +
+            '<option value="3" ' + (ex.difficulty==3?'selected':'') + '>3 — Средне</option>' +
+            '<option value="4" ' + (ex.difficulty==4?'selected':'') + '>4 — Сложно</option>' +
+            '<option value="5" ' + (ex.difficulty==5?'selected':'') + '>5 — Очень сложно</option></select></div>' +
+          '<div><label style="display:block;margin-bottom:5px;font-weight:600">🎯 Эффективность:</label>' +
+            '<select id="exEffectiveness" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+            '<option value="1" ' + (ex.effectiveness==1?'selected':'') + '>1 — Низкая</option>' +
+            '<option value="2" ' + (ex.effectiveness==2?'selected':'') + '>2 — Ниже среднего</option>' +
+            '<option value="3" ' + (ex.effectiveness==3?'selected':'') + '>3 — Средняя</option>' +
+            '<option value="4" ' + (ex.effectiveness==4?'selected':'') + '>4 — Высокая</option>' +
+            '<option value="5" ' + (ex.effectiveness==5?'selected':'') + '>5 — Максимальная</option></select></div>' +
         '</div>' +
-        
-        '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Категория:</label>' +
-          '<select id="exMuscleGroup" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
-            optionsHtml +
-          '</select>' +
-          '<div class="hint">💡 Выбери категорию или оставь "Без категории". Категории управляются в тулбаре выше.</div>' +
-        '</div>' +
-        
-        '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Описание / техника:</label>' +
-          '<textarea id="exDescription" rows="3" placeholder="Опиши правильное выполнение, на что обратить внимание..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em;resize:vertical">' + (ex ? (ex.description || '') : '') + '</textarea>' +
-          '<div class="hint">💡 Пошаговая инструкция или ключевые моменты</div>' +
-        '</div>' +
-        
-        '<div style="margin-bottom:12px">' +
-          '<label style="display:block;margin-bottom:5px;font-weight:600">Ссылка на видео:</label>' +
-          '<input type="text" id="exVideo" value="' + (ex ? (ex.videoUrl || '') : '') + '" placeholder="https://youtube.com/watch?v=... или https://vk.com/video..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
-          '<div class="hint">💡 YouTube, VK Видео, Rutube, Vimeo или прямая ссылка на mp4</div>' +
-        '</div>' +
-        
+        '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:5px;font-weight:600">📝 Описание:</label>' +
+          '<textarea id="exDescription" rows="3" placeholder="Техника выполнения..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em;resize:vertical">' + ex.description + '</textarea></div>' +
+        '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:5px;font-weight:600">🖼️ Картинка (URL):</label>' +
+          '<input type="text" id="exImage" value="' + ex.imageUrl + '" placeholder="https://example.com/image.jpg" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<div class="hint">💡 Прямая ссылка на изображение</div></div>' +
+        '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:5px;font-weight:600">📺 Видео (URL):</label>' +
+          '<input type="text" id="exVideo" value="' + ex.videoUrl + '" placeholder="YouTube, VK, Rutube..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em"></div>' +
+        '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:5px;font-weight:600">🎒 Инвентарь:</label>' +
+          '<input type="text" id="exInventory" value="' + ex.inventory + '" placeholder="гантели 10кг, коврик..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">' +
+          '<div class="hint">💡 Что понадобится</div></div>' +
+        '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:5px;font-weight:600">📌 Заметки:</label>' +
+          '<textarea id="exNotes" rows="2" placeholder="Личные заметки..." style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em;resize:vertical">' + ex.notes + '</textarea></div>' +
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
           '<button class="btn" style="padding:10px 20px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="document.getElementById(\'exFormModal\').remove()">Отмена</button>' +
           '<button class="btn" style="padding:10px 20px;background:var(--ok);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="ExercisesModule.saveExercise()">💾 Сохранить</button>' +
@@ -327,47 +251,40 @@ const ExercisesModule = {
 
   saveExercise: function() {
     var name = document.getElementById('exName').value.trim();
-    if (!name) { alert('⚠️ Укажи название упражнения'); return; }
-
+    if (!name) { alert('⚠️ Укажи название'); return; }
     var db = this.getDB();
     var exData = {
       name: name,
       muscleGroup: document.getElementById('exMuscleGroup').value,
+      difficulty: parseInt(document.getElementById('exDifficulty').value),
+      effectiveness: parseInt(document.getElementById('exEffectiveness').value),
       description: document.getElementById('exDescription').value.trim(),
+      imageUrl: document.getElementById('exImage').value.trim(),
       videoUrl: document.getElementById('exVideo').value.trim(),
+      inventory: document.getElementById('exInventory').value.trim(),
+      notes: document.getElementById('exNotes').value.trim(),
       updatedAt: Date.now()
     };
-
     if (this.editingId) {
-      for (var i = 0; i < db.length; i++) {
-        if (db[i].id === this.editingId) {
-          db[i] = Object.assign({}, db[i], exData);
-          break;
-        }
-      }
+      for (var i = 0; i < db.length; i++) if (db[i].id === this.editingId) { db[i] = Object.assign({}, db[i], exData); break; }
     } else {
       exData.id = 'ex_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       exData.createdAt = Date.now();
       db.push(exData);
     }
-
     this.saveDB(db);
     document.getElementById('exFormModal').remove();
     this.editingId = null;
     this.createExercisesScreen();
   },
 
-  editExercise: function(id) {
-    this.openExForm(id);
-  },
+  editExercise: function(id) { this.openExForm(id); },
 
   deleteExercise: function(id) {
-    if (!confirm('🗑️ Удалить упражнение? Это действие нельзя отменить.')) return;
+    if (!confirm('🗑️ Удалить упражнение?')) return;
     var db = this.getDB();
     var newDb = [];
-    for (var i = 0; i < db.length; i++) {
-      if (db[i].id !== id) newDb.push(db[i]);
-    }
+    for (var i = 0; i < db.length; i++) if (db[i].id !== id) newDb.push(db[i]);
     this.saveDB(newDb);
     this.createExercisesScreen();
   },
@@ -375,19 +292,18 @@ const ExercisesModule = {
   viewExercise: function(id) {
     var db = this.getDB();
     var ex = null;
-    for (var i = 0; i < db.length; i++) {
-      if (db[i].id === id) { ex = db[i]; break; }
-    }
+    for (var i = 0; i < db.length; i++) if (db[i].id === id) { ex = db[i]; break; }
     if (!ex) return;
 
+    var imageHtml = '';
+    if (ex.imageUrl) {
+      imageHtml = '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0"><h3 style="color:var(--acc);margin:0 0 10px 0">🖼️ Изображение</h3>' +
+        '<img src="' + ex.imageUrl + '" alt="' + ex.name + '" style="width:100%;border-radius:6px;max-height:300px;object-fit:cover" onerror="this.parentElement.innerHTML=\'<em>Не удалось загрузить изображение</em>\'"></div>';
+    }
     var videoHtml = '';
     if (ex.videoUrl) {
-      videoHtml = '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0">' +
-        '<h3 style="color:var(--acc);margin:0 0 10px 0">📺 Видео</h3>' +
-        '<div style="aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden">' +
-          '<a href="' + ex.videoUrl + '" target="_blank" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--lnk);text-decoration:none">▶️ Открыть видео</a>' +
-        '</div>' +
-      '</div>';
+      videoHtml = '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0"><h3 style="color:var(--acc);margin:0 0 10px 0">📺 Видео</h3>' +
+        '<a href="' + ex.videoUrl + '" target="_blank" style="display:block;padding:15px;background:var(--bg);border-radius:6px;color:var(--lnk);text-decoration:none;text-align:center">▶️ Открыть видео</a></div>';
     }
 
     var modal = document.createElement('div');
@@ -397,9 +313,15 @@ const ExercisesModule = {
       '<div class="ex-modal-content">' +
         '<button style="float:right;background:transparent;border:none;color:var(--text);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exViewModal\').remove()">×</button>' +
         '<h2 style="color:var(--acc);margin-top:0">' + ex.name + '</h2>' +
-        '<div style="font-size:0.9em;opacity:0.7;margin-bottom:15px">' + (ex.muscleGroup || '❓ Без категории') + '</div>' +
-        (ex.description ? '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0"><h3 style="color:var(--acc);margin:0 0 10px 0">📝 Описание</h3><p style="white-space:pre-wrap;margin:0">' + ex.description + '</p></div>' : '<div style="opacity:0.6;font-style:italic">Описание не добавлено</div>') +
-        videoHtml +
+        '<div style="font-size:0.9em;opacity:0.7;margin-bottom:10px">' + (ex.muscleGroup || '❓ Без категории') + '</div>' +
+        '<div style="display:flex;gap:15px;margin-bottom:15px;font-size:0.9em">' +
+          '<div>Сложность: <span class="stars">' + this.renderStars(ex.difficulty || 3) + '</span></div>' +
+          '<div>Эффективность: <span class="stars">' + this.renderStars(ex.effectiveness || 3) + '</span></div>' +
+        '</div>' +
+        (ex.inventory ? '<div style="background:var(--inp);padding:10px;border-radius:8px;margin:10px 0"><strong>🎒 Инвентарь:</strong> ' + ex.inventory + '</div>' : '') +
+        (ex.description ? '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0"><h3 style="color:var(--acc);margin:0 0 10px 0">📝 Описание</h3><p style="white-space:pre-wrap;margin:0">' + ex.description + '</p></div>' : '') +
+        imageHtml + videoHtml +
+        (ex.notes ? '<div style="background:var(--inp);padding:12px;border-radius:8px;margin:10px 0"><h3 style="color:var(--acc);margin:0 0 10px 0">📌 Заметки</h3><p style="white-space:pre-wrap;margin:0">' + ex.notes + '</p></div>' : '') +
         '<div style="display:flex;gap:10px;margin-top:15px">' +
           '<button class="btn" style="padding:10px 20px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="document.getElementById(\'exViewModal\').remove()">Закрыть</button>' +
           '<button class="btn" style="padding:10px 20px;background:var(--acc);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="document.getElementById(\'exViewModal\').remove();ExercisesModule.editExercise(\'' + ex.id + '\')">✏️ Редактировать</button>' +
