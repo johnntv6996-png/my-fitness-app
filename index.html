@@ -301,23 +301,27 @@ class ModuleManager {
     container.innerHTML = html;
   }
 
-  initializeUserInterface() {
-    Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
-    var nav = document.getElementById('userNav');
-    if (nav) nav.innerHTML = '';
-    this.loadedModules.forEach(function(module, id) {
-      if (module && module.init) {
-        try {
-          Logger.log('🔄 Вызов init() для модуля ' + id + '...', 'info');
-          module.init();
-          Logger.log('✅ Модуль ' + id + ' инициализирован', 'info');
-        } catch (error) {
-          Logger.log('❌ Ошибка инициализации ' + id + ': ' + error.message, 'error');
-          console.error('Error in module ' + id + ':', error);
-        }
-      }
-    });
-  }
+	initializeUserInterface: function() {
+		Logger.log('🎨 Инициализация пользовательского интерфейса...', 'info');
+		var nav = document.getElementById('userNav');
+		if (nav) nav.innerHTML = '';
+		this.loadedModules.forEach(function(module, id) {
+			if (module && module.init) {
+				try {
+					Logger.log('🔄 Вызов init() для модуля ' + id + '...', 'info');
+					module.init();
+					Logger.log('✅ Модуль ' + id + ' инициализирован', 'info');
+				} catch (error) {
+					Logger.log('❌ Ошибка инициализации ' + id + ': ' + error.message, 'error');
+					console.error('Error in module ' + id + ':', error);
+				}
+			}
+		});
+		// Включить drag-to-reorder после добавления всех кнопок
+		if (typeof Core !== 'undefined' && Core.enableDragReorder) {
+			Core.enableDragReorder();
+		}
+	}
 
   async retryModule(id) {
     var config = MODULE_REGISTRY[id];

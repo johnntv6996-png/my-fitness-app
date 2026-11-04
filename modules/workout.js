@@ -3,18 +3,12 @@
 const WorkoutModule = {
   currentExerciseId: null,
   expandedExerciseId: null,
+  modalElement: null,
 
   init: function() {
     console.log('🏋️ Workout module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль тренировки инициализирован', 'info');
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() { WorkoutModule.setup(); });
-    } else { this.setup(); }
-  },
-
-  setup: function() {
-    this.createWorkoutScreen();
-    if (typeof Core !== 'undefined') Core.addNavButton('Тренировка', 'workout', '🏋️');
+    // НЕ добавляем кнопку в навигацию — тренировка запускается из welcome
   },
 
   getStats: function() {
@@ -37,133 +31,137 @@ const WorkoutModule = {
   saveHistory: function(h) { if (typeof FTStorage !== 'undefined') FTStorage.set('history', h); },
   saveStats: function(s) { if (typeof FTStorage !== 'undefined') FTStorage.set('stats', s); },
   getTodayIndex: function() { return (new Date().getDay() + 6) % 7; },
+  renderStars: function(c) { var s = ''; for (var i = 1; i <= 5; i++) s += i <= c ? '★' : '☆'; return s; },
 
-  renderStars: function(c) {
-    var s = '';
-    for (var i = 1; i <= 5; i++) s += i <= c ? '★' : '☆';
-    return s;
-  },
-
-  createWorkoutScreen: function() {
-    var screen = document.getElementById('screen-workout');
-    if (!screen) {
-      screen = document.createElement('div');
-      screen.id = 'screen-workout';
-      screen.className = 'screen';
-      document.getElementById('userInterface').appendChild(screen);
-    }
-
-    var stats = this.getStats();
+  // Главная функция — открыть модалку тренировки
+  openWorkoutModal: function() {
+    var self = this;
     var plan = this.getPlan();
     var db = this.getDB();
     var todayIdx = this.getTodayIndex();
     var todayPlan = plan[todayIdx] || { dayName: 'Сегодня', muscleGroup: '', exercises: [] };
+    var stats = this.getStats();
     var xpNeeded = stats.level * 100;
     var xpPercent = Math.min(100, Math.round((stats.xp / xpNeeded) * 100));
 
-    var css = '<style>' +
-      '.workout-status-bar { background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%); border-radius:10px; padding:10px 14px; margin-bottom:15px; border:1px solid var(--acc); }' +
-      '.workout-ex-card { background:var(--card); border-radius:10px; margin-bottom:10px; border-left:4px solid var(--acc); overflow:hidden; }' +
-      '.workout-ex-header { padding:12px 15px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }' +
-      '.workout-ex-header:hover { background:rgba(255,255,255,0.05); }' +
-      '.workout-ex-body { padding:0 15px 15px; border-top:1px solid var(--brd); }' +
-      '.workout-set { display:flex; align-items:center; gap:10px; padding:10px; background:var(--inp); border-radius:8px; margin-bottom:6px; }' +
-      '.workout-set.done { background:rgba(144,238,144,0.15); border-left:3px solid var(--ok); }' +
-      '.workout-set.missed { background:rgba(231,76,60,0.15); border-left:3px solid var(--err); }' +
-      '.go-btn { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--acc) 0%, #FFF8DC 100%); color:#2c3e50; border:none; font-size:0.9em; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(255,215,0,0.4); transition:all 0.2s; }' +
-      '.go-btn:hover { transform:scale(1.05); box-shadow:0 6px 20px rgba(255,215,0,0.6); }' +
-      '.go-btn:active { transform:scale(0.95); }' +
-      '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
-      '.stars { color:var(--acc); letter-spacing:2px; }' +
-      '.survey-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; display:flex; justify-content:center; align-items:center; padding:15px; }' +
-      '.survey-modal-content { background:var(--card); padding:20px; border-radius:12px; width:100%; max-width:400px; }' +
-    '</style>';
+    // Удалить старую модалку если есть
+    this.closeWorkoutModal();
+
+    var modal = document.createElement('div');
+    modal.className = 'workout-modal';
+    modal.id = 'workoutModal';
+
+    var content = document.createElement('div');
+    content.className = 'workout-modal-content';
 
     // Статус-бар
-    var statusBarHtml = '<div class="workout-status-bar">';
-    statusBarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-    statusBarHtml += '<div style="display:flex;align-items:center;gap:8px">';
-    statusBarHtml += '<span style="font-size:1.3em">⭐</span>';
-    statusBarHtml += '<span style="font-size:1.3em;font-weight:bold;color:var(--acc)">' + stats.level + '</span>';
-    statusBarHtml += '<span style="font-size:0.75em;opacity:0.7">уровень</span>';
-    statusBarHtml += '</div>';
-    statusBarHtml += '<div style="text-align:right">';
-    statusBarHtml += '<div style="font-size:0.75em;opacity:0.7">XP</div>';
-    statusBarHtml += '<div style="font-size:0.95em;font-weight:bold">' + stats.xp + '/' + xpNeeded + '</div>';
-    statusBarHtml += '</div></div>';
-    statusBarHtml += '<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--brd)">';
-    statusBarHtml += '<div style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--acc), var(--warn));border-radius:3px;transition:width 0.5s"></div>';
-    statusBarHtml += '</div>';
-    statusBarHtml += '<div style="text-align:center;font-size:0.7em;opacity:0.6;margin-top:4px">До следующего уровня: ' + (xpNeeded - stats.xp) + ' XP</div>';
-    statusBarHtml += '</div>';
+    var statusBar = document.createElement('div');
+    statusBar.style.cssText = 'background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%); border-radius:10px 10px 0 0; padding:10px 14px; border-bottom:1px solid var(--acc);';
+    statusBar.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3em">⭐</span><span style="font-size:1.3em;font-weight:bold;color:var(--acc)">' + stats.level + '</span><span style="font-size:0.75em;opacity:0.7">уровень</span></div>' +
+      '<div style="text-align:right"><div style="font-size:0.75em;opacity:0.7">XP</div><div style="font-size:0.95em;font-weight:bold">' + stats.xp + '/' + xpNeeded + '</div></div></div>' +
+      '<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--brd)"><div style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--acc), var(--warn));border-radius:3px"></div></div>' +
+      '<div style="text-align:center;font-size:0.7em;opacity:0.6;margin-top:4px">До следующего уровня: ' + (xpNeeded - stats.xp) + ' XP</div>';
+    content.appendChild(statusBar);
+
+    // Кнопка закрытия
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'position:sticky; top:10px; float:right; background:var(--card); border:1px solid var(--brd); color:var(--text); width:36px; height:36px; border-radius:50%; font-size:1.2em; cursor:pointer; z-index:10; margin:10px';
+    closeBtn.onclick = function() { self.closeWorkoutModal(); };
+    content.appendChild(closeBtn);
 
     // Заголовок дня
-    var dayHeaderHtml = '<div style="text-align:center;margin-bottom:15px">';
-    dayHeaderHtml += '<h2 style="color:var(--acc);margin:0 0 5px 0">🏋️ ' + todayPlan.dayName + '</h2>';
-    dayHeaderHtml += '<div style="font-size:0.9em;opacity:0.7">' + (todayPlan.muscleGroup || 'Тренировка') + ' · ' + todayPlan.exercises.length + ' упражнений</div>';
-    dayHeaderHtml += '</div>';
+    var header = document.createElement('div');
+    header.style.cssText = 'text-align:center; padding:10px 15px;';
+    header.innerHTML = '<h2 style="color:var(--acc);margin:0 0 5px 0">🏋️ ' + todayPlan.dayName + '</h2>' +
+      '<div style="font-size:0.9em;opacity:0.7">' + (todayPlan.muscleGroup || 'Тренировка') + ' · ' + todayPlan.exercises.length + ' упражнений</div>';
+    content.appendChild(header);
 
     // Список упражнений
-    var exercisesHtml = '';
     if (todayPlan.exercises.length === 0) {
-      exercisesHtml = '<div style="text-align:center;padding:30px;opacity:0.6"><div style="font-size:3em;margin-bottom:10px">📝</div><p>План на сегодня пуст</p>' +
-        '<button class="btn" style="margin-top:10px;padding:10px 20px;background:var(--acc);color:#2c3e50;border:none;border-radius:6px;cursor:pointer" onclick="Core.navigate(\'plan\')">Составить план</button></div>';
+      var empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center; padding:30px; opacity:0.6;';
+      empty.innerHTML = '<div style="font-size:3em;margin-bottom:10px">📝</div><p>План на сегодня пуст</p>';
+      content.appendChild(empty);
     } else {
       for (var i = 0; i < todayPlan.exercises.length; i++) {
-        var exRef = todayPlan.exercises[i];
-        var ex = null;
-        for (var j = 0; j < db.length; j++) if (db[j].id === exRef.id) { ex = db[j]; break; }
-        if (!ex) continue;
+        (function(idx) {
+          var exRef = todayPlan.exercises[idx];
+          var ex = null;
+          for (var j = 0; j < db.length; j++) if (db[j].id === exRef.id) { ex = db[j]; break; }
+          if (!ex) return;
 
-        var isExpanded = this.expandedExerciseId === ex.id;
-        var setsStr = exRef.sets || '3×10';
-        var setsMatch = setsStr.match(/(\d+)\s*[×xх*]\s*(\d+)/i);
-        var numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
-        var numReps = setsMatch ? parseInt(setsMatch[2]) : 10;
+          var card = document.createElement('div');
+          card.style.cssText = 'background:var(--card); border-radius:10px; margin:10px 15px; border-left:4px solid var(--acc); overflow:hidden;';
 
-        exercisesHtml += '<div class="workout-ex-card">';
-        exercisesHtml += '<div class="workout-ex-header" onclick="WorkoutModule.toggleExercise(\'' + ex.id + '\')">';
-        exercisesHtml += '<div style="flex:1">';
-        exercisesHtml += '<div style="font-weight:700;font-size:1.05em;color:var(--acc)">' + (i + 1) + '. ' + ex.name + '</div>';
-        exercisesHtml += '<div style="font-size:0.8em;opacity:0.7">' + (ex.muscleGroup || '❓') + ' · ' + setsStr + '</div>';
-        exercisesHtml += '</div>';
-        exercisesHtml += '<div style="font-size:1.2em;opacity:0.7">' + (isExpanded ? '▼' : '▶') + '</div>';
-        exercisesHtml += '</div>';
+          var setsStr = exRef.sets || '3×10';
+          var setsMatch = setsStr.match(/(\d+)\s*[×xх*]\s*(\d+)/i);
+          var numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
+          var numReps = setsMatch ? parseInt(setsMatch[2]) : 10;
 
-        if (isExpanded) {
-          exercisesHtml += '<div class="workout-ex-body">';
-          if (ex.imageUrl) exercisesHtml += '<div style="margin-bottom:10px;border-radius:8px;overflow:hidden;max-height:200px"><img src="' + ex.imageUrl + '" style="width:100%;object-fit:cover" onerror="this.parentElement.style.display=\'none\'"></div>';
-          if (ex.videoUrl) exercisesHtml += '<div style="margin-bottom:10px"><a href="' + ex.videoUrl + '" target="_blank" style="display:inline-block;padding:6px 12px;background:var(--brd);border-radius:6px;color:var(--text);text-decoration:none;font-size:0.85em">📺 Смотреть видео</a></div>';
-          if (ex.description) exercisesHtml += '<div style="background:var(--inp);padding:10px;border-radius:8px;margin-bottom:10px;font-size:0.9em"><strong>📝 Техника:</strong><div style="white-space:pre-wrap;margin-top:5px">' + ex.description + '</div></div>';
-          if (ex.inventory) exercisesHtml += '<div style="background:var(--inp);padding:8px 10px;border-radius:8px;margin-bottom:10px;font-size:0.85em">🎒 <strong>Инвентарь:</strong> ' + ex.inventory + '</div>';
-          exercisesHtml += '<div style="display:flex;gap:15px;margin-bottom:12px;font-size:0.85em"><div>Сложность: <span class="stars">' + this.renderStars(ex.difficulty || 3) + '</span></div><div>Эффективность: <span class="stars">' + this.renderStars(ex.effectiveness || 3) + '</span></div></div>';
-          if (ex.notes) exercisesHtml += '<div style="background:rgba(255,215,0,0.1);padding:8px 10px;border-radius:8px;margin-bottom:12px;font-size:0.85em;border-left:3px solid var(--acc)">📌 <strong>Заметки:</strong> ' + ex.notes + '</div>';
+          var headerDiv = document.createElement('div');
+          headerDiv.style.cssText = 'padding:12px 15px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;';
+          headerDiv.innerHTML = '<div style="flex:1"><div style="font-weight:700;font-size:1.05em;color:var(--acc)">' + (idx + 1) + '. ' + ex.name + '</div><div style="font-size:0.8em;opacity:0.7">' + (ex.muscleGroup || '❓') + ' · ' + setsStr + '</div></div><div style="font-size:1.2em;opacity:0.7" class="ex-arrow">▶</div>';
 
-          exercisesHtml += '<div style="margin-top:12px"><div style="font-weight:600;margin-bottom:8px;font-size:0.95em">🏋️ Подходы (' + numSets + ' × ' + numReps + ')</div>';
+          var bodyDiv = document.createElement('div');
+          bodyDiv.style.cssText = 'display:none; padding:0 15px 15px; border-top:1px solid var(--brd);';
+
+          if (ex.imageUrl) bodyDiv.innerHTML += '<div style="margin:10px 0;border-radius:8px;overflow:hidden;max-height:200px"><img src="' + ex.imageUrl + '" style="width:100%;object-fit:cover" onerror="this.parentElement.style.display=\'none\'"></div>';
+          if (ex.videoUrl) bodyDiv.innerHTML += '<div style="margin:10px 0"><a href="' + ex.videoUrl + '" target="_blank" style="display:inline-block;padding:6px 12px;background:var(--brd);border-radius:6px;color:var(--text);text-decoration:none;font-size:0.85em">📺 Смотреть видео</a></div>';
+          if (ex.description) bodyDiv.innerHTML += '<div style="background:var(--inp);padding:10px;border-radius:8px;margin:10px 0;font-size:0.9em"><strong>📝 Техника:</strong><div style="white-space:pre-wrap;margin-top:5px">' + ex.description + '</div></div>';
+          if (ex.inventory) bodyDiv.innerHTML += '<div style="background:var(--inp);padding:8px 10px;border-radius:8px;margin:10px 0;font-size:0.85em">🎒 <strong>Инвентарь:</strong> ' + ex.inventory + '</div>';
+          bodyDiv.innerHTML += '<div style="display:flex;gap:15px;margin:10px 0;font-size:0.85em"><div>Сложность: <span style="color:var(--acc);letter-spacing:2px">' + self.renderStars(ex.difficulty || 3) + '</span></div><div>Эффективность: <span style="color:var(--acc);letter-spacing:2px">' + self.renderStars(ex.effectiveness || 3) + '</span></div></div>';
+          if (ex.notes) bodyDiv.innerHTML += '<div style="background:rgba(255,215,0,0.1);padding:8px 10px;border-radius:8px;margin:10px 0;font-size:0.85em;border-left:3px solid var(--acc)">📌 <strong>Заметки:</strong> ' + ex.notes + '</div>';
+
+          bodyDiv.innerHTML += '<div style="margin-top:12px"><div style="font-weight:600;margin-bottom:8px;font-size:0.95em">🏋️ Подходы (' + numSets + ' × ' + numReps + ')</div></div>';
+          var setsContainer = document.createElement('div');
+          setsContainer.id = 'sets-container-' + ex.id;
           for (var s = 0; s < numSets; s++) {
-            exercisesHtml += '<div class="workout-set"><div style="flex:1"><div style="font-weight:600">Подход ' + (s + 1) + ' <span style="font-size:0.85em;opacity:0.7">· ' + numReps + ' повт.</span></div></div><span style="font-size:1.2em;opacity:0.5">○</span></div>';
+            var setDiv = document.createElement('div');
+            setDiv.className = 'workout-set';
+            setDiv.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px; background:var(--inp); border-radius:8px; margin-bottom:6px;';
+            setDiv.innerHTML = '<div style="flex:1"><div style="font-weight:600">Подход ' + (s + 1) + ' <span style="font-size:0.85em;opacity:0.7">· ' + numReps + ' повт.</span></div></div><span style="font-size:1.2em;opacity:0.5">○</span>';
+            setsContainer.appendChild(setDiv);
           }
-          exercisesHtml += '</div>';
+          bodyDiv.appendChild(setsContainer);
 
-          exercisesHtml += '<div style="text-align:center;margin-top:15px">';
-          exercisesHtml += '<button class="go-btn" onclick="WorkoutModule.startExercise(\'' + ex.id + '\')">ПОГНАЛИ!</button>';
-          exercisesHtml += '<div class="hint" style="margin-top:8px">Начать упражнение</div>';
-          exercisesHtml += '</div>';
-          exercisesHtml += '</div>';
-        }
-        exercisesHtml += '</div>';
+          var goBtn = document.createElement('button');
+          goBtn.className = 'go-btn';
+          goBtn.textContent = 'ПОГНАЛИ!';
+          goBtn.style.cssText = 'display:block; margin:15px auto; width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--acc) 0%, #FFF8DC 100%); color:#2c3e50; border:none; font-size:0.9em; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(255,215,0,0.4); transition:all 0.2s;';
+          goBtn.onmouseover = function() { this.style.transform = 'scale(1.05)'; };
+          goBtn.onmouseout = function() { this.style.transform = 'scale(1)'; };
+          goBtn.onclick = function() { self.startExercise(ex.id); };
+          bodyDiv.appendChild(goBtn);
+
+          headerDiv.onclick = function() {
+            var isOpen = bodyDiv.style.display !== 'none';
+            bodyDiv.style.display = isOpen ? 'none' : 'block';
+            headerDiv.querySelector('.ex-arrow').textContent = isOpen ? '▶' : '▼';
+          };
+
+          card.appendChild(headerDiv);
+          card.appendChild(bodyDiv);
+          content.appendChild(card);
+        })(i);
       }
     }
 
-    screen.innerHTML = css +
-      '<div style="padding:15px;max-width:500px;margin:0 auto">' +
-        statusBarHtml + dayHeaderHtml + exercisesHtml +
-      '</div>';
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    this.modalElement = modal;
   },
 
-  toggleExercise: function(exId) {
-    this.expandedExerciseId = this.expandedExerciseId === exId ? null : exId;
-    this.createWorkoutScreen();
+  closeWorkoutModal: function() {
+    if (this.modalElement) {
+      this.modalElement.remove();
+      this.modalElement = null;
+    }
+    var old = document.getElementById('workoutModal');
+    if (old) old.remove();
+    this.currentExerciseId = null;
+    this.expandedExerciseId = null;
   },
 
   startExercise: function(exId) {
@@ -180,27 +178,66 @@ const WorkoutModule = {
     var numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
     var numReps = setsMatch ? parseInt(setsMatch[2]) : 10;
 
-    var modal = document.createElement('div');
-    modal.className = 'survey-modal';
-    modal.id = 'workoutModal';
+    var self = this;
 
-    var setsHtml = '';
+    // Создать модалку подходов
+    var subModal = document.createElement('div');
+    subModal.className = 'workout-modal';
+    subModal.id = 'exerciseModal';
+    subModal.style.zIndex = '2100';
+
+    var subContent = document.createElement('div');
+    subContent.className = 'workout-modal-content';
+    subContent.style.maxWidth = '400px';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'float:right; background:transparent; border:none; color:var(--text); font-size:1.5em; cursor:pointer';
+    closeBtn.onclick = function() { subModal.remove(); };
+    subContent.appendChild(closeBtn);
+
+    var title = document.createElement('h2');
+    title.style.cssText = 'color:var(--acc); margin-top:0; text-align:center';
+    title.textContent = '🏋️ Упражнение';
+    subContent.appendChild(title);
+
+    var setsContainer = document.createElement('div');
+    setsContainer.id = 'modalSetsContainer';
+
     for (var s = 0; s < numSets; s++) {
-      setsHtml += '<div class="workout-set" id="modal-set-' + s + '">';
-      setsHtml += '<div style="flex:1"><div style="font-weight:600">Подход ' + (s + 1) + '</div><div style="font-size:0.85em;opacity:0.7">' + numReps + ' повторений</div></div>';
-      setsHtml += '<button class="btn" style="padding:8px 16px;background:var(--ok);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="WorkoutModule.completeSet(' + s + ',' + numReps + ')">✅ Выполнено</button>';
-      setsHtml += '</div>';
+      (function(setIdx) {
+        var setDiv = document.createElement('div');
+        setDiv.className = 'workout-set';
+        setDiv.id = 'modal-set-' + setIdx;
+        setDiv.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px; background:var(--inp); border-radius:8px; margin-bottom:6px;';
+
+        var info = document.createElement('div');
+        info.style.flex = '1';
+        info.innerHTML = '<div style="font-weight:600">Подход ' + (setIdx + 1) + '</div><div style="font-size:0.85em;opacity:0.7">' + numReps + ' повторений</div>';
+        setDiv.appendChild(info);
+
+        var btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = '✅ Выполнено';
+        btn.style.cssText = 'padding:8px 16px; background:var(--ok); color:#2c3e50; border:none; border-radius:6px; cursor:pointer; font-weight:700';
+        btn.onclick = function() { self.completeSet(setIdx, numReps); };
+        setDiv.appendChild(btn);
+
+        setsContainer.appendChild(setDiv);
+      })(s);
     }
 
-    modal.innerHTML =
-      '<div class="survey-modal-content">' +
-        '<button style="float:right;background:transparent;border:none;color:var(--text);font-size:1.5em;cursor:pointer" onclick="WorkoutModule.closeWorkoutModal()">×</button>' +
-        '<h2 style="color:var(--acc);margin-top:0">🏋️ Упражнение</h2>' +
-        '<div id="modalSetsContainer">' + setsHtml + '</div>' +
-        '<div style="text-align:center;margin-top:15px">' +
-          '<button class="btn" style="padding:10px 20px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="WorkoutModule.closeWorkoutModal()">Закрыть</button>' +
-        '</div></div>';
-    document.body.appendChild(modal);
+    subContent.appendChild(setsContainer);
+
+    var closeAllBtn = document.createElement('button');
+    closeAllBtn.className = 'btn';
+    closeAllBtn.textContent = 'Закрыть';
+    closeAllBtn.style.cssText = 'width:100%; padding:10px; margin-top:15px; background:var(--brd); color:var(--text); border:none; border-radius:6px; cursor:pointer';
+    closeAllBtn.onclick = function() { subModal.remove(); };
+    subContent.appendChild(closeAllBtn);
+
+    subModal.appendChild(subContent);
+    document.body.appendChild(subModal);
   },
 
   completeSet: function(setIdx, numReps) {
@@ -230,6 +267,7 @@ const WorkoutModule = {
   },
 
   showMiniSurvey: function(exId, setIdx, numReps, dayRecord, exDetail, history) {
+    // Проверяем настройку
     if (typeof FTStorage !== 'undefined') {
       var settings = FTStorage.get('settings') || {};
       if (settings.disableMiniSurvey) {
@@ -238,26 +276,81 @@ const WorkoutModule = {
       }
     }
 
+    var self = this;
+
+    // Закрыть модалку упражнения
+    var exModal = document.getElementById('exerciseModal');
+    if (exModal) exModal.remove();
+
+    // Создать модалку мини-опроса
     var modal = document.createElement('div');
-    modal.className = 'survey-modal';
+    modal.className = 'workout-modal';
     modal.id = 'miniSurveyModal';
-    modal.innerHTML =
-      '<div class="survey-modal-content">' +
-        '<h2 style="color:var(--acc);margin-top:0;text-align:center">📋 Подход ' + (setIdx + 1) + '</h2>' +
-        '<p style="text-align:center;margin-bottom:15px">Удалось выполнить все ' + numReps + ' повторений?</p>' +
-        '<div style="display:flex;flex-direction:column;gap:8px">' +
-          '<button class="btn" style="padding:12px;background:var(--ok);color:#2c3e50;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1em" onclick="WorkoutModule.answerMiniSurvey(\'yes\',' + setIdx + ',' + numReps + ')">✅ Да, все повторения</button>' +
-          '<button class="btn" style="padding:12px;background:#FFB347;color:#3a2a0a;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1em" onclick="WorkoutModule.answerMiniSurvey(\'partial\',' + setIdx + ',' + numReps + ')">⚠️ Частично</button>' +
-          '<button class="btn" style="padding:12px;background:#e74c3c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1em" onclick="WorkoutModule.answerMiniSurvey(\'no\',' + setIdx + ',' + numReps + ')">❌ Нет</button>' +
-          '<button class="btn" style="padding:10px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer;font-size:0.9em" onclick="WorkoutModule.answerMiniSurvey(\'skip\',' + setIdx + ',' + numReps + ')">⏭ Пропустить</button>' +
-        '</div>' +
-        '<div style="margin-top:12px;text-align:center">' +
-          '<label style="font-size:0.85em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">' +
-            '<input type="checkbox" id="dontAskAgain" style="width:16px;height:16px;accent-color:var(--acc)"> ' +
-            '<span>Больше не спрашивать</span>' +
-          '</label>' +
-        '</div>' +
-      '</div>';
+    modal.style.zIndex = '2200';
+
+    var content = document.createElement('div');
+    content.className = 'workout-modal-content';
+    content.style.maxWidth = '400px';
+
+    var title = document.createElement('h2');
+    title.style.cssText = 'color:var(--acc); margin-top:0; text-align:center';
+    title.textContent = '📋 Подход ' + (setIdx + 1);
+    content.appendChild(title);
+
+    var question = document.createElement('p');
+    question.style.cssText = 'text-align:center; margin-bottom:15px';
+    question.textContent = 'Удалось выполнить все ' + numReps + ' повторений?';
+    content.appendChild(question);
+
+    var buttonsDiv = document.createElement('div');
+    buttonsDiv.style.cssText = 'display:flex; flex-direction:column; gap:8px';
+
+    var btnYes = document.createElement('button');
+    btnYes.className = 'btn';
+    btnYes.textContent = '✅ Да, все повторения';
+    btnYes.style.cssText = 'padding:12px; background:var(--ok); color:#2c3e50; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:1em';
+    btnYes.onclick = function() { self.answerMiniSurvey('yes', setIdx, numReps); };
+    buttonsDiv.appendChild(btnYes);
+
+    var btnPartial = document.createElement('button');
+    btnPartial.className = 'btn';
+    btnPartial.textContent = '⚠️ Частично';
+    btnPartial.style.cssText = 'padding:12px; background:#FFB347; color:#3a2a0a; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:1em';
+    btnPartial.onclick = function() { self.answerMiniSurvey('partial', setIdx, numReps); };
+    buttonsDiv.appendChild(btnPartial);
+
+    var btnNo = document.createElement('button');
+    btnNo.className = 'btn';
+    btnNo.textContent = '❌ Нет';
+    btnNo.style.cssText = 'padding:12px; background:#e74c3c; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:1em';
+    btnNo.onclick = function() { self.answerMiniSurvey('no', setIdx, numReps); };
+    buttonsDiv.appendChild(btnNo);
+
+    var btnSkip = document.createElement('button');
+    btnSkip.className = 'btn';
+    btnSkip.textContent = '⏭ Пропустить';
+    btnSkip.style.cssText = 'padding:10px; background:var(--brd); color:var(--text); border:none; border-radius:6px; cursor:pointer; font-size:0.9em';
+    btnSkip.onclick = function() { self.answerMiniSurvey('skip', setIdx, numReps); };
+    buttonsDiv.appendChild(btnSkip);
+
+    content.appendChild(buttonsDiv);
+
+    var checkboxDiv = document.createElement('div');
+    checkboxDiv.style.cssText = 'margin-top:12px; text-align:center';
+    var label = document.createElement('label');
+    label.style.cssText = 'font-size:0.85em; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px';
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'dontAskAgain';
+    checkbox.style.cssText = 'width:16px; height:16px; accent-color:var(--acc)';
+    var span = document.createElement('span');
+    span.textContent = 'Больше не спрашивать';
+    label.appendChild(checkbox);
+    label.appendChild(span);
+    checkboxDiv.appendChild(label);
+    content.appendChild(checkboxDiv);
+
+    modal.appendChild(content);
     document.body.appendChild(modal);
   },
 
@@ -272,6 +365,7 @@ const WorkoutModule = {
     for (var i = 0; i < dayRecord.details.length; i++) if (dayRecord.details[i].exId === exId) { exDetail = dayRecord.details[i]; break; }
     if (!exDetail) return;
 
+    // Чекбокс "Больше не спрашивать"
     var dontAskCheckbox = document.getElementById('dontAskAgain');
     if (dontAskCheckbox && dontAskCheckbox.checked) {
       if (typeof FTStorage !== 'undefined') {
@@ -281,18 +375,24 @@ const WorkoutModule = {
       }
     }
 
+    // Закрыть модалку мини-опроса
+    var miniModal = document.getElementById('miniSurveyModal');
+    if (miniModal) miniModal.remove();
+
     var setStatus = 'done';
     var partialReps = null;
-    if (answer === 'yes') setStatus = 'done';
-    else if (answer === 'partial') {
+
+    if (answer === 'yes') {
+      setStatus = 'done';
+    } else if (answer === 'partial') {
       var repsInput = prompt('Сколько повторений удалось выполнить? (из ' + numReps + ')', Math.floor(numReps * 0.7));
       partialReps = parseInt(repsInput) || 0;
       setStatus = partialReps > 0 ? 'partial' : 'missed';
-    } else if (answer === 'no') setStatus = 'missed';
-    else if (answer === 'skip') setStatus = 'done';
-
-    var miniModal = document.getElementById('miniSurveyModal');
-    if (miniModal) miniModal.remove();
+    } else if (answer === 'no') {
+      setStatus = 'missed';
+    } else if (answer === 'skip') {
+      setStatus = 'done';
+    }
 
     this.markSetDone(exId, setIdx, setStatus, partialReps, dayRecord, exDetail, history);
   },
@@ -318,9 +418,11 @@ const WorkoutModule = {
     this.saveStats(stats);
     this.saveHistory(history);
 
+    // Обновить UI в модалке упражнения
     var setEl = document.getElementById('modal-set-' + setIdx);
     if (setEl) {
-      setEl.className = 'workout-set ' + setStatus;
+      setEl.style.background = setStatus === 'done' ? 'rgba(144,238,144,0.15)' : setStatus === 'missed' ? 'rgba(231,76,60,0.15)' : 'rgba(255,179,71,0.15)';
+      setEl.style.borderLeft = '3px solid ' + (setStatus === 'done' ? 'var(--ok)' : setStatus === 'missed' ? 'var(--err)' : '#FFB347');
       var btn = setEl.querySelector('button');
       if (btn) {
         if (setStatus === 'done') { btn.textContent = '✅ Выполнено'; btn.disabled = true; btn.style.opacity = '0.6'; }
@@ -329,6 +431,7 @@ const WorkoutModule = {
       }
     }
 
+    // Проверить завершение упражнения
     var plan = this.getPlan();
     var todayIdx = this.getTodayIndex();
     var todayPlan = plan[todayIdx];
@@ -339,22 +442,19 @@ const WorkoutModule = {
       var setsMatch = setsStr.match(/(\d+)\s*[×xх*]\s*(\d+)/i);
       var numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
       var allDone = true;
-      for (var s = 0; s < numSets; s++) if (!exDetail.sets[s] || exDetail.sets[s] === 'pending') { allDone = false; break; }
+      for (var s = 0; s < numSets; s++) if (!exDetail.sets[s]) { allDone = false; break; }
       if (allDone) {
         var self = this;
         setTimeout(function() {
           alert('🎉 Упражнение завершено! +' + (5 * numSets) + ' XP');
-          WorkoutModule.closeWorkoutModal();
-          self.createWorkoutScreen();
+          var exModal = document.getElementById('exerciseModal');
+          if (exModal) exModal.remove();
+          // Обновить главную модалку
+          self.closeWorkoutModal();
+          self.openWorkoutModal();
         }, 300);
       }
     }
-  },
-
-  closeWorkoutModal: function() {
-    var modal = document.getElementById('workoutModal');
-    if (modal) modal.remove();
-    this.currentExerciseId = null;
   }
 };
 
