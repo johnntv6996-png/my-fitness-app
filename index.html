@@ -101,7 +101,7 @@ body {
   -webkit-text-fill-color: var(--accent-gold);
 }
 
-/* HAMBURGER */
+/* HAMBURGER - теперь слева */
 .hamburger {
   width: 44px;
   height: 44px;
@@ -116,6 +116,7 @@ body {
   gap: 5px;
   transition: all var(--transition-fast);
   flex-shrink: 0;
+  order: -1; /* Перемещаем влево */
 }
 
 .hamburger:hover {
@@ -233,12 +234,6 @@ body {
   font-size: 1.3em;
   width: 24px;
   text-align: center;
-}
-
-.sidebar-divider {
-  height: 1px;
-  background: var(--border-subtle);
-  margin: 16px 24px;
 }
 
 /* MAIN CONTENT */
@@ -432,23 +427,17 @@ body {
     <div class="sidebar-section-title">Навигация</div>
     <!-- Кнопки добавляются динамически -->
   </div>
-  <div class="sidebar-divider"></div>
-  <div class="sidebar-section">
-    <div class="sidebar-item" onclick="toggleSidebar(); switchMode('dev')">
-      <i class="ph ph-code"></i> Панель разработчика
-    </div>
-  </div>
 </aside>
 
 <!-- HEADER -->
 <div style="max-width:1200px;margin:0 auto;padding:10px">
   <div class="header" id="mainHeader" onclick="goHome()">
-    <h1><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
     <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()">
       <span></span>
       <span></span>
       <span></span>
     </button>
+    <h1><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
   </div>
 </div>
 
@@ -686,6 +675,8 @@ class ModuleManager {
         }
       }
     });
+    // Добавляем пункт "Панель разработчика" после всех модулей
+    addDevMenuItem();
   }
 
   async retryModule(id) {
@@ -721,6 +712,31 @@ class ModuleManager {
       location.reload();
     }
   }
+}
+
+// Добавляем пункт "Панель разработчика" как обычный пункт меню
+function addDevMenuItem() {
+  var menu = document.getElementById('sidebarMenu');
+  if (!menu) return;
+  // Проверяем, не добавлен ли уже
+  if (menu.querySelector('[data-screen="dev"]')) return;
+  
+  var item = document.createElement('div');
+  item.className = 'sidebar-item';
+  item.setAttribute('data-screen', 'dev');
+  item.innerHTML = '<i class="ph ph-code"></i> Панель разработчика';
+  item.onclick = function() {
+    // Закрываем sidebar
+    if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+    // Переключаем режим
+    switchMode('dev');
+    // Обновляем активный пункт
+    document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
+    item.classList.add('active');
+    // Скролл вверх
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  menu.appendChild(item);
 }
 
 var moduleManager = new ModuleManager();

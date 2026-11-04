@@ -19,15 +19,32 @@ const CoreModule = {
   },
 
   navigate: function(screenId) {
+    // Если это панель разработчика - обрабатываем отдельно
+    if (screenId === 'dev') {
+      if (typeof switchMode === 'function') switchMode('dev');
+      document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
+      var devItem = document.querySelector('.sidebar-item[data-screen="dev"]');
+      if (devItem) devItem.classList.add('active');
+      return;
+    }
+    
+    // Обычная навигация
     document.querySelectorAll('#userInterface .screen').forEach(function(s) { s.classList.remove('active'); });
     var target = document.getElementById('screen-' + screenId);
     if (target) {
       target.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    
+    // Переключаем режим на user если был dev
+    if (typeof switchMode === 'function') switchMode('user');
+    
+    // Обновляем активный пункт меню
     document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
     var activeBtn = document.querySelector('.sidebar-item[data-screen="' + screenId + '"]');
     if (activeBtn) activeBtn.classList.add('active');
+    
+    // Закрываем sidebar если открыт
     if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) {
       toggleSidebar();
     }
