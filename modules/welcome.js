@@ -108,7 +108,6 @@ const WelcomeModule = {
       '.w-delay-2 { animation-delay:0.2s; }' +
       '.w-delay-3 { animation-delay:0.3s; }' +
       '.w-delay-4 { animation-delay:0.4s; }' +
-      '.w-delay-5 { animation-delay:0.5s; }' +
       '.w-pulse { animation:pulse 2s ease-in-out infinite; display:inline-block; }' +
       '.w-glow { animation:glow 2s ease-in-out infinite; }' +
       '.w-xp-bar { animation:fillBar 1.2s ease-out both; }' +
@@ -123,104 +122,101 @@ const WelcomeModule = {
     var statusHtml = '';
     if (todayRecord) {
       if (todayRecord.skipped) {
-        statusHtml = '<div class="w-fade w-delay-5" style="background:rgba(231,76,60,0.1);padding:10px 14px;border-radius:8px;margin-top:12px;border-left:3px solid #e74c3c;font-size:0.9em"><strong style="color:#e74c3c">❌ День пропущен</strong><span class="text-small" style="margin-left:8px">Можно передумать</span></div>';
+        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(231,76,60,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #e74c3c;font-size:0.85em"><strong style="color:#e74c3c">❌ День пропущен</strong><span class="text-small" style="margin-left:8px">Можно передумать</span></div>';
       } else if (todayRecord.exercises && todayRecord.exercises.length > 0) {
-        statusHtml = '<div class="w-fade w-delay-5" style="background:rgba(144,238,144,0.1);padding:10px 14px;border-radius:8px;margin-top:12px;border-left:3px solid #90EE90;font-size:0.9em"><strong style="color:#90EE90">✅ Тренировка проведена</strong><span class="text-small" style="margin-left:8px">' + todayRecord.exercises.length + '/' + exCount + '</span></div>';
+        statusHtml = '<div class="w-fade w-delay-4" style="background:rgba(144,238,144,0.1);padding:8px 12px;border-radius:6px;margin-top:10px;border-left:3px solid #90EE90;font-size:0.85em"><strong style="color:#90EE90">✅ Тренировка проведена</strong><span class="text-small" style="margin-left:8px">' + todayRecord.exercises.length + '/' + exCount + '</span></div>';
       }
     }
 
-    // План
+    // План (компактно)
     var planInfo = '';
     if (exCount > 0) {
       var muscleGroup = todayPlan.muscleGroup || 'тренировка';
-      planInfo = '<div class="text-small" style="margin-bottom:12px;opacity:0.8">📋 <strong>' + muscleGroup + '</strong> · ' + exCount + ' упр.</div>';
+      planInfo = '<div style="font-size:0.8em;opacity:0.8;margin-bottom:8px">📋 <strong>' + muscleGroup + '</strong> · ' + exCount + ' упр.</div>';
     } else {
-      planInfo = '<div class="text-small" style="margin-bottom:12px;color:#FFB347">⚠️ План пуст</div>';
+      planInfo = '<div style="font-size:0.8em;color:#FFB347;margin-bottom:8px">⚠️ План пуст</div>';
     }
 
     // Кнопка "Да"
     var yesButton = '';
     if (exCount > 0) {
-      yesButton = '<button class="btn w-btn" style="width:100%;padding:12px;font-size:1em;font-weight:700;background:linear-gradient(135deg, #90EE90 0%, #7FDD7F 100%);color:#1a3a1a;border:1px solid #90EE90" onclick="WelcomeModule.handleAnswer(\'yes\')">✅ Тренируемся!</button>';
+      yesButton = '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #90EE90 0%, #7FDD7F 100%);color:#1a3a1a;border:1px solid #90EE90" onclick="WelcomeModule.handleAnswer(\'yes\')">✅ Да</button>';
     } else {
-      yesButton = '<button class="btn w-btn" style="width:100%;padding:12px;font-size:1em;font-weight:700;background:linear-gradient(135deg, #FFD700 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid #FFD700" onclick="WelcomeModule.goToPlan()">📝 Составить план</button>';
+      yesButton = '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFD700 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid #FFD700" onclick="WelcomeModule.goToPlan()">📝 План</button>';
     }
 
-    // ПОРЯДОК: Приветствие → XP-бар → Кнопки → Статус → Карточки → Мотивация → Подсказка
+    // НОВЫЙ ПОРЯДОК: XP-бар → Приветствие → Кнопки → Статус → Карточки → Мотивация → Подсказка
     screen.innerHTML = css +
-      '<div style="padding:15px;max-width:500px;margin:0 auto">' +
+      '<div style="padding:12px;max-width:450px;margin:0 auto">' +
       
-      // === 1. ПРИВЕТСТВИЕ (сверху) ===
-      '<div class="w-fade" style="background:var(--card);border-radius:10px 10px 0 0;padding:20px 15px 10px;text-align:center;border:1px solid var(--brd);border-bottom:none">' +
-        '<div style="font-size:2.5em;margin-bottom:5px">💪</div>' +
-        '<h1 style="color:var(--acc);margin:0 0 6px 0;font-size:1.4em">Привет!</h1>' +
-        '<div class="text-small" style="margin-bottom:8px">Сегодня <strong>' + dayName + '</strong></div>' +
+      // === 1. XP-БАР (САМЫЙ ВЕРХ) ===
+      '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid var(--acc)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+          '<div style="display:flex;align-items:center;gap:6px">' +
+            '<div style="font-size:1.5em;line-height:1" class="w-pulse">' + levelEmoji + '</div>' +
+            '<div style="font-size:1.5em;font-weight:bold;color:var(--acc);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
+            '<div style="font-size:0.7em;opacity:0.7">уровень</div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+            '<div style="font-size:0.7em;opacity:0.7">XP</div>' +
+            '<div style="font-size:0.9em;font-weight:bold;color:var(--text)"><span class="w-anim-xp">0</span><span style="font-size:0.7em;opacity:0.6">/' + xpNeeded + '</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--brd)">' +
+          '<div class="w-xp-bar" style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--acc), var(--warn));border-radius:3px"></div>' +
+        '</div>' +
+      '</div>' +
+
+      // === 2. ПРИВЕТСТВИЕ (КОМПАКТНОЕ) ===
+      '<div class="w-fade w-delay-1" style="background:var(--card);border-radius:10px;padding:12px 15px;text-align:center;border:1px solid var(--brd);margin-bottom:10px">' +
+        '<div style="font-size:2em;margin-bottom:3px">💪</div>' +
+        '<h1 style="color:var(--acc);margin:0 0 4px 0;font-size:1.2em">Привет!</h1>' +
+        '<div style="font-size:0.85em;margin-bottom:6px">Сегодня <strong>' + dayName + '</strong></div>' +
         planInfo +
       '</div>' +
 
-      // === 2. XP-БАР (над кнопками) ===
-      '<div class="w-fade w-delay-1 w-glow" style="background:linear-gradient(135deg, #3D3D3D 0%, #2a2a2a 100%);padding:12px 15px;border-left:1px solid var(--acc);border-right:1px solid var(--acc)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-          '<div style="display:flex;align-items:center;gap:8px">' +
-            '<div style="font-size:2em;line-height:1" class="w-pulse">' + levelEmoji + '</div>' +
-            '<div style="font-size:1.8em;font-weight:bold;color:var(--acc);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
-            '<div style="font-size:0.75em;opacity:0.7">уровень</div>' +
-          '</div>' +
-          '<div style="text-align:right">' +
-            '<div style="font-size:0.75em;opacity:0.7">XP</div>' +
-            '<div style="font-size:1em;font-weight:bold;color:var(--text)"><span class="w-anim-xp">0</span><span style="font-size:0.7em;opacity:0.6">/' + xpNeeded + '</span></div>' +
-          '</div>' +
-        '</div>' +
-        '<div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--brd)">' +
-          '<div class="w-xp-bar" style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--acc), var(--warn));border-radius:4px"></div>' +
-        '</div>' +
-      '</div>' +
-
-      // === 3. КНОПКИ ===
-      '<div class="w-fade w-delay-2" style="background:var(--card);border-radius:0 0 10px 10px;padding:10px 15px 18px;text-align:center;border:1px solid var(--brd);border-top:none;margin-bottom:10px">' +
-        '<div style="font-size:1.05em;margin:8px 0 10px;font-weight:600">Позанимаемся?</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
-          yesButton +
-          '<button class="btn w-btn" style="padding:12px;font-size:0.95em;font-weight:700;background:linear-gradient(135deg, #FFB347 0%, #FFC870 100%);color:#3a2a0a;border:1px solid #FFB347" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
-          '<button class="btn w-btn" style="padding:12px;font-size:0.95em;font-weight:700;background:linear-gradient(135deg, #e74c3c 0%, #FF7070 100%);color:#fff;border:1px solid #e74c3c" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
-        '</div>' +
+      // === 3. КНОПКИ (КОМПАКТНЫЕ) ===
+      '<div class="w-fade w-delay-2" style="display:flex;gap:6px;margin-bottom:10px">' +
+        yesButton +
+        '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #FFB347 0%, #FFC870 100%);color:#3a2a0a;border:1px solid #FFB347" onclick="WelcomeModule.handleAnswer(\'later\')">⏰ Позже</button>' +
+        '<button class="btn w-btn" style="flex:1;padding:10px 8px;font-size:0.9em;font-weight:700;background:linear-gradient(135deg, #e74c3c 0%, #FF7070 100%);color:#fff;border:1px solid #e74c3c" onclick="WelcomeModule.handleAnswer(\'no\')">❌ Нет</button>' +
       '</div>' +
 
       // === 4. СТАТУС ДНЯ ===
       statusHtml +
 
       // === 5. ТРИ МИНИ-КАРТОЧКИ ===
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0">' +
-        '<div class="w-card w-fade w-delay-2" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
-          '<div class="w-pulse" style="font-size:1.5em">🔥</div>' +
-          '<div style="font-size:1.4em;font-weight:bold;color:#FFB347;line-height:1.2"><span class="w-anim-streak">0</span></div>' +
-          '<div style="font-size:0.7em;opacity:0.7">стрик</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:10px 0">' +
+        '<div class="w-card w-fade w-delay-2" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+          '<div class="w-pulse" style="font-size:1.3em">🔥</div>' +
+          '<div style="font-size:1.2em;font-weight:bold;color:#FFB347;line-height:1.2"><span class="w-anim-streak">0</span></div>' +
+          '<div style="font-size:0.65em;opacity:0.7">стрик</div>' +
         '</div>' +
-        '<div class="w-card w-fade w-delay-3" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
-          '<div style="font-size:1.5em">🏋️</div>' +
-          '<div style="font-size:1.4em;font-weight:bold;color:#90EE90;line-height:1.2"><span class="w-anim-workouts">0</span></div>' +
-          '<div style="font-size:0.7em;opacity:0.7">тренировок</div>' +
+        '<div class="w-card w-fade w-delay-3" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+          '<div style="font-size:1.3em">🏋️</div>' +
+          '<div style="font-size:1.2em;font-weight:bold;color:#90EE90;line-height:1.2"><span class="w-anim-workouts">0</span></div>' +
+          '<div style="font-size:0.65em;opacity:0.7">тренировок</div>' +
         '</div>' +
-        '<div class="w-card w-fade w-delay-4" style="background:var(--card);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--brd);cursor:default">' +
-          '<div style="font-size:1.5em">⚡</div>' +
-          '<div style="font-size:1.4em;font-weight:bold;color:var(--acc);line-height:1.2"><span class="w-anim-totalxp">0</span></div>' +
-          '<div style="font-size:0.7em;opacity:0.7">всего XP</div>' +
+        '<div class="w-card w-fade w-delay-4" style="background:var(--card);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--brd);cursor:default">' +
+          '<div style="font-size:1.3em">⚡</div>' +
+          '<div style="font-size:1.2em;font-weight:bold;color:var(--acc);line-height:1.2"><span class="w-anim-totalxp">0</span></div>' +
+          '<div style="font-size:0.65em;opacity:0.7">всего XP</div>' +
         '</div>' +
       '</div>' +
 
       // === 6. МОТИВАЦИЯ ===
-      '<div class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:8px 12px;margin-bottom:10px;border-left:3px solid ' + motivation.color + ';font-size:0.9em;text-align:center;color:' + motivation.color + ';font-weight:600">' +
+      '<div class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:6px 10px;margin-bottom:10px;border-left:3px solid ' + motivation.color + ';font-size:0.85em;text-align:center;color:' + motivation.color + ';font-weight:600">' +
         motivation.text +
       '</div>' +
 
       // === 7. ПОДСКАЗКА XP (свёрнутая) ===
-      '<details class="w-fade w-delay-5" style="background:var(--bg);border-radius:8px;padding:10px 12px;font-size:0.8em;opacity:0.85;cursor:pointer">' +
-        '<summary style="font-weight:600;color:var(--acc);margin-bottom:6px">💡 Как получать XP</summary>' +
-        '<div style="margin-top:6px;line-height:1.6">' +
-          '<div>✅ Выполнение упражнения: <strong>+5 XP</strong></div>' +
-          '<div>🏁 Завершение упражнения: <strong>+15 XP</strong></div>' +
-          '<div>🎉 Завершение дня: <strong>+20 XP</strong></div>' +
-          '<div>📊 Запись данных: <strong>+10 XP</strong></div>' +
+      '<details class="w-fade w-delay-4" style="background:var(--bg);border-radius:8px;padding:8px 10px;font-size:0.75em;opacity:0.85;cursor:pointer">' +
+        '<summary style="font-weight:600;color:var(--acc);margin-bottom:4px">💡 Как получать XP</summary>' +
+        '<div style="margin-top:4px;line-height:1.5">' +
+          '<div>✅ Упражнение: <strong>+5 XP</strong></div>' +
+          '<div>🏁 Завершение: <strong>+15 XP</strong></div>' +
+          '<div>🎉 День: <strong>+20 XP</strong></div>' +
+          '<div>📊 Данные: <strong>+10 XP</strong></div>' +
         '</div>' +
       '</details>' +
 
