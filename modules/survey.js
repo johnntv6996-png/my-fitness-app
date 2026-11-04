@@ -2,7 +2,7 @@
 
 const SurveyModule = {
   init: function() {
-    console.log('📋 Survey module initialized');
+    console.log('Survey module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль опросов инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { SurveyModule.setup(); });
@@ -10,7 +10,7 @@ const SurveyModule = {
   },
   setup: function() {
     this.createSurveyScreen();
-    if (typeof Core !== 'undefined') Core.addNavButton('Опросы', 'survey', '📋');
+    if (typeof Core !== 'undefined') Core.addNavButton('Опросы', 'survey', '<i class="ph ph-clipboard-text"></i>');
   },
 
   getSurveyConfig: function() {
@@ -44,39 +44,42 @@ const SurveyModule = {
     if (!config) config = this.getDefaultSurvey();
 
     var css = '<style>' +
-      '.survey-q { background:var(--card); border-radius:10px; padding:15px; margin-bottom:10px; border:1px solid var(--brd); }' +
+      '.survey-q { background:var(--bg-card); border-radius:12px; padding:16px; margin-bottom:12px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
+      '.survey-q:hover { border-color:var(--border-gold); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
     '</style>';
 
-    var html = css + '<div style="padding:15px;max-width:600px;margin:0 auto">';
-    html += '<h2 style="color:var(--acc);margin-top:0">📋 Конструктор опросов</h2>';
-    html += '<div class="hint" style="margin-bottom:15px">💡 Настрой вопросы для финального опроса после тренировки. Можно использовать стандартные или создать свои.</div>';
+    var html = css + '<div style="padding:16px;max-width:700px;margin:0 auto">';
+    html += '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-clipboard-text"></i> Конструктор опросов</h2>';
+    html += '<div class="hint" style="margin-bottom:18px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Настрой вопросы для финального опроса после тренировки</div>';
 
-    html += '<button class="btn" style="width:100%;padding:10px;font-size:0.9em;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer;margin-bottom:15px" onclick="SurveyModule.resetToDefault()">🔄 Сбросить к стандартным</button>';
+    html += '<button class="btn btn-secondary" style="width:100%;padding:12px;font-size:0.95em;margin-bottom:18px" onclick="SurveyModule.resetToDefault()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить к стандартным</button>';
 
     for (var i = 0; i < config.questions.length; i++) {
       var q = config.questions[i];
       html += '<div class="survey-q">';
       html += '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">';
       html += '<div style="flex:1">';
-      html += '<div style="font-weight:600;margin-bottom:8px">' + (i + 1) + '. ' + q.text + '</div>';
-      html += '<div style="font-size:0.8em;opacity:0.7">Тип: ' + (q.type === 'rating' ? '⭐ Оценка ' + q.min + '-' + q.max : '📝 Текст') + '</div>';
+      html += '<div style="font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="color:var(--accent-gold);font-weight:700">' + (i + 1) + '.</span> ' + q.text + '</div>';
+      var typeIcon = q.type === 'rating' ? 'ph-star' : 'ph-text-t';
+      var typeLabel = q.type === 'rating' ? 'Оценка ' + q.min + '-' + q.max : 'Текст';
+      html += '<div style="font-size:0.85em;opacity:0.7;display:flex;align-items:center;gap:6px"><i class="ph ' + typeIcon + '"></i> Тип: ' + typeLabel + '</div>';
       html += '</div>';
-      html += '<div style="display:flex;gap:5px">';
-      html += '<button class="btn" style="padding:4px 8px;font-size:0.8em;background:var(--brd);color:var(--text);border:none;border-radius:4px;cursor:pointer" onclick="SurveyModule.editQuestion(' + i + ')">✏️</button>';
-      html += '<button class="btn" style="padding:4px 8px;font-size:0.8em;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer" onclick="SurveyModule.deleteQuestion(' + i + ')">🗑️</button>';
+      html += '<div style="display:flex;gap:6px">';
+      html += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" onclick="SurveyModule.editQuestion(' + i + ')"><i class="ph ph-pencil-simple"></i></button>';
+      html += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="SurveyModule.deleteQuestion(' + i + ')"><i class="ph ph-trash"></i></button>';
       html += '</div></div></div>';
     }
 
-    html += '<button class="btn" style="width:100%;padding:12px;font-size:1em;font-weight:700;background:linear-gradient(135deg, var(--acc) 0%, #FFF8DC 100%);color:#3a2a0a;border:1px solid var(--acc);border-radius:8px;cursor:pointer;margin-top:15px" onclick="SurveyModule.addQuestion()">➕ Добавить вопрос</button>';
-    html += '<button class="btn" style="width:100%;padding:12px;font-size:1em;font-weight:700;background:linear-gradient(135deg, var(--ok) 0%, #7FDD7F 100%);color:#1a3a1a;border:1px solid var(--ok);border-radius:8px;cursor:pointer;margin-top:10px" onclick="SurveyModule.testSurvey()">▶️ Тестовый запуск</button>';
+    html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-top:16px" onclick="SurveyModule.addQuestion()"><i class="ph ph-plus-circle"></i> Добавить вопрос</button>';
+    html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-top:10px;background:linear-gradient(135deg, #00ff88, #00cc6a)" onclick="SurveyModule.testSurvey()"><i class="ph ph-play-circle"></i> Тестовый запуск</button>';
     html += '</div>';
 
     screen.innerHTML = html;
   },
 
   resetToDefault: function() {
-    if (!confirm('🔄 Сбросить опрос к стандартным вопросам?')) return;
+    if (!confirm('Сбросить опрос к стандартным вопросам?')) return;
     this.saveSurveyConfig(this.getDefaultSurvey());
     this.createSurveyScreen();
   },
@@ -102,7 +105,7 @@ const SurveyModule = {
   },
 
   deleteQuestion: function(idx) {
-    if (!confirm('🗑️ Удалить вопрос?')) return;
+    if (!confirm('Удалить вопрос?')) return;
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
     config.questions.splice(idx, 1);
     this.saveSurveyConfig(config);
@@ -111,61 +114,101 @@ const SurveyModule = {
 
   testSurvey: function() {
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
-    if (config.questions.length === 0) { alert('⚠️ Нет вопросов'); return; }
+    if (config.questions.length === 0) { alert('Нет вопросов'); return; }
     this.runSurvey(config, function(answers) {
-      alert('✅ Опрос пройден! Ответы сохранены.\n\n' + JSON.stringify(answers, null, 2));
+      alert('Опрос пройден! Ответы:\n\n' + JSON.stringify(answers, null, 2));
     });
   },
 
   runSurvey: function(config, callback) {
-    var currentQ = 0;
-    var answers = {};
+    SurveyModule._currentQ = 0;
+    SurveyModule._answers = {};
+    SurveyModule._surveyCallback = callback;
 
     var modal = document.createElement('div');
-    modal.className = 'survey-modal';
+    modal.className = 'workout-modal';
     modal.id = 'finalSurveyModal';
-
-    function renderQuestion() {
-      if (currentQ >= config.questions.length) {
-        modal.remove();
-        if (callback) callback(answers);
-        return;
-      }
-      var q = config.questions[currentQ];
-      var content = '<div class="survey-modal-content">';
-      content += '<div style="font-size:0.8em;opacity:0.7;margin-bottom:10px">Вопрос ' + (currentQ + 1) + ' из ' + config.questions.length + '</div>';
-      content += '<h2 style="color:var(--acc);margin-top:0">' + q.text + '</h2>';
-
-      if (q.type === 'rating') {
-        content += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:20px 0">';
-        for (var v = q.min; v <= q.max; v++) {
-          content += '<button class="btn" style="width:50px;height:50px;font-size:1.2em;background:var(--brd);color:var(--text);border:none;border-radius:8px;cursor:pointer" onclick="SurveyModule._surveyAnswer(' + v + ')">' + v + '</button>';
-        }
-        content += '</div>';
-      } else {
-        content += '<textarea id="surveyTextAnswer" rows="4" placeholder="Твой ответ..." style="width:100%;padding:10px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em;resize:vertical;margin:15px 0"></textarea>';
-        content += '<button class="btn" style="width:100%;padding:12px;background:var(--ok);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="SurveyModule._surveyTextAnswer()">✅ Ответить</button>';
-      }
-
-      content += '<button class="btn" style="width:100%;padding:10px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer;margin-top:10px" onclick="SurveyModule._surveySkip()">⏭ Пропустить</button>';
-      content += '</div>';
-      modal.innerHTML = content;
-    }
+    modal.style.zIndex = '2200';
 
     document.body.appendChild(modal);
-    renderQuestion();
+    this._renderQuestion();
+  },
+
+  _renderQuestion: function() {
+    var config = SurveyModule.getSurveyConfig() || SurveyModule.getDefaultSurvey();
+    var modal = document.getElementById('finalSurveyModal');
+    if (!modal) return;
+    var currentQ = SurveyModule._currentQ || 0;
+
+    if (currentQ >= config.questions.length) {
+      modal.remove();
+      alert('Опрос пройден!');
+      if (SurveyModule._surveyCallback) SurveyModule._surveyCallback(SurveyModule._answers);
+      return;
+    }
+
+    var q = config.questions[currentQ];
+    var content = document.createElement('div');
+    content.className = 'workout-modal-content';
+    content.style.maxWidth = '400px';
+
+    var progress = document.createElement('div');
+    progress.style.cssText = 'font-size:0.8em;opacity:0.7;margin-bottom:12px;display:flex;align-items:center;gap:6px';
+    progress.innerHTML = '<i class="ph ph-clipboard-text"></i> Вопрос ' + (currentQ + 1) + ' из ' + config.questions.length;
+    content.appendChild(progress);
+
+    var title = document.createElement('h2');
+    title.style.cssText = 'font-family:var(--font-display);color:var(--accent-gold);margin-top:0;text-align:center';
+    title.textContent = q.text;
+    content.appendChild(title);
+
+    if (q.type === 'rating') {
+      var buttonsDiv = document.createElement('div');
+      buttonsDiv.style.cssText = 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:20px 0';
+      for (var v = q.min; v <= q.max; v++) {
+        var btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.textContent = v;
+        btn.style.cssText = 'width:50px;height:50px;font-size:1.2em';
+        (function(val) { btn.onclick = function() { SurveyModule._surveyAnswer(val); }; })(v);
+        buttonsDiv.appendChild(btn);
+      }
+      content.appendChild(buttonsDiv);
+    } else {
+      var textarea = document.createElement('textarea');
+      textarea.id = 'surveyTextAnswer';
+      textarea.rows = 4;
+      textarea.placeholder = 'Твой ответ...';
+      textarea.style.cssText = 'width:100%;padding:12px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:10px;color:var(--text-primary);font-size:1em;resize:vertical;margin:16px 0;font-family:var(--font-primary)';
+      content.appendChild(textarea);
+
+      var submitBtn = document.createElement('button');
+      submitBtn.className = 'btn btn-primary';
+      submitBtn.innerHTML = '<i class="ph ph-check"></i> Ответить';
+      submitBtn.style.cssText = 'width:100%;padding:14px';
+      submitBtn.onclick = function() { SurveyModule._surveyTextAnswer(); };
+      content.appendChild(submitBtn);
+    }
+
+    var skipBtn = document.createElement('button');
+    skipBtn.className = 'btn btn-secondary';
+    skipBtn.innerHTML = '<i class="ph ph-skip-forward"></i> Пропустить';
+    skipBtn.style.cssText = 'width:100%;padding:12px;margin-top:12px';
+    skipBtn.onclick = function() { SurveyModule._surveySkip(); };
+    content.appendChild(skipBtn);
+
+    modal.innerHTML = '';
+    modal.appendChild(content);
   },
 
   _surveyAnswer: function(value) {
     var config = SurveyModule.getSurveyConfig() || SurveyModule.getDefaultSurvey();
-    var modal = document.getElementById('finalSurveyModal');
-    if (!modal) return;
     var q = config.questions[SurveyModule._currentQ || 0];
     if (!q) return;
     SurveyModule._answers = SurveyModule._answers || {};
     SurveyModule._answers[q.id] = value;
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
-    SurveyModule._renderNext();
+    SurveyModule._renderQuestion();
   },
 
   _surveyTextAnswer: function() {
@@ -178,7 +221,7 @@ const SurveyModule = {
     SurveyModule._answers = SurveyModule._answers || {};
     SurveyModule._answers[q.id] = value;
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
-    SurveyModule._renderNext();
+    SurveyModule._renderQuestion();
   },
 
   _surveySkip: function() {
@@ -188,36 +231,7 @@ const SurveyModule = {
     SurveyModule._answers = SurveyModule._answers || {};
     SurveyModule._answers[q.id] = null;
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
-    SurveyModule._renderNext();
-  },
-
-  _renderNext: function() {
-    var config = SurveyModule.getSurveyConfig() || SurveyModule.getDefaultSurvey();
-    var modal = document.getElementById('finalSurveyModal');
-    if (!modal) return;
-    if (SurveyModule._currentQ >= config.questions.length) {
-      modal.remove();
-      alert('✅ Опрос пройден!');
-      if (SurveyModule._surveyCallback) SurveyModule._surveyCallback(SurveyModule._answers);
-      return;
-    }
-    var q = config.questions[SurveyModule._currentQ];
-    var content = '<div class="survey-modal-content">';
-    content += '<div style="font-size:0.8em;opacity:0.7;margin-bottom:10px">Вопрос ' + (SurveyModule._currentQ + 1) + ' из ' + config.questions.length + '</div>';
-    content += '<h2 style="color:var(--acc);margin-top:0">' + q.text + '</h2>';
-    if (q.type === 'rating') {
-      content += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:20px 0">';
-      for (var v = q.min; v <= q.max; v++) {
-        content += '<button class="btn" style="width:50px;height:50px;font-size:1.2em;background:var(--brd);color:var(--text);border:none;border-radius:8px;cursor:pointer" onclick="SurveyModule._surveyAnswer(' + v + ')">' + v + '</button>';
-      }
-      content += '</div>';
-    } else {
-      content += '<textarea id="surveyTextAnswer" rows="4" placeholder="Твой ответ..." style="width:100%;padding:10px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em;resize:vertical;margin:15px 0"></textarea>';
-      content += '<button class="btn" style="width:100%;padding:12px;background:var(--ok);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="SurveyModule._surveyTextAnswer()">✅ Ответить</button>';
-    }
-    content += '<button class="btn" style="width:100%;padding:10px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer;margin-top:10px" onclick="SurveyModule._surveySkip()">⏭ Пропустить</button>';
-    content += '</div>';
-    modal.innerHTML = content;
+    SurveyModule._renderQuestion();
   }
 };
 

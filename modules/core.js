@@ -47,17 +47,14 @@ const CoreModule = {
     nav.appendChild(btn);
   },
 
-  // Drag-to-reorder для вкладок
   enableDragReorder: function() {
     var nav = document.getElementById('userNav');
     if (!nav) return;
 
     var draggedItem = null;
-    var touchStartX = 0;
-    var touchStartY = 0;
-    var isDragging = false;
     var longPressTimer = null;
     var LONG_PRESS_DELAY = 400;
+    var isDragging = false;
 
     function saveOrder() {
       var order = [];
@@ -93,11 +90,8 @@ const CoreModule = {
       if (btn && btn !== draggedItem) {
         var rect = btn.getBoundingClientRect();
         var midX = rect.left + rect.width / 2;
-        if (clientX < midX) {
-          nav.insertBefore(draggedItem, btn);
-        } else {
-          nav.insertBefore(draggedItem, btn.nextSibling);
-        }
+        if (clientX < midX) nav.insertBefore(draggedItem, btn);
+        else nav.insertBefore(draggedItem, btn.nextSibling);
       }
     }
 
@@ -118,7 +112,6 @@ const CoreModule = {
       saveOrder();
     }
 
-    // Mouse events
     nav.addEventListener('mousedown', function(e) {
       var btn = e.target.closest ? e.target.closest('.nav-btn') : null;
       if (!btn) return;
@@ -136,12 +129,9 @@ const CoreModule = {
       endDrag();
     });
 
-    // Touch events
     nav.addEventListener('touchstart', function(e) {
       var btn = e.target.closest ? e.target.closest('.nav-btn') : null;
       if (!btn) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
       longPressTimer = setTimeout(function() { startDrag(btn); }, LONG_PRESS_DELAY);
     }, {passive: true});
 
@@ -151,22 +141,14 @@ const CoreModule = {
       moveDraggedItem(touch.clientX, touch.clientY);
     }, {passive: true});
 
-    document.addEventListener('touchend', function() {
-      clearTimeout(longPressTimer);
-      endDrag();
-    });
+    document.addEventListener('touchend', function() { clearTimeout(longPressTimer); endDrag(); });
+    document.addEventListener('touchcancel', function() { clearTimeout(longPressTimer); endDrag(); });
 
-    document.addEventListener('touchcancel', function() {
-      clearTimeout(longPressTimer);
-      endDrag();
-    });
-
-    // Восстановить порядок после небольшой задержки (чтобы все кнопки добавились)
     setTimeout(restoreOrder, 500);
   },
 
   init: function() {
-    console.log('⚙️ Core module initialized');
+    console.log('Core module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Ядро системы загружено', 'info');
     window.Core = this;
     window.FTStorage = this.storage;

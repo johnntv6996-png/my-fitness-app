@@ -2,7 +2,7 @@
 
 const SettingsModule = {
   init: function() {
-    console.log('⚙️ Settings module initialized');
+    console.log('Settings module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль настроек инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { SettingsModule.setup(); });
@@ -10,7 +10,7 @@ const SettingsModule = {
   },
   setup: function() {
     this.createSettingsScreen();
-    if (typeof Core !== 'undefined') Core.addNavButton('Настройки', 'settings', '⚙️');
+    if (typeof Core !== 'undefined') Core.addNavButton('Настройки', 'settings', '<i class="ph ph-gear"></i>');
   },
 
   getSettings: function() {
@@ -24,8 +24,8 @@ const SettingsModule = {
   },
   saveUserName: function(n) { if (typeof FTStorage !== 'undefined') FTStorage.set('user_name', n); },
   getUserAvatar: function() {
-    if (typeof FTStorage !== 'undefined') return FTStorage.get('user_avatar') || '💪';
-    return '💪';
+    if (typeof FTStorage !== 'undefined') return FTStorage.get('user_avatar') || 'ph-user-circle';
+    return 'ph-user-circle';
   },
   saveUserAvatar: function(a) { if (typeof FTStorage !== 'undefined') FTStorage.set('user_avatar', a); },
 
@@ -43,59 +43,57 @@ const SettingsModule = {
     var userAvatar = this.getUserAvatar();
 
     var css = '<style>' +
-      '.settings-section { background:var(--card); border-radius:10px; padding:15px; margin-bottom:15px; border:1px solid var(--brd); }' +
+      '.settings-section { background:var(--bg-card); border-radius:14px; padding:20px; margin-bottom:16px; border:1px solid var(--border-subtle); }' +
+      '.settings-section:hover { border-color:var(--border-gold); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
-      '.avatar-picker { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }' +
-      '.avatar-option { width:50px; height:50px; font-size:1.8em; background:var(--bg); border:2px solid var(--brd); border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }' +
-      '.avatar-option:hover { transform:scale(1.1); }' +
-      '.avatar-option.selected { border-color:var(--acc); background:rgba(255,215,0,0.1); }' +
+      '.avatar-picker { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }' +
+      '.avatar-option { width:50px; height:50px; font-size:1.5em; background:var(--bg-primary); border:2px solid var(--border-subtle); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; color:var(--text-secondary); }' +
+      '.avatar-option:hover { transform:scale(1.1); border-color:var(--accent-gold); color:var(--accent-gold); }' +
+      '.avatar-option.selected { border-color:var(--accent-gold); background:rgba(212,175,55,0.1); color:var(--accent-gold); }' +
     '</style>';
 
-    var html = css + '<div style="padding:15px;max-width:500px;margin:0 auto">';
-    html += '<h2 style="color:var(--acc);margin-top:0">⚙️ Настройки</h2>';
+    var html = css + '<div style="padding:16px;max-width:500px;margin:0 auto">';
+    html += '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-gear"></i> Настройки</h2>';
 
-    // Профиль
     html += '<div class="settings-section">';
-    html += '<h3 style="color:var(--acc);margin:0 0 15px 0">👤 Профиль</h3>';
-    html += '<div style="margin-bottom:15px">';
-    html += '<label style="display:block;margin-bottom:5px;font-weight:600">Имя:</label>';
-    html += '<input type="text" id="settingUserName" value="' + userName + '" placeholder="Введи своё имя" style="width:100%;padding:8px;background:var(--inp);border:1px solid var(--brd);border-radius:6px;color:var(--text);font-size:1em">';
-    html += '<div class="hint">💡 Будет отображаться на главном экране</div>';
+    html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-user"></i> Профиль</h3>';
+    html += '<div style="margin-bottom:16px">';
+    html += '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Имя:</label>';
+    html += '<input type="text" id="settingUserName" value="' + userName + '" placeholder="Введи своё имя" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">';
+    html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Будет отображаться на главном экране</div>';
     html += '</div>';
 
-    html += '<div style="margin-bottom:15px">';
-    html += '<label style="display:block;margin-bottom:5px;font-weight:600">Аватар:</label>';
-    html += '<div style="font-size:3em;text-align:center;margin:10px 0">' + userAvatar + '</div>';
+    html += '<div style="margin-bottom:16px">';
+    html += '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Аватар:</label>';
+    html += '<div style="text-align:center;margin:12px 0"><i class="ph ' + userAvatar + '" style="font-size:4em;color:var(--accent-gold)"></i></div>';
     html += '<div class="avatar-picker">';
-    var avatars = ['💪','🏋️','🥊','🤸','🧘','🏃','🚴','🏊','⚽','🎯','🔥','⭐','👑','💎','🦾','🤖'];
+    var avatars = ['ph-user-circle','ph-barbell','ph-sword','ph-person-simple-run','ph-person-simple-bike','ph-person-simple-swim','ph-person-simple-hike','ph-fire','ph-lightning','ph-star','ph-crown','ph-diamond','ph-trophy','ph-rocket'];
     for (var i = 0; i < avatars.length; i++) {
-      html += '<div class="avatar-option ' + (userAvatar === avatars[i] ? 'selected' : '') + '" onclick="SettingsModule.setAvatar(\'' + avatars[i] + '\')">' + avatars[i] + '</div>';
+      html += '<div class="avatar-option ' + (userAvatar === avatars[i] ? 'selected' : '') + '" onclick="SettingsModule.setAvatar(\'' + avatars[i] + '\')"><i class="ph ' + avatars[i] + '"></i></div>';
     }
     html += '</div>';
     html += '</div>';
 
-    html += '<button class="btn" style="width:100%;padding:10px;background:var(--ok);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="SettingsModule.saveProfile()">💾 Сохранить профиль</button>';
+    html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveProfile()"><i class="ph ph-floppy-disk"></i> Сохранить профиль</button>';
     html += '</div>';
 
-    // Опросы
     html += '<div class="settings-section">';
-    html += '<h3 style="color:var(--acc);margin:0 0 15px 0">📋 Опросы</h3>';
-    html += '<div style="margin-bottom:12px">';
+    html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-clipboard-text"></i> Опросы</h3>';
+    html += '<div style="margin-bottom:14px">';
     html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">';
-    html += '<input type="checkbox" id="settingDisableMini" ' + (settings.disableMiniSurvey ? 'checked' : '') + ' style="width:20px;height:20px;accent-color:var(--acc)">';
-    html += '<span>Отключить мини-опрос после подхода</span>';
+    html += '<input type="checkbox" id="settingDisableMini" ' + (settings.disableMiniSurvey ? 'checked' : '') + ' style="width:20px;height:20px;accent-color:var(--accent-gold)">';
+    html += '<span style="font-size:0.95em">Отключить мини-опрос после подхода</span>';
     html += '</label>';
-    html += '<div class="hint">💡 Подходы будут отмечаться сразу без вопросов</div>';
+    html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Подходы будут отмечаться сразу без вопросов</div>';
     html += '</div>';
-    html += '<button class="btn" style="width:100%;padding:10px;background:var(--ok);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="SettingsModule.saveSurveySettings()">💾 Сохранить</button>';
+    html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveSurveySettings()"><i class="ph ph-floppy-disk"></i> Сохранить</button>';
     html += '</div>';
 
-    // Данные
     html += '<div class="settings-section">';
-    html += '<h3 style="color:var(--acc);margin:0 0 15px 0">💾 Данные</h3>';
-    html += '<button class="btn" style="width:100%;padding:10px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer;margin-bottom:8px" onclick="SettingsModule.exportData()">📤 Экспорт данных</button>';
-    html += '<button class="btn" style="width:100%;padding:10px;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer;margin-bottom:8px" onclick="SettingsModule.importData()">📥 Импорт данных</button>';
-    html += '<button class="btn" style="width:100%;padding:10px;background:#e74c3c;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="SettingsModule.resetAll()">⚠️ Сбросить всё</button>';
+    html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-database"></i> Данные</h3>';
+    html += '<button class="btn btn-secondary" style="width:100%;padding:12px;margin-bottom:10px" onclick="SettingsModule.exportData()"><i class="ph ph-export"></i> Экспорт данных</button>';
+    html += '<button class="btn btn-secondary" style="width:100%;padding:12px;margin-bottom:10px" onclick="SettingsModule.importData()"><i class="ph ph-import"></i> Импорт данных</button>';
+    html += '<button class="btn btn-danger" style="width:100%;padding:12px" onclick="SettingsModule.resetAll()"><i class="ph ph-warning"></i> Сбросить всё</button>';
     html += '</div>';
 
     html += '</div>';
@@ -110,14 +108,14 @@ const SettingsModule = {
   saveProfile: function() {
     var name = document.getElementById('settingUserName').value.trim();
     this.saveUserName(name);
-    alert('✅ Профиль сохранён!');
+    alert('Профиль сохранён!');
   },
 
   saveSurveySettings: function() {
     var settings = this.getSettings();
     settings.disableMiniSurvey = document.getElementById('settingDisableMini').checked;
     this.saveSettings(settings);
-    alert('✅ Настройки опросов сохранены!');
+    alert('Настройки опросов сохранены!');
   },
 
   exportData: function() {
@@ -132,7 +130,7 @@ const SettingsModule = {
     a.download = 'fitness_backup_' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     URL.revokeObjectURL(url);
-    alert('📤 Данные экспортированы!');
+    alert('Данные экспортированы!');
   },
 
   importData: function() {
@@ -147,10 +145,10 @@ const SettingsModule = {
         try {
           var data = JSON.parse(ev.target.result);
           Object.keys(data).forEach(function(key) { localStorage.setItem(key, data[key]); });
-          alert('✅ Данные импортированы! Перезагрузи страницу.');
+          alert('Данные импортированы! Перезагрузи страницу.');
           location.reload();
         } catch (error) {
-          alert('❌ Ошибка импорта: ' + error.message);
+          alert('Ошибка импорта: ' + error.message);
         }
       };
       reader.readAsText(file);
@@ -159,12 +157,12 @@ const SettingsModule = {
   },
 
   resetAll: function() {
-    if (!confirm('⚠️ Удалить ВСЕ данные? Это нельзя отменить!')) return;
+    if (!confirm('Удалить ВСЕ данные? Это нельзя отменить!')) return;
     if (!confirm('Ты точно уверен?')) return;
     Object.keys(localStorage).forEach(function(key) {
       if (key.startsWith('ft_')) localStorage.removeItem(key);
     });
-    alert('🗑️ Все данные удалены!');
+    alert('Все данные удалены!');
     location.reload();
   }
 };
