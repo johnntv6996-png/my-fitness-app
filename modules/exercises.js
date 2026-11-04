@@ -84,11 +84,10 @@ const ExercisesModule = {
 
     // Тулбар категорий
     var toolbarHtml = '<div style="background:var(--card);border-radius:8px;padding:10px;margin-bottom:15px;border:1px solid var(--brd)">';
-    toolbarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    toolbarHtml += '<div style="font-weight:600;font-size:0.9em">📂 Категории</div>';
-    toolbarHtml += '<button class="btn" style="padding:6px 12px;font-size:0.8em;background:var(--acc);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="ExercisesModule.openCategoryForm()">➕ Добавить</button>';
-    toolbarHtml += '</div>';
-    toolbarHtml += '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">';
+    toolbarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">';
+    
+    // Левая часть: кнопки фильтрации
+    toolbarHtml += '<div style="display:flex;gap:5px;flex-wrap:wrap;flex:1">';
     
     // Кнопка "Все"
     var isAll = this.currentFilter === 'all';
@@ -98,17 +97,32 @@ const ExercisesModule = {
     var isUncat = this.currentFilter === 'uncategorized';
     toolbarHtml += '<button class="cat-btn ' + (isUncat ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')">❓ Без категории</button>';
     
-    // Кнопки категорий с редактированием
+    // Кнопки категорий (только для фильтрации, без кнопок действий)
     for (var i = 0; i < categories.length; i++) {
       var isActive = this.currentFilter === categories[i];
-      toolbarHtml += '<button class="cat-btn ' + (isActive ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')">' + categories[i];
-      toolbarHtml += '<button class="cat-edit-btn" onclick="event.stopPropagation();ExercisesModule.openCategoryForm(\'' + categories[i].replace(/'/g, "\\'") + '\')" title="Редактировать">✏️</button>';
-      toolbarHtml += '<button class="cat-delete-btn" onclick="event.stopPropagation();ExercisesModule.deleteCategory(\'' + categories[i].replace(/'/g, "\\'") + '\')" title="Удалить">🗑️</button>';
-      toolbarHtml += '</button>';
+      toolbarHtml += '<button class="cat-btn ' + (isActive ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')" title="Фильтр: ' + categories[i] + '">' + categories[i] + '</button>';
     }
     
     toolbarHtml += '</div>';
-    toolbarHtml += '<div class="hint" style="margin-top:6px">💡 Нажми на категорию для фильтрации. ✏️ — редактировать, 🗑️ — удалить</div>';
+    
+    // Правая часть: действия
+    toolbarHtml += '<div style="display:flex;gap:5px;align-items:center">';
+    
+    // Кнопки редактирования и удаления (только если выбрана обычная категория)
+    var isRegularCategory = this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized';
+    if (isRegularCategory) {
+      toolbarHtml += '<button class="btn" style="padding:6px 10px;font-size:0.8em;background:var(--brd);color:var(--text);border:none;border-radius:6px;cursor:pointer" onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Редактировать: ' + this.currentFilter + '">✏️</button>';
+      toolbarHtml += '<button class="btn" style="padding:6px 10px;font-size:0.8em;background:#e74c3c;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Удалить: ' + this.currentFilter + '">🗑️</button>';
+    } else {
+      toolbarHtml += '<span style="font-size:0.75em;opacity:0.5;margin-right:5px">Выбери категорию</span>';
+    }
+    
+    // Кнопка добавления новой категории
+    toolbarHtml += '<button class="btn" style="padding:6px 12px;font-size:0.8em;background:var(--acc);color:#2c3e50;border:none;border-radius:6px;cursor:pointer;font-weight:700" onclick="ExercisesModule.openCategoryForm()">➕ Добавить</button>';
+    toolbarHtml += '</div>';
+    
+    toolbarHtml += '</div>';
+    toolbarHtml += '<div class="hint" style="margin-top:6px">💡 Кликни на категорию для фильтрации. Выбрав её, справа появятся кнопки ✏️ и 🗑️. ➕ — создать новую категорию.</div>';
     toolbarHtml += '</div>';
 
     // Список упражнений
