@@ -125,7 +125,7 @@ const WorkoutModule = {
 
           var goBtn = document.createElement('button');
           goBtn.className = 'go-btn';
-          goBtn.innerHTML = '<i class="ph ph-play-circle" style="font-size:1.5em"></i><br>ПОГНАЛИ';
+          goBtn.innerHTML = '<i class="ph ph-play-circle" style="font-size:1.5em"></i><br>Начать';
           goBtn.style.cssText = 'display:block; margin:18px auto; width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%); color:#000; border:none; font-size:0.85em; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(212,175,55,0.4); transition:all 0.2s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;';
           goBtn.onmouseover = function() { this.style.transform = 'scale(1.05)'; this.style.boxShadow = '0 8px 30px rgba(212,175,55,0.6)'; };
           goBtn.onmouseout = function() { this.style.transform = 'scale(1)'; this.style.boxShadow = '0 4px 20px rgba(212,175,55,0.4)'; };

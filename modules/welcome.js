@@ -63,7 +63,7 @@ const WelcomeModule = {
     }
     var userName = this.getUserName();
     var userAvatar = this.getUserAvatar();
-    var greeting = userName ? 'Привет, ' + userName + '!' : 'Привет!';
+    var greeting = userName ? 'Приветствую, ' + userName + '!' : 'Приветствую!';
     var stats = this.getStats();
     var xpNeeded = stats.level * 100;
     var xpPercent = Math.min(100, Math.round((stats.xp / xpNeeded) * 100));
