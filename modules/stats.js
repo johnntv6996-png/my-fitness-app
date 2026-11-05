@@ -1,7 +1,12 @@
 // modules/stats.js
 
 const StatsModule = {
-  chartScrollOffset: 0,
+  chartMetrics: {
+    exercises: { id: 'exercises', label: 'Упражнения', color: '#d4af37', key: 'exCount', enabled: true },
+    weight: { id: 'weight', label: 'Вес (кг)', color: '#4ade80', key: 'weight', enabled: false },
+    mood: { id: 'mood', label: 'Самочувствие', color: '#60a5fa', key: 'mood', enabled: false }
+  },
+
   init: function() {
     console.log('Stats module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль статистики инициализирован', 'info');
@@ -21,6 +26,7 @@ const StatsModule = {
     if (typeof FTStorage !== 'undefined') return FTStorage.get('history') || [];
     return [];
   },
+
   createStatsScreen: function() {
     var screen = document.getElementById('screen-stats');
     if (!screen) {
@@ -52,34 +58,55 @@ const StatsModule = {
       '.heatmap-cell { width:12px; height:12px; border-radius:2px; cursor:pointer; transition:all 0.2s; }' +
       '.heatmap-cell:hover { transform:scale(1.3); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; color:var(--text-secondary); }' +
-      '.chart-nav-btn { width:36px; height:36px; border-radius:50%; background:var(--bg-card); border:1px solid var(--border-gold); color:var(--accent-gold); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; }' +
-      '.chart-nav-btn:hover { background:var(--accent-gold); color:#000; }' +
+      '.chart-nav-btn { position:absolute; top:50%; transform:translateY(-50%); width:36px; height:36px; border-radius:50%; background:rgba(212,175,55,0.15); backdrop-filter:blur(8px); border:1px solid rgba(212,175,55,0.3); color:var(--accent-gold); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; z-index:10; }' +
+      '.chart-nav-btn:hover { background:rgba(212,175,55,0.3); }' +
       '.chart-nav-btn:disabled { opacity:0.3; cursor:not-allowed; }' +
-      '.chart-container { position:relative; overflow:hidden; border-radius:12px; background:var(--bg-primary); border:1px solid var(--border-subtle); }' +
+      '.chart-nav-btn.prev { left:12px; }' +
+      '.chart-nav-btn.next { right:12px; }' +
+      '.chart-container { position:relative; border-radius:12px; background:var(--bg-primary); border:1px solid var(--border-subtle); overflow:hidden; }' +
       '.chart-scroll { overflow-x:auto; scroll-behavior:smooth; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; }' +
       '.chart-scroll::-webkit-scrollbar { height: 6px; }' +
       '.chart-scroll::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
+      '.metric-checkbox { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border-subtle); border-radius:8px; cursor:pointer; transition:all 0.2s; user-select:none; }' +
+      '.metric-checkbox:hover { border-color:var(--border-gold); }' +
+      '.metric-checkbox input { accent-color:var(--accent-gold); width:16px; height:16px; cursor:pointer; }' +
+      '.metric-checkbox .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }' +
+      '.metric-checkbox label { cursor:pointer; font-size:0.9em; color:var(--text-secondary); flex:1; }' +
       '@media (max-width: 600px) { .stat-metric-value { font-size:1.6em; } .stat-card { padding:14px; } }' +
     '</style>';
 
     var metricsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:10px;margin-bottom:20px">';
-    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-star w-icon" style="font-size:1.5em"></i><div class="stat-metric-value">' + stats.level + '</div><div class="stat-metric-label">Уровень</div></div>';
-    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-flame w-icon" style="font-size:1.5em"></i><div class="stat-metric-value">' + currentStreak + '</div><div class="stat-metric-label">Текущий стрик</div></div>';
-    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-trophy w-icon" style="font-size:1.5em"></i><div class="stat-metric-value">' + bestStreak + '</div><div class="stat-metric-label">Лучший стрик</div></div>';
-    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-check-circle w-icon" style="font-size:1.5em"></i><div class="stat-metric-value">' + stats.yes + '</div><div class="stat-metric-label">Тренировок</div></div>';
-    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-lightning w-icon" style="font-size:1.5em"></i><div class="stat-metric-value">' + stats.xp + '</div><div class="stat-metric-label">XP</div></div>';
+    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-star w-icon" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.level + '</div><div class="stat-metric-label">Уровень</div></div>';
+    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-flame w-icon" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + currentStreak + '</div><div class="stat-metric-label">Текущий стрик</div></div>';
+    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-trophy w-icon" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + bestStreak + '</div><div class="stat-metric-label">Лучший стрик</div></div>';
+    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-check-circle w-icon" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.yes + '</div><div class="stat-metric-label">Тренировок</div></div>';
+    metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-lightning w-icon" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.xp + '</div><div class="stat-metric-label">XP</div></div>';
     metricsHtml += '</div>';
 
+    // Чекбоксы метрик
+    var metrics = this.chartMetrics;
+    var checkboxesHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+    for (var key in metrics) {
+      var m = metrics[key];
+      checkboxesHtml += '<div class="metric-checkbox">';
+      checkboxesHtml += '<input type="checkbox" id="metric-' + m.id + '" ' + (m.enabled ? 'checked' : '') + ' onchange="StatsModule.toggleMetric(\'' + m.id + '\')">';
+      checkboxesHtml += '<div class="dot" style="background:' + m.color + '"></div>';
+      checkboxesHtml += '<label for="metric-' + m.id + '">' + m.label + '</label>';
+      checkboxesHtml += '</div>';
+    }
+    checkboxesHtml += '</div>';
+
     var chartHtml = '<div class="stat-card"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-chart-line-up"></i> Активность за 30 дней</h3>';
-    chartHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-bottom:12px"><i class="ph ph-info"></i> Количество упражнений за каждый день. Листай для навигации.</div>';
-    chartHtml += '<div class="chart-container">';
-    chartHtml += '<div style="display:flex;align-items:center;gap:8px;padding:10px">';
-    chartHtml += '<button class="chart-nav-btn" id="chartPrevBtn" onclick="StatsModule.scrollChart(-100)"><i class="ph ph-caret-left"></i></button>';
-    chartHtml += '<div class="chart-scroll" id="chartScroll" style="flex:1">';
-    chartHtml += '<canvas id="activityChart" width="800" height="220" style="display:block;min-width:600px"></canvas>';
+    chartHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-bottom:12px"><i class="ph ph-info"></i> Выбери метрики для отображения. Листай график пальцем или кнопками.</div>';
+    chartHtml += checkboxesHtml;
+    // Overlay-навигация: кнопки позиционируются абсолютно поверх canvas
+    chartHtml += '<div class="chart-container" style="position:relative">';
+    chartHtml += '<div class="chart-scroll" id="chartScroll" style="width:100%">';
+    chartHtml += '<canvas id="activityChart" width="800" height="240" style="display:block;min-width:600px;width:100%"></canvas>';
     chartHtml += '</div>';
-    chartHtml += '<button class="chart-nav-btn" id="chartNextBtn" onclick="StatsModule.scrollChart(100)"><i class="ph ph-caret-right"></i></button>';
-    chartHtml += '</div></div></div>';
+    chartHtml += '<button class="chart-nav-btn prev" id="chartPrevBtn" onclick="StatsModule.scrollChart(-100)"><i class="ph ph-caret-left"></i></button>';
+    chartHtml += '<button class="chart-nav-btn next" id="chartNextBtn" onclick="StatsModule.scrollChart(100)"><i class="ph ph-caret-right"></i></button>';
+    chartHtml += '</div></div>';
 
     var heatmapHtml = '<div class="stat-card"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-calendar-blank"></i> Тепловая карта (90 дней)</h3>';
     heatmapHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-bottom:12px"><i class="ph ph-info"></i> Цвет показывает интенсивность</div>';
@@ -112,6 +139,14 @@ const StatsModule = {
     setTimeout(function() { self.updateChartButtons(); }, 300);
   },
 
+  toggleMetric: function(metricId) {
+    if (this.chartMetrics[metricId]) {
+      this.chartMetrics[metricId].enabled = !this.chartMetrics[metricId].enabled;
+    }
+    var history = this.getHistory();
+    this.drawChart(history);
+  },
+
   scrollChart: function(delta) {
     var container = document.getElementById('chartScroll');
     if (container) {
@@ -135,17 +170,35 @@ const StatsModule = {
     var ctx = canvas.getContext('2d');
     var width = canvas.width, height = canvas.height;
     ctx.clearRect(0, 0, width, height);
-    var data = [], labels = [];
+
+    // Собираем данные за 30 дней
+    var data = { exercises: [], weight: [], mood: [] };
+    var labels = [];
     for (var i = 29; i >= 0; i--) {
       var date = new Date(); date.setDate(date.getDate() - i);
       var dateStr = date.toISOString().slice(0, 10);
-      var count = 0;
-      for (var j = 0; j < history.length; j++) if (history[j].date === dateStr && !history[j].skipped) { count = history[j].exercises ? history[j].exercises.length : 0; break; }
-      data.push(count);
+      var dayRecord = null;
+      for (var j = 0; j < history.length; j++) if (history[j].date === dateStr) { dayRecord = history[j]; break; }
+      
+      var exCount = 0;
+      if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
+      data.exercises.push(exCount);
+      data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
+      data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
       labels.push(date.getDate() + '.' + (date.getMonth() + 1));
     }
-    var maxVal = Math.max.apply(null, data.concat([10]));
+
+    // Определяем max для каждой метрики
+    var maxValues = {};
+    for (var key in data) {
+      var vals = data[key].filter(function(v) { return v !== null; });
+      maxValues[key] = vals.length > 0 ? Math.max.apply(null, vals) : 10;
+      if (key === 'exercises' && maxValues[key] < 10) maxValues[key] = 10;
+      if (key === 'mood' && maxValues[key] < 10) maxValues[key] = 10;
+    }
+
     var padding = 40, chartWidth = width - padding * 2, chartHeight = height - padding * 2;
+
     // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
@@ -156,47 +209,71 @@ const StatsModule = {
     // Оси
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding, padding); ctx.lineTo(padding, height - padding); ctx.lineTo(width - padding, height - padding); ctx.stroke();
-    // Линия графика
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    for (var i = 0; i < data.length; i++) {
-      var x = padding + (i / (data.length - 1)) * chartWidth;
-      var y = height - padding - (data[i] / maxVal) * chartHeight;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+
+    // Рисуем каждую включённую метрику
+    var metrics = this.chartMetrics;
+    for (var key in metrics) {
+      var m = metrics[key];
+      if (!m.enabled) continue;
+      var series = data[key];
+      var maxVal = maxValues[key];
+
+      // Линия
+      ctx.strokeStyle = m.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i < series.length; i++) {
+        if (series[i] === null) continue;
+        var x = padding + (i / (series.length - 1)) * chartWidth;
+        var y = height - padding - (series[i] / maxVal) * chartHeight;
+        if (!started) { ctx.moveTo(x, y); started = true; }
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Градиент под линией
+      var gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+      gradient.addColorStop(0, m.color.replace(')', ',0.3)').replace('rgb', 'rgba'));
+      gradient.addColorStop(1, m.color.replace(')', ',0)').replace('rgb', 'rgba'));
+      ctx.lineTo(padding + chartWidth, height - padding);
+      ctx.lineTo(padding, height - padding);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Точки
+      for (var i = 0; i < series.length; i++) {
+        if (series[i] === null) continue;
+        var x = padding + (i / (series.length - 1)) * chartWidth;
+        var y = height - padding - (series[i] / maxVal) * chartHeight;
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = m.color; ctx.fill();
+        ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
+      }
     }
-    ctx.stroke();
-    // Градиент под линией
-    var gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
-    gradient.addColorStop(0, 'rgba(212,175,55,0.3)');
-    gradient.addColorStop(1, 'rgba(212,175,55,0)');
-    ctx.lineTo(padding + chartWidth, height - padding);
-    ctx.lineTo(padding, height - padding);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
-    // Точки
-    for (var i = 0; i < data.length; i++) {
-      var x = padding + (i / (data.length - 1)) * chartWidth;
-      var y = height - padding - (data[i] / maxVal) * chartHeight;
-      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#d4af37'; ctx.fill();
-      ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
-    }
+
     // Подписи оси X
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
-    for (var i = 0; i < data.length; i += 3) {
-      var x = padding + (i / (data.length - 1)) * chartWidth;
+    for (var i = 0; i < labels.length; i += 3) {
+      var x = padding + (i / (labels.length - 1)) * chartWidth;
       ctx.fillText(labels[i], x, height - padding + 18);
     }
-    // Подписи оси Y
-    ctx.textAlign = 'right';
-    for (var i = 0; i <= 4; i++) {
-      var y = padding + (i / 4) * chartHeight;
-      var val = Math.round(maxVal - (i / 4) * maxVal);
-      ctx.fillText(val, padding - 8, y + 4);
+
+    // Легенда внутри canvas (справа вверху)
+    var legendY = padding + 10;
+    ctx.textAlign = 'left';
+    ctx.font = '12px Inter, sans-serif';
+    for (var key in metrics) {
+      var m = metrics[key];
+      if (!m.enabled) continue;
+      ctx.fillStyle = m.color;
+      ctx.fillRect(width - padding - 120, legendY, 12, 12);
+      ctx.fillStyle = '#a0a0b0';
+      ctx.fillText(m.label, width - padding - 104, legendY + 10);
+      legendY += 18;
     }
   },
 

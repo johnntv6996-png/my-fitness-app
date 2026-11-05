@@ -29,6 +29,8 @@ const CoreModule = {
     var activeBtn = document.querySelector('.sidebar-item[data-screen="' + screenId + '"]');
     if (activeBtn) activeBtn.classList.add('active');
     if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+    // Обновить профиль в sidebar после навигации
+    if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
   },
   addNavButton: function(label, screenId, icon) {
     icon = icon || '<i class="ph ph-circle"></i>';
