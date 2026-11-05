@@ -33,6 +33,7 @@ const SettingsModule = {
     var settings = this.getSettings();
     var userName = this.getUserName();
     var userAvatar = this.getUserAvatar();
+    var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
 
     var css = '<style>' +
       '.settings-section { background:var(--bg-card); border-radius:14px; padding:20px; margin-bottom:16px; border:1px solid var(--border-subtle); }' +
@@ -46,6 +47,7 @@ const SettingsModule = {
     var html = css + '<div style="padding:16px;max-width:500px;margin:0 auto">';
     html += '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-gear"></i> Настройки</h2>';
 
+    // === ПРОФИЛЬ ===
     html += '<div class="settings-section">';
     html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-user"></i> Профиль</h3>';
     html += '<div class="avatar-preview">';
@@ -63,11 +65,12 @@ const SettingsModule = {
     html += '<div style="margin-bottom:16px">';
     html += '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Имя:</label>';
     html += '<input type="text" id="settingUserName" value="' + userName + '" placeholder="Введи своё имя" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">';
-    html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Будет отображаться на главном экране</div>';
+    if (hintsEnabled) html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Будет отображаться на главном экране</div>';
     html += '</div>';
     html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveProfile()"><i class="ph ph-floppy-disk"></i> Сохранить профиль</button>';
     html += '</div>';
 
+    // === ОПРОСЫ ===
     html += '<div class="settings-section">';
     html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-clipboard-text"></i> Опросы</h3>';
     html += '<div style="margin-bottom:14px">';
@@ -75,11 +78,12 @@ const SettingsModule = {
     html += '<input type="checkbox" id="settingDisableMini" ' + (settings.disableMiniSurvey ? 'checked' : '') + ' style="width:20px;height:20px;accent-color:var(--accent-gold)">';
     html += '<span style="font-size:0.95em">Отключить мини-опрос после подхода</span>';
     html += '</label>';
-    html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Подходы будут отмечаться сразу без вопросов</div>';
+    if (hintsEnabled) html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Подходы будут отмечаться сразу без вопросов</div>';
     html += '</div>';
     html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveSurveySettings()"><i class="ph ph-floppy-disk"></i> Сохранить</button>';
     html += '</div>';
 
+    // === ИНТЕРФЕЙС ===
     html += '<div class="settings-section">';
     html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-eye-slash"></i> Интерфейс</h3>';
     html += '<div style="margin-bottom:14px">';
@@ -87,11 +91,12 @@ const SettingsModule = {
     html += '<input type="checkbox" id="settingDisableHints" ' + (settings.disableHints ? 'checked' : '') + ' style="width:20px;height:20px;accent-color:var(--accent-gold)">';
     html += '<span style="font-size:0.95em">Отключить все подсказки (хинты)</span>';
     html += '</label>';
-    html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Уберёт все информационные подсказки во всех разделах</div>';
+    if (hintsEnabled) html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Уберёт все информационные подсказки во всех разделах</div>';
     html += '</div>';
     html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveInterfaceSettings()"><i class="ph ph-floppy-disk"></i> Сохранить</button>';
     html += '</div>';
 
+    // === ДАННЫЕ ===
     html += '<div class="settings-section">';
     html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-database"></i> Данные</h3>';
     html += '<button class="btn btn-secondary" style="width:100%;padding:12px;margin-bottom:10px" onclick="SettingsModule.exportData()"><i class="ph ph-export"></i> Экспорт данных</button>';
@@ -126,6 +131,7 @@ const SettingsModule = {
           var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
           SettingsModule.saveUserAvatar(dataUrl);
           SettingsModule.createSettingsScreen();
+          if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
           alert('Аватарка обновлена!');
         };
         img.src = ev.target.result;
@@ -143,6 +149,7 @@ const SettingsModule = {
     if (idx >= 0 && idx < icons.length) {
       this.saveUserAvatar(icons[idx]);
       this.createSettingsScreen();
+      if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
     }
   },
 
@@ -150,11 +157,13 @@ const SettingsModule = {
     if (!confirm('Удалить аватарку?')) return;
     this.saveUserAvatar(null);
     this.createSettingsScreen();
+    if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
   },
 
   saveProfile: function() {
     var name = document.getElementById('settingUserName').value.trim();
     this.saveUserName(name);
+    if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
     alert('Профиль сохранён!');
   },
 
@@ -169,7 +178,7 @@ const SettingsModule = {
     var settings = this.getSettings();
     settings.disableHints = document.getElementById('settingDisableHints').checked;
     this.saveSettings(settings);
-    alert('Настройки интерфейса сохранены!');
+    alert('Настройки интерфейса сохранены! Перезагрузи страницу для применения.');
   },
 
   exportData: function() {
@@ -187,6 +196,7 @@ const SettingsModule = {
     alert('Данные экспортированы!');
   },
 
+  // ИСПРАВЛЕННАЯ ФУНКЦИЯ ИМПОРТА
   importData: function() {
     var input = document.createElement('input');
     input.type = 'file';
@@ -198,10 +208,28 @@ const SettingsModule = {
       reader.onload = function(ev) {
         try {
           var data = JSON.parse(ev.target.result);
-          Object.keys(data).forEach(function(key) { localStorage.setItem(key, data[key]); });
-          alert('Данные импортированы! Перезагрузи страницу.');
+          var importedCount = 0;
+          var skippedCount = 0;
+          Object.keys(data).forEach(function(key) {
+            var value = data[key];
+            // Если значение не строка — преобразуем в JSON-строку
+            var stringValue = (typeof value === 'string') ? value : JSON.stringify(value);
+            try {
+              localStorage.setItem(key, stringValue);
+              importedCount++;
+            } catch (err) {
+              console.warn('Не удалось сохранить ключ ' + key + ': ' + err.message);
+              skippedCount++;
+            }
+          });
+          var msg = '✅ Импортировано ключей: ' + importedCount;
+          if (skippedCount > 0) msg += '\n⚠️ Пропущено: ' + skippedCount;
+          msg += '\n\nСтраница перезагрузится для применения изменений.';
+          alert(msg);
           location.reload();
-        } catch (error) { alert('Ошибка импорта: ' + error.message); }
+        } catch (error) { 
+          alert('❌ Ошибка импорта: ' + error.message); 
+        }
       };
       reader.readAsText(file);
     };
