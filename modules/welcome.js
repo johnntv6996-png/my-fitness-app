@@ -210,6 +210,7 @@ const WelcomeModule = {
     stats.yes++;
     stats.streak = (stats.streak || 0) + 1;
     if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+    if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
     if (typeof WorkoutModule !== 'undefined' && WorkoutModule.openWorkoutModal) {
       WorkoutModule.openWorkoutModal();
     } else {
@@ -256,6 +257,7 @@ const WelcomeModule = {
       alert('Понял, день пропущен. Завтра новый шанс!');
       this.createWelcomeScreen();
     }
+    if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
   }
 };
 

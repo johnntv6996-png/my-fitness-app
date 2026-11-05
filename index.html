@@ -95,7 +95,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 28px;
+  padding: 16px 24px;
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.03) 100%);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
@@ -105,11 +105,8 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   box-shadow: var(--shadow-gold);
   position: relative;
   overflow: hidden;
-  cursor: pointer;
   transition: all var(--transition-fast);
 }
-
-.header:hover { box-shadow: 0 0 60px rgba(212, 175, 55, 0.3); }
 
 .header::before {
   content: '';
@@ -123,12 +120,12 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 @keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
 .header-left { display: flex; align-items: center; gap: 16px; }
-.header-right { display: flex; align-items: center; gap: 10px; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 .header h1 { 
   margin: 0; 
   font-family: var(--font-display);
-  font-size: 1.8em;
+  font-size: 1.6em;
   font-weight: 900;
   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 50%, var(--accent-gold) 100%);
   -webkit-background-clip: text;
@@ -138,12 +135,140 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
 }
 
 .header h1 i { font-size: 1.1em; -webkit-text-fill-color: var(--accent-gold); }
 
+.header-level-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  border: 1px solid var(--border-gold);
+}
+
+body.light-theme .header-level-block {
+  background: rgba(166, 124, 0, 0.08);
+}
+
+.header-level-icon {
+  font-size: 1.4em;
+  color: var(--accent-gold);
+  animation: levelPulse 3s ease-in-out infinite;
+}
+
+@keyframes levelPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--accent-gold)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 8px var(--accent-gold)); }
+}
+
+.header-level-num {
+  font-family: var(--font-display);
+  font-size: 1.5em;
+  font-weight: 900;
+  color: var(--accent-gold);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.header-level-label {
+  font-family: var(--font-primary);
+  font-size: 0.5em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-xp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 110px;
+}
+
+.header-xp-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7em;
+  color: var(--text-secondary);
+}
+
+.header-xp-text strong {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.header-xp-bar {
+  height: 5px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+body.light-theme .header-xp-bar {
+  background: rgba(166, 124, 0, 0.15);
+}
+
+.header-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+  border-radius: 3px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.header-xp-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: xpShine 2.5s ease-in-out infinite;
+}
+
+@keyframes xpShine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.header-xp-fill.xp-gained {
+  animation: xpGain 0.8s ease-out;
+}
+
+@keyframes xpGain {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.8); box-shadow: 0 0 12px var(--accent-gold); }
+  100% { filter: brightness(1); }
+}
+
+.header-achievement-hint {
+  font-size: 0.65em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+.header-achievement-hint i {
+  color: var(--accent-gold);
+  font-size: 0.9em;
+}
+
 .theme-btn {
-  width: 42px; height: 42px;
+  width: 40px; height: 40px;
   border-radius: 50%;
   background: var(--bg-glass);
   border: 1px solid var(--border-subtle);
@@ -152,7 +277,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2em;
+  font-size: 1.1em;
   transition: all var(--transition-fast);
 }
 
@@ -160,7 +285,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 .theme-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
 
 .hamburger {
-  width: 44px; height: 44px;
+  width: 42px; height: 42px;
   background: var(--bg-glass);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -380,152 +505,104 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
+/* Уведомление об ачивке */
+.achievement-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-150%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  border: 2px solid var(--accent-gold);
+  border-radius: 16px;
+  padding: 20px 28px;
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  max-width: 90vw;
+}
+
+.achievement-toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.achievement-toast .ach-icon {
+  font-size: 2.5em;
+  color: var(--accent-gold);
+  animation: achBounce 0.6s ease-out;
+}
+
+@keyframes achBounce {
+  0% { transform: scale(0) rotate(-180deg); }
+  60% { transform: scale(1.3) rotate(10deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.achievement-toast .ach-text { flex: 1; }
+.achievement-toast .ach-title { font-family: var(--font-display); color: var(--accent-gold); font-size: 1.1em; font-weight: 700; margin-bottom: 4px; }
+.achievement-toast .ach-desc { color: var(--text-secondary); font-size: 0.85em; }
+
+.achievement-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.achievement-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  animation: particleFall 1.5s ease-out forwards;
+}
+
+@keyframes particleFall {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(100vh) scale(0); opacity: 0; }
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold-light); }
 
-/* === ИНДИКАТОР ЗАГРУЗКИ === */
-.loading-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: var(--bg-primary);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  transition: opacity 0.5s;
-}
-
-.loading-overlay.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.loading-box {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-gold);
-  border-radius: var(--radius-lg);
-  padding: 40px;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: var(--shadow-gold);
-}
-
-.loading-title {
-  font-family: var(--font-display);
-  font-size: 1.8em;
-  color: var(--accent-gold);
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.loading-progress {
-  background: var(--bg-primary);
-  border-radius: 10px;
-  height: 8px;
-  overflow: hidden;
-  margin: 20px 0;
-  border: 1px solid var(--border-subtle);
-}
-
-.loading-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
-  border-radius: 10px;
-  transition: width 0.3s ease;
-  width: 0%;
-}
-
-.loading-status {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.9em;
-  margin-top: 12px;
-}
-
-.loading-modules {
-  margin-top: 20px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.loading-module-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  background: var(--bg-card);
-  border-radius: 8px;
-  font-size: 0.85em;
-  border-left: 3px solid var(--border-subtle);
-}
-
-.loading-module-item.loading { border-left-color: var(--accent-gold); }
-.loading-module-item.loaded { border-left-color: var(--accent-success); }
-.loading-module-item.error { border-left-color: var(--accent-error); }
-
-.loading-module-item i { font-size: 1.2em; }
-
-.loading-error {
-  background: rgba(248, 113, 113, 0.1);
-  border: 1px solid var(--accent-error);
-  border-radius: 10px;
-  padding: 16px;
-  margin-top: 16px;
-  color: var(--accent-error);
-  font-size: 0.9em;
-}
-
-.loading-error h4 { margin-bottom: 8px; }
-
-.loading-error code {
-  display: block;
-  background: var(--bg-primary);
-  padding: 8px;
-  border-radius: 6px;
-  margin-top: 8px;
-  font-size: 0.85em;
-  word-break: break-all;
-}
-
 @media (max-width: 768px) {
   body { padding: 0; }
-  .header { margin: 10px; padding: 14px 16px; border-radius: var(--radius-md); flex-wrap: wrap; gap: 12px; }
-  .header h1 { font-size: 1.2em; }
+  .header { margin: 10px; padding: 12px 16px; border-radius: var(--radius-md); flex-wrap: wrap; gap: 10px; }
+  .header h1 { font-size: 1.1em; }
   .header h1 i { font-size: 0.9em; }
-  .hamburger { width: 40px; height: 40px; }
-  .theme-btn { width: 38px; height: 38px; font-size: 1em; }
+  .hamburger { width: 38px; height: 38px; }
+  .theme-btn { width: 36px; height: 36px; font-size: 1em; }
+  .header-level-block { padding: 6px 10px; gap: 8px; }
+  .header-level-num { font-size: 1.2em; }
+  .header-xp-block { min-width: 90px; }
   .main-content { padding: 0 12px 40px; }
   .dev-panel { padding: 20px; }
   .module-item { flex-direction: column; align-items: flex-start; }
   .module-item > div:last-child { width: 100%; justify-content: flex-end; }
-  .loading-box { padding: 24px 20px; }
-  .loading-title { font-size: 1.4em; }
 }
 
 @media (max-width: 480px) {
   .header h1 { font-size: 1em; gap: 8px; }
   .header-left { gap: 10px; }
+  .header-right { gap: 6px; }
+  .header-level-block { flex-wrap: wrap; }
+  .header-xp-block { min-width: 100%; margin-top: 6px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ИНДИКАТОР ЗАГРУЗКИ -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-box">
-    <div class="loading-title"><i class="ph ph-barbell" style="margin-right:10px"></i>FITNESS ELITE</div>
-    <div class="loading-progress">
-      <div class="loading-progress-bar" id="loadingProgressBar"></div>
-    </div>
-    <div class="loading-status" id="loadingStatus">Подготовка...</div>
-    <div class="loading-modules" id="loadingModules"></div>
-    <div id="loadingError"></div>
-  </div>
-</div>
+<!-- Контейнер для уведомлений об ачивках -->
+<div id="achievementContainer"></div>
+<div class="achievement-particles" id="achievementParticles"></div>
 
 <!-- SIDEBAR -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
@@ -567,14 +644,34 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 
 <!-- HEADER -->
 <div style="max-width:1200px;margin:0 auto;padding:10px">
-  <div class="header" id="mainHeader" onclick="goHome()">
+  <div class="header" id="mainHeader">
     <div class="header-left">
       <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()">
         <span></span><span></span><span></span>
       </button>
-      <h1><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
+      <h1 onclick="event.stopPropagation(); goHome()"><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
     </div>
     <div class="header-right">
+      <div class="header-level-block" id="headerLevelBlock" onclick="event.stopPropagation()">
+        <i class="ph ph-star header-level-icon" id="headerLevelIcon"></i>
+        <div class="header-level-num">
+          <span id="headerLevelNum">1</span>
+          <span class="header-level-label">уровень</span>
+        </div>
+        <div class="header-xp-block">
+          <div class="header-xp-text">
+            <span>XP</span>
+            <span><strong id="headerXpCurrent">0</strong> / <span id="headerXpNeeded">100</span></span>
+          </div>
+          <div class="header-xp-bar">
+            <div class="header-xp-fill" id="headerXpFill" style="width:0%"></div>
+          </div>
+          <div class="header-achievement-hint" id="headerAchHint">
+            <i class="ph ph-trophy"></i>
+            <span id="headerAchText">до следующей ачивки: 100 XP</span>
+          </div>
+        </div>
+      </div>
       <button class="theme-btn" id="themeDarkBtn" onclick="event.stopPropagation(); setTheme('dark')" title="Тёмная тема">
         <i class="ph ph-moon-stars"></i>
       </button>
@@ -586,7 +683,7 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 </div>
 
 <!-- MAIN CONTENT -->
-<div class="main-content" id="mainContent">
+<div class="main-content">
   <div id="userInterface">
     <div id="screen-welcome" class="screen active">
       <div class="loading">
@@ -660,31 +757,31 @@ const Logger = {
 };
 
 const MODULE_REGISTRY = {
-  'core': { name: 'Ядро системы', version: '3.1.0',
+  'core': { name: 'Ядро системы', version: '3.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
     required: true, description: 'Базовый функционал' },
-  'welcome': { name: 'Главная', version: '6.1.0',
+  'welcome': { name: 'Главная', version: '6.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
     required: false, description: 'Экран приветствия' },
-  'exercises': { name: 'База упражнений', version: '5.1.0',
+  'exercises': { name: 'База упражнений', version: '5.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
     required: false, description: 'CRUD упражнений с избранным' },
-  'plan': { name: 'План тренировок', version: '4.1.0',
+  'plan': { name: 'План тренировок', version: '4.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
     required: false, description: 'Настройка плана' },
-  'workout': { name: 'Тренировка', version: '3.1.0',
+  'workout': { name: 'Тренировка', version: '3.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js',
     required: false, description: 'Экран тренировки' },
-  'stats': { name: 'Статистика', version: '4.1.0',
+  'stats': { name: 'Статистика', version: '4.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js',
     required: false, description: 'Графики и аналитика' },
-  'survey': { name: 'Опросы', version: '3.1.0',
+  'survey': { name: 'Опросы', version: '3.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js',
     required: false, description: 'Конструктор опросов' },
-  'achievements': { name: 'Достижения', version: '1.0.0',
+  'achievements': { name: 'Достижения', version: '1.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js',
     required: false, description: 'Система достижений' },
-  'settings': { name: 'Настройки', version: '3.1.0',
+  'settings': { name: 'Настройки', version: '3.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js',
     required: false, description: 'Параметры и данные' }
 };
@@ -1044,135 +1141,185 @@ function clearBugReports() {
   alert('Все репорты удалены');
 }
 
-// === МОДУЛЬ МЕНЕДЖЕР С ИНДИКАТОРОМ ЗАГРУЗКИ ===
+// === ОБНОВЛЕНИЕ ШАПКИ (уровень + XP) ===
+function updateHeaderLevel() {
+  var stats = null;
+  try { stats = JSON.parse(localStorage.getItem('ft_stats')) || {xp:0, level:1, streak:0, yes:0}; } catch(e) {}
+  if (!stats) return;
+  
+  var level = stats.level || 1;
+  var xp = stats.xp || 0;
+  var xpNeeded = level * 100;
+  var xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
+  
+  var levelIcon = 'ph-star';
+  if (level >= 50) levelIcon = 'ph-diamond';
+  else if (level >= 20) levelIcon = 'ph-crown';
+  else if (level >= 10) levelIcon = 'ph-trophy';
+  else if (level >= 5) levelIcon = 'ph-star-four';
+  
+  var iconEl = document.getElementById('headerLevelIcon');
+  if (iconEl) {
+    iconEl.className = 'ph ' + levelIcon + ' header-level-icon';
+  }
+  
+  var numEl = document.getElementById('headerLevelNum');
+  if (numEl) {
+    var oldVal = parseInt(numEl.textContent) || 0;
+    if (oldVal !== level) animateNumber(numEl, oldVal, level, 600);
+    else numEl.textContent = level;
+  }
+  
+  var xpCurEl = document.getElementById('headerXpCurrent');
+  if (xpCurEl) {
+    var oldXp = parseInt(xpCurEl.textContent) || 0;
+    if (oldXp !== xp) animateNumber(xpCurEl, oldXp, xp, 800);
+    else xpCurEl.textContent = xp;
+  }
+  
+  var xpNeedEl = document.getElementById('headerXpNeeded');
+  if (xpNeedEl) xpNeedEl.textContent = xpNeeded;
+  
+  var fillEl = document.getElementById('headerXpFill');
+  if (fillEl) {
+    var oldWidth = parseFloat(fillEl.style.width) || 0;
+    fillEl.style.width = xpPercent + '%';
+    if (Math.abs(oldWidth - xpPercent) > 1) {
+      fillEl.classList.remove('xp-gained');
+      void fillEl.offsetWidth;
+      fillEl.classList.add('xp-gained');
+      setTimeout(function() { fillEl.classList.remove('xp-gained'); }, 800);
+    }
+  }
+  
+  // Подсказка до следующей ачивки
+  var achThresholds = [5, 10, 20, 50, 100];
+  var nextAch = null;
+  for (var i = 0; i < achThresholds.length; i++) {
+    if (level < achThresholds[i]) { nextAch = achThresholds[i]; break; }
+  }
+  var achText = document.getElementById('headerAchText');
+  if (achText) {
+    if (nextAch) {
+      var totalXp = xp + (level - 1) * 100;
+      var nextTotalXp = (nextAch - 1) * 100;
+      var xpToNext = Math.max(0, nextTotalXp - totalXp);
+      achText.textContent = 'до ур. ' + nextAch + ': ' + xpToNext + ' XP';
+    } else {
+      achText.textContent = 'Максимальный уровень!';
+    }
+  }
+}
+
+function animateNumber(el, from, to, duration) {
+  var start = null;
+  var range = to - from;
+  function step(timestamp) {
+    if (!start) start = timestamp;
+    var progress = Math.min((timestamp - start) / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(from + range * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// === УВЕДОМЛЕНИЕ ОБ АЧИВКЕ ===
+function showAchievementToast(name, description, icon) {
+  icon = icon || 'ph-trophy';
+  var container = document.getElementById('achievementContainer');
+  if (!container) return;
+  
+  var toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.innerHTML = 
+    '<i class="ph ph-fill ' + icon + ' ach-icon"></i>' +
+    '<div class="ach-text">' +
+      '<div class="ach-title">🏆 Достижение разблокировано!</div>' +
+      '<div class="ach-desc"><strong>' + name + '</strong> — ' + description + '</div>' +
+    '</div>';
+  container.appendChild(toast);
+  
+  createAchievementParticles();
+  
+  setTimeout(function() { toast.classList.add('show'); }, 50);
+  setTimeout(function() { 
+    toast.classList.remove('show');
+    setTimeout(function() { toast.remove(); }, 600);
+  }, 4000);
+}
+
+function createAchievementParticles() {
+  var container = document.getElementById('achievementParticles');
+  if (!container) return;
+  for (var i = 0; i < 30; i++) {
+    var p = document.createElement('div');
+    p.className = 'achievement-particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = '-10px';
+    p.style.animationDelay = (Math.random() * 0.5) + 's';
+    p.style.animationDuration = (1 + Math.random()) + 's';
+    var colors = ['#d4af37', '#f4d03f', '#FFD700', '#FFA500'];
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.width = (4 + Math.random() * 8) + 'px';
+    p.style.height = p.style.width;
+    container.appendChild(p);
+    setTimeout(function(el) { el.remove(); }.bind(null, p), 2000);
+  }
+}
+
+function refreshHeaderAfterXP() {
+  updateHeaderLevel();
+}
+
+// === MODULE MANAGER ===
 class ModuleManager {
-  constructor() { 
-    this.loadedModules = new Map(); 
-    this.moduleStatus = new Map();
-    this.loadingOverlay = document.getElementById('loadingOverlay');
-    this.progressBar = document.getElementById('loadingProgressBar');
-    this.statusText = document.getElementById('loadingStatus');
-    this.modulesList = document.getElementById('loadingModules');
-    this.errorDiv = document.getElementById('loadingError');
-  }
-
-  updateProgress(current, total, status) {
-    var percent = Math.round((current / total) * 100);
-    this.progressBar.style.width = percent + '%';
-    this.statusText.textContent = status;
-  }
-
-  addModuleStatus(id, status, message) {
-    var item = document.createElement('div');
-    item.className = 'loading-module-item ' + status;
-    var icon = status === 'loading' ? 'ph-spinner ph-spin' : status === 'loaded' ? 'ph-check-circle' : 'ph-x-circle';
-    item.innerHTML = '<i class="ph ' + icon + '"></i><span style="flex:1">' + MODULE_REGISTRY[id].name + '</span><span style="font-size:0.8em;opacity:0.7">' + message + '</span>';
-    this.modulesList.appendChild(item);
-  }
+  constructor() { this.loadedModules = new Map(); this.moduleStatus = new Map(); }
 
   async init() {
     Logger.log('Инициализация менеджера модулей...', 'info');
     applyTheme();
     updateSidebarProfile();
-    
-    var moduleIds = Object.keys(MODULE_REGISTRY);
-    var total = moduleIds.length;
-    var loaded = 0;
-    var errors = [];
-
-    this.modulesList.innerHTML = '';
-    this.errorDiv.innerHTML = '';
-
-    for (var i = 0; i < moduleIds.length; i++) {
-      var id = moduleIds[i];
-      var config = MODULE_REGISTRY[id];
-      
-      this.addModuleStatus(id, 'loading', 'Загрузка...');
-      this.updateProgress(i, total, 'Загрузка ' + config.name + '...');
-
-      try {
-        await this.loadModule(id, config);
-        loaded++;
-        this.updateModuleStatus(id, 'loaded', '✓ Загружен');
-      } catch (error) {
-        errors.push({ id: id, name: config.name, error: error.message });
-        this.updateModuleStatus(id, 'error', '✗ Ошибка');
-        if (config.required) {
-          this.showError('Критическая ошибка: не удалось загрузить модуль "' + config.name + '"\n\n' + error.message);
-          return;
-        }
-      }
-    }
-
-    this.updateProgress(total, total, 'Загрузка завершена!');
-    
-    if (errors.length > 0) {
-      var errorHtml = '<div class="loading-error"><h4><i class="ph ph-warning"></i> Ошибки загрузки (' + errors.length + ')</h4>';
-      errors.forEach(function(e) {
-        errorHtml += '<div style="margin-top:8px"><strong>' + e.name + ':</strong> ' + e.error + '</div>';
-      });
-      errorHtml += '<button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="moduleManager.retryFailed()"><i class="ph ph-arrows-clockwise"></i> Повторить загрузку</button>';
-      errorHtml += '</div>';
-      this.errorDiv.innerHTML = errorHtml;
-    }
-
-    setTimeout(() => {
-      this.loadingOverlay.classList.add('hidden');
-      setTimeout(() => { this.loadingOverlay.style.display = 'none'; }, 500);
-    }, 1000);
-
+    updateHeaderLevel();
+    await this.loadAllModules();
     this.renderModuleList();
     var self = this;
     setTimeout(function() { self.initializeUserInterface(); }, 100);
   }
 
-  updateModuleStatus(id, status, message) {
-    var items = this.modulesList.querySelectorAll('.loading-module-item');
-    var moduleIds = Object.keys(MODULE_REGISTRY);
-    var idx = moduleIds.indexOf(id);
-    if (items[idx]) {
-      items[idx].className = 'loading-module-item ' + status;
-      var icon = status === 'loaded' ? 'ph-check-circle' : 'ph-x-circle';
-      items[idx].innerHTML = '<i class="ph ' + icon + '"></i><span style="flex:1">' + MODULE_REGISTRY[id].name + '</span><span style="font-size:0.8em;opacity:0.7">' + message + '</span>';
-    }
-  }
-
-  showError(message) {
-    this.errorDiv.innerHTML = '<div class="loading-error"><h4><i class="ph ph-warning"></i> Ошибка</h4><p>' + message + '</p><button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="location.reload()"><i class="ph ph-arrows-clockwise"></i> Перезагрузить</button></div>';
-    this.updateProgress(0, 1, 'Ошибка загрузки');
-  }
-
-  async retryFailed() {
-    this.errorDiv.innerHTML = '';
-    await this.init();
-  }
+  async loadAllModules() { for (var id in MODULE_REGISTRY) await this.loadModule(id, MODULE_REGISTRY[id]); }
 
   async loadModule(id, config) {
     var storageKey = STORAGE_PREFIX + id;
     var cachedData = localStorage.getItem(storageKey);
-
     if (cachedData) {
       try {
         var cached = JSON.parse(cachedData);
         if (cached.version === config.version) {
-          Logger.log('Модуль ' + id + ' загружен из кэша (v' + cached.version + ')', 'info');
+          Logger.log('Модуль ' + id + ' актуален (v' + cached.version + ')', 'info');
           this.executeModule(id, cached.code);
           this.moduleStatus.set(id, 'loaded');
           return;
         }
       } catch (e) { Logger.log('Ошибка чтения кэша ' + id, 'warn'); }
     }
-
-    Logger.log('Загрузка модуля ' + id + ' с GitHub...', 'info');
-    
-    var response = await fetch(config.url);
-    if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-    
-    var code = await response.text();
-    localStorage.setItem(storageKey, JSON.stringify({ version: config.version, code: code, loadedAt: Date.now() }));
-    Logger.log('Модуль ' + id + ' загружен (v' + config.version + ')', 'info');
-    this.executeModule(id, code);
-    this.moduleStatus.set(id, 'loaded');
+    Logger.log('Загрузка модуля ' + id + '...', 'info');
+    this.moduleStatus.set(id, 'loading');
+    this.renderModuleList();
+    try {
+      var response = await fetch(config.url);
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      var code = await response.text();
+      localStorage.setItem(storageKey, JSON.stringify({ version: config.version, code: code, loadedAt: Date.now() }));
+      Logger.log('Модуль ' + id + ' загружен (v' + config.version + ')', 'info');
+      this.executeModule(id, code);
+      this.moduleStatus.set(id, 'loaded');
+    } catch (error) {
+      Logger.log('Ошибка загрузки ' + id + ': ' + error.message, 'error');
+      this.moduleStatus.set(id, 'error');
+      if (config.required) alert('Критическая ошибка: не удалось загрузить модуль "' + config.name + '"');
+    }
+    this.renderModuleList();
   }
 
   executeModule(id, code) {
@@ -1186,7 +1333,6 @@ class ModuleManager {
     } catch (error) {
       Logger.log('Ошибка выполнения ' + id + ': ' + error.message, 'error');
       this.moduleStatus.set(id, 'error');
-      throw error;
     }
   }
 
@@ -1230,22 +1376,19 @@ class ModuleManager {
       }
     });
     updateSidebarProfile();
+    updateHeaderLevel();
   }
 
   async retryModule(id) {
     var config = MODULE_REGISTRY[id];
-    if (config) { 
-      localStorage.removeItem(STORAGE_PREFIX + id); 
-      await this.loadModule(id, config); 
-      this.renderModuleList();
-    }
+    if (config) { localStorage.removeItem(STORAGE_PREFIX + id); await this.loadModule(id, config); }
   }
 
   clearModule(id) {
     if (confirm('Удалить модуль "' + MODULE_REGISTRY[id].name + '" из кэша?')) {
       localStorage.removeItem(STORAGE_PREFIX + id);
       this.loadedModules.delete(id);
-      this.moduleStatus.set(id, 'error');
+      this.moduleStatus.delete(id);
       this.renderModuleList();
       Logger.log('Модуль ' + id + ' удалён из кэша', 'info');
     }
@@ -1253,9 +1396,9 @@ class ModuleManager {
 
   async checkAllModules() {
     Logger.log('Проверка обновлений...', 'info');
-    this.loadingOverlay.style.display = 'flex';
-    this.loadingOverlay.classList.remove('hidden');
-    await this.init();
+    await this.loadAllModules();
+    this.initializeUserInterface();
+    alert('Все модули проверены!');
   }
 
   clearAllCache() {
@@ -1265,6 +1408,7 @@ class ModuleManager {
       });
       this.loadedModules.clear();
       this.moduleStatus.clear();
+      this.renderModuleList();
       location.reload();
     }
   }

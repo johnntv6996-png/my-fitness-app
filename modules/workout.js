@@ -55,7 +55,6 @@ const WorkoutModule = {
     var content = document.createElement('div');
     content.className = 'workout-modal-content';
 
-    // Статус-бар
     var statusBar = document.createElement('div');
     statusBar.style.cssText = 'background:linear-gradient(135deg, #1a1a2e 0%, #151520 100%); border-radius:16px 16px 0 0; padding:16px 20px; border-bottom:1px solid var(--border-gold);';
     statusBar.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
@@ -65,21 +64,18 @@ const WorkoutModule = {
       '<div style="text-align:center;font-size:0.7em;opacity:0.6;margin-top:6px">До следующего уровня: ' + (xpNeeded - stats.xp) + ' XP</div>';
     content.appendChild(statusBar);
 
-    // Кнопка закрытия
     var closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="ph ph-x"></i>';
     closeBtn.style.cssText = 'position:sticky; top:10px; float:right; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-secondary); width:36px; height:36px; border-radius:50%; font-size:1.2em; cursor:pointer; z-index:10; margin:12px; display:flex; align-items:center; justify-content:center;';
     closeBtn.onclick = function() { self.closeWorkoutModal(); };
     content.appendChild(closeBtn);
 
-    // Заголовок дня
     var header = document.createElement('div');
     header.style.cssText = 'text-align:center; padding:10px 20px;';
     header.innerHTML = '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;justify-content:center;gap:10px"><i class="ph ph-barbell"></i> ' + todayPlan.dayName + '</h2>' +
       '<div style="font-size:0.9em;opacity:0.7;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ph ph-tag"></i> ' + (todayPlan.muscleGroup || 'Тренировка') + ' · <i class="ph ph-list-dashes"></i> ' + todayPlan.exercises.length + ' упражнений</div>';
     content.appendChild(header);
 
-    // Список упражнений
     if (todayPlan.exercises.length === 0) {
       var empty = document.createElement('div');
       empty.style.cssText = 'text-align:center; padding:40px; opacity:0.6;';
@@ -400,10 +396,17 @@ const WorkoutModule = {
     if (stats.xp >= xpNeeded) {
       stats.xp -= xpNeeded;
       stats.level++;
-      setTimeout(function() { alert('Новый уровень ' + stats.level + '!'); }, 100);
+      setTimeout(function() { 
+        if (typeof showAchievementToast === 'function') {
+          showAchievementToast('Новый уровень ' + stats.level + '!', 'Ты достиг уровня ' + stats.level, 'ph-star');
+        } else {
+          alert('Новый уровень ' + stats.level + '!');
+        }
+      }, 100);
     }
     this.saveStats(stats);
     this.saveHistory(history);
+    if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
 
     var setEl = document.getElementById('modal-set-' + setIdx);
     if (setEl) {
@@ -435,7 +438,11 @@ const WorkoutModule = {
       if (allDone) {
         var self = this;
         setTimeout(function() {
-          alert('Упражнение завершено! +' + (5 * numSets) + ' XP');
+          if (typeof showAchievementToast === 'function') {
+            showAchievementToast('Упражнение завершено!', '+' + (5 * numSets) + ' XP', 'ph-barbell');
+          } else {
+            alert('Упражнение завершено! +' + (5 * numSets) + ' XP');
+          }
           var exModal = document.getElementById('exerciseModal');
           if (exModal) exModal.remove();
           self.closeWorkoutModal();

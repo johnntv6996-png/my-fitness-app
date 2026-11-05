@@ -29,10 +29,7 @@ const ExercisesModule = {
   toggleFavorite: function(id) {
     var db = this.getDB();
     for (var i = 0; i < db.length; i++) {
-      if (db[i].id === id) {
-        db[i].favorite = !db[i].favorite;
-        break;
-      }
+      if (db[i].id === id) { db[i].favorite = !db[i].favorite; break; }
     }
     this.saveDB(db);
     this.createExercisesScreen();
@@ -71,7 +68,6 @@ const ExercisesModule = {
     var db = this.getDB();
     var categories = this.getCategories();
     
-    // Подсчёт избранного
     var favCount = 0;
     for (var i = 0; i < db.length; i++) if (db[i].favorite) favCount++;
 
@@ -100,45 +96,56 @@ const ExercisesModule = {
       '.cat-btn { padding:8px 14px; font-size:0.85em; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; transition:all 0.2s; background:var(--bg-card); color:var(--text-secondary); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0; }' +
       '.cat-btn.active { background:linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); color:#000; border-color:var(--accent-gold); font-weight:600; }' +
       '.cat-btn:not(.active):hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }' +
+      '.cat-action-btn { width:36px; height:36px; border-radius:50%; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-secondary); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:1em; transition:all 0.2s; flex-shrink:0; }' +
+      '.cat-action-btn:hover:not(:disabled) { background:var(--accent-gold-dim); border-color:var(--border-gold); color:var(--accent-gold); }' +
+      '.cat-action-btn:disabled { opacity:0.3; cursor:not-allowed; }' +
+      '.cat-action-btn.danger:hover:not(:disabled) { background:rgba(248,113,113,0.15); border-color:var(--accent-error); color:var(--accent-error); }' +
       '.fav-btn { background:transparent; border:none; cursor:pointer; font-size:1.3em; padding:4px 8px; transition:all 0.2s; }' +
       '.fav-btn:hover { transform:scale(1.2); }' +
       '.fav-btn.active { color:var(--accent-gold); }' +
       '.fav-btn:not(.active) { color:var(--text-muted); opacity:0.5; }' +
     '</style>';
 
-    // Навигация с drag-scroll (без кнопок)
-    var catNavHtml = '<div style="background:var(--bg-card);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
-    catNavHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
-    catNavHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
-    catNavHtml += '<button class="btn btn-primary" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.openCategoryForm()"><i class="ph ph-plus"></i> Добавить</button>';
-    catNavHtml += '</div>';
-    catNavHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
-    catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
+    // Тулбар категорий
+    var toolbarHtml = '<div style="background:var(--bg-card);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
+    
+    // Верхняя строка: заголовок + кнопки действий
+    toolbarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">';
+    toolbarHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
+    toolbarHtml += '<div style="display:flex;gap:6px;align-items:center">';
+    var isSystemFilter = ['all', 'uncategorized', 'favorites'].indexOf(this.currentFilter) !== -1;
+    toolbarHtml += '<button class="cat-action-btn" ' + (isSystemFilter ? 'disabled' : '') + ' onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Редактировать"><i class="ph ph-pencil-simple"></i></button>';
+    toolbarHtml += '<button class="cat-action-btn danger" ' + (isSystemFilter ? 'disabled' : '') + ' onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Удалить"><i class="ph ph-trash"></i></button>';
+    toolbarHtml += '<button class="cat-action-btn" onclick="ExercisesModule.openCategoryForm()" title="Добавить категорию" style="background:var(--accent-gold);color:#000;border-color:var(--accent-gold)"><i class="ph ph-plus"></i></button>';
+    toolbarHtml += '</div></div>';
+    
+    // Полоса прокрутки категорий
+    toolbarHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
     if (favCount > 0) {
-      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
+      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
     }
-    catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
     for (var i = 0; i < categories.length; i++) {
       var count = 0;
       for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
-      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
+      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
     }
-    catNavHtml += '</div>';
-    catNavHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Перетаскивай мышкой для навигации. Кликни на категорию для фильтрации.</div>';
-    catNavHtml += '</div>';
+    toolbarHtml += '</div>';
+    toolbarHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Перетаскивай мышкой для навигации. Кликни на категорию для фильтрации.</div>';
+    toolbarHtml += '</div>';
 
-    var isRegular = this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites';
-    if (isRegular) {
-      catNavHtml += '<div style="display:flex;gap:8px;margin-bottom:16px">';
-      catNavHtml += '<button class="btn btn-secondary" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')"><i class="ph ph-pencil-simple"></i> Редактировать "' + this.currentFilter + '"</button>';
-      catNavHtml += '<button class="btn btn-danger" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')"><i class="ph ph-trash"></i> Удалить категорию</button>';
-      catNavHtml += '</div>';
+    // Кнопка "Добавить упражнение" ПОД категориями
+    var addBtnText = 'Добавить упражнение';
+    if (this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites') {
+      addBtnText = 'Добавить в "' + this.currentFilter + '"';
     }
+    var addBtnHtml = '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:16px" onclick="ExercisesModule.openExForm(null, \'' + (this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites' ? this.currentFilter.replace(/'/g, "\\'") : '') + '\')"><i class="ph ph-plus-circle"></i> ' + addBtnText + '</button>';
 
     var listHtml = '';
     if (filtered.length === 0) {
       var emptyIcon = this.currentFilter === 'favorites' ? 'ph-star' : 'ph-books';
-      var emptyText = this.currentFilter === 'favorites' ? 'Нет избранных упражнений. Нажми ☆ на упражнении, чтобы добавить.' : 'Ничего не найдено';
+      var emptyText = this.currentFilter === 'favorites' ? 'Нет избранных упражнений. Нажми ☆ на упражнении.' : 'Ничего не найдено';
       listHtml = '<div style="text-align:center;padding:40px;opacity:0.6"><i class="ph ' + emptyIcon + '" style="font-size:3em;color:var(--accent-gold);margin-bottom:10px;display:block"></i><p>' + emptyText + '</p></div>';
     } else {
       for (var i = 0; i < filtered.length; i++) {
@@ -150,8 +157,8 @@ const ExercisesModule = {
         listHtml += '<div style="display:flex;justify-content:space-between;align-items:start">';
         listHtml += '<div style="flex:1">';
         listHtml += '<h4 style="margin:0 0 6px 0;color:var(--accent-gold);font-size:1.05em;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + ex.name;
-        if (ex.videoUrl) listHtml += '<i class="ph ph-video-camera" style="color:var(--accent-neon)" title="Есть видео"></i>';
-        if (ex.imageUrl) listHtml += '<i class="ph ph-image" style="color:var(--accent-neon)" title="Есть изображение"></i>';
+        if (ex.videoUrl) listHtml += '<i class="ph ph-video-camera" style="color:var(--accent-neon)"></i>';
+        if (ex.imageUrl) listHtml += '<i class="ph ph-image" style="color:var(--accent-neon)"></i>';
         listHtml += '</h4>';
         listHtml += '<div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + '</div>';
         listHtml += '<div style="font-size:0.8em;opacity:0.7;display:flex;gap:16px;flex-wrap:wrap">';
@@ -170,61 +177,25 @@ const ExercisesModule = {
     screen.innerHTML = css +
       '<div style="padding:8px;max-width:700px;margin:0 auto">' +
         '<h2 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:16px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-books"></i> База упражнений</h2>' +
-        '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:16px" onclick="ExercisesModule.openExForm()"><i class="ph ph-plus-circle"></i> Добавить упражнение</button>' +
-        catNavHtml + listHtml +
+        toolbarHtml +
+        addBtnHtml +
+        listHtml +
       '</div>';
 
-    // Инициализация drag-scroll
     setTimeout(function() { ExercisesModule.initDragScroll(); }, 100);
   },
 
   initDragScroll: function() {
     var container = document.getElementById('catScrollContainer');
     if (!container) return;
-    
-    var isDown = false;
-    var startX;
-    var scrollLeft;
-
-    container.addEventListener('mousedown', function(e) {
-      isDown = true;
-      startX = e.pageX - container.offsetLeft;
-      scrollLeft = container.scrollLeft;
-      container.style.cursor = 'grabbing';
-    });
-
-    container.addEventListener('mouseleave', function() {
-      isDown = false;
-      container.style.cursor = 'grab';
-    });
-
-    container.addEventListener('mouseup', function() {
-      isDown = false;
-      container.style.cursor = 'grab';
-    });
-
-    container.addEventListener('mousemove', function(e) {
-      if (!isDown) return;
-      e.preventDefault();
-      var x = e.pageX - container.offsetLeft;
-      var walk = (x - startX) * 2;
-      container.scrollLeft = scrollLeft - walk;
-    });
-
-    // Touch support
-    var touchStartX = 0;
-    var touchScrollLeft = 0;
-
-    container.addEventListener('touchstart', function(e) {
-      touchStartX = e.touches[0].pageX - container.offsetLeft;
-      touchScrollLeft = container.scrollLeft;
-    }, { passive: true });
-
-    container.addEventListener('touchmove', function(e) {
-      var x = e.touches[0].pageX - container.offsetLeft;
-      var walk = (x - touchStartX) * 2;
-      container.scrollLeft = touchScrollLeft - walk;
-    }, { passive: true });
+    var isDown = false, startX, scrollLeft;
+    container.addEventListener('mousedown', function(e) { isDown = true; startX = e.pageX - container.offsetLeft; scrollLeft = container.scrollLeft; });
+    container.addEventListener('mouseleave', function() { isDown = false; });
+    container.addEventListener('mouseup', function() { isDown = false; });
+    container.addEventListener('mousemove', function(e) { if (!isDown) return; e.preventDefault(); var x = e.pageX - container.offsetLeft; container.scrollLeft = scrollLeft - (x - startX) * 2; });
+    var touchStartX = 0, touchScrollLeft = 0;
+    container.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].pageX - container.offsetLeft; touchScrollLeft = container.scrollLeft; }, { passive: true });
+    container.addEventListener('touchmove', function(e) { var x = e.touches[0].pageX - container.offsetLeft; container.scrollLeft = touchScrollLeft - (x - touchStartX) * 2; }, { passive: true });
   },
 
   setFilter: function(f) { this.currentFilter = f; this.createExercisesScreen(); },
@@ -241,7 +212,6 @@ const ExercisesModule = {
         '<div style="margin-bottom:16px">' +
           '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Название:</label>' +
           '<input type="text" id="catName" value="' + (isEdit ? oldName : '') + '" placeholder="Например: Грудь" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
-          '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Короткое название группы мышц</div>' +
         '</div>' +
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
           '<button class="btn btn-secondary" onclick="document.getElementById(\'catFormModal\').remove()">Отмена</button>' +
@@ -283,7 +253,7 @@ const ExercisesModule = {
     this.createExercisesScreen();
   },
 
-  openExForm: function(id) {
+  openExForm: function(id, defaultCategory) {
     this.editingId = id || null;
     var db = this.getDB();
     var categories = this.getCategories();
@@ -293,7 +263,9 @@ const ExercisesModule = {
 
     var optionsHtml = '<option value="">Без категории</option>';
     for (var i = 0; i < categories.length; i++) {
-      optionsHtml += '<option value="' + categories[i] + '" ' + (ex.muscleGroup === categories[i] ? 'selected' : '') + '>' + categories[i] + '</option>';
+      var selected = (ex.muscleGroup === categories[i]) ? 'selected' : '';
+      if (defaultCategory && !id && categories[i] === defaultCategory) selected = 'selected';
+      optionsHtml += '<option value="' + categories[i] + '" ' + selected + '>' + categories[i] + '</option>';
     }
 
     var modal = document.createElement('div');
@@ -409,7 +381,7 @@ const ExercisesModule = {
           videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
             '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
             '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;background:#000">' +
-              '<iframe src="' + videoInfo.embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>' +
+              '<iframe src="' + videoInfo.embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>' +
             '</div></div>';
         } else if (videoInfo.type === 'video') {
           videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +

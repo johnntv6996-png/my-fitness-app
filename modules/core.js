@@ -30,6 +30,7 @@ const CoreModule = {
     if (activeBtn) activeBtn.classList.add('active');
     if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
     if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
+    if (typeof updateHeaderLevel === 'function') updateHeaderLevel();
     setTimeout(function() {
       if (screenId && screenId !== 'welcome' && screenId !== 'dev') {
         var module = null;
