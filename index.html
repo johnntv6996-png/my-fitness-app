@@ -14,12 +14,13 @@
   --bg-glass: rgba(255, 255, 255, 0.05);
   --text-primary: #ffffff;
   --text-secondary: #a0a0b0;
+  --text-muted: #6a6a7a;
   --accent-gold: #d4af37;
   --accent-gold-light: #f4d03f;
-  --accent-neon: #00d4ff;
-  --accent-success: #00ff88;
-  --accent-error: #ff3366;
-  --accent-warning: #ffaa00;
+  --accent-gold-dim: rgba(212, 175, 55, 0.15);
+  --accent-success: #4ade80;
+  --accent-error: #f87171;
+  --accent-warning: #fbbf24;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-gold: rgba(212, 175, 55, 0.3);
   --shadow-gold: 0 0 40px rgba(212, 175, 55, 0.2);
@@ -43,7 +44,7 @@ body {
   overflow-x: hidden;
   background-image: 
     radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 50%);
 }
 
 /* HEADER */
@@ -52,7 +53,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px 28px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(0, 212, 255, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.03) 100%);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-radius: var(--radius-lg);
@@ -81,6 +82,12 @@ body {
   50% { opacity: 1; }
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .header h1 { 
   margin: 0; 
   font-family: var(--font-display);
@@ -101,7 +108,7 @@ body {
   -webkit-text-fill-color: var(--accent-gold);
 }
 
-/* HAMBURGER - теперь слева */
+/* HAMBURGER */
 .hamburger {
   width: 44px;
   height: 44px;
@@ -116,7 +123,6 @@ body {
   gap: 5px;
   transition: all var(--transition-fast);
   flex-shrink: 0;
-  order: -1; /* Перемещаем влево */
 }
 
 .hamburger:hover {
@@ -154,8 +160,7 @@ body {
 
 .sidebar {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
   width: 320px;
   max-width: 85vw;
   height: 100vh;
@@ -186,10 +191,7 @@ body {
   gap: 10px;
 }
 
-.sidebar-section {
-  padding: 0 16px;
-  margin-bottom: 20px;
-}
+.sidebar-section { padding: 0 16px; margin-bottom: 20px; }
 
 .sidebar-section-title {
   font-size: 0.75em;
@@ -217,14 +219,14 @@ body {
 }
 
 .sidebar-item:hover {
-  background: rgba(212, 175, 55, 0.08);
+  background: var(--accent-gold-dim);
   color: var(--text-primary);
   border-color: var(--border-subtle);
   transform: translateX(4px);
 }
 
 .sidebar-item.active {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
+  background: var(--accent-gold-dim);
   color: var(--accent-gold);
   border-color: var(--border-gold);
   font-weight: 600;
@@ -234,6 +236,7 @@ body {
   font-size: 1.3em;
   width: 24px;
   text-align: center;
+  color: var(--accent-gold);
 }
 
 /* MAIN CONTENT */
@@ -272,6 +275,8 @@ body {
   margin-bottom: 12px;
   border: 1px solid var(--border-subtle);
   transition: all var(--transition-fast);
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .module-item:hover {
@@ -295,8 +300,10 @@ body {
   transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-family: var(--font-primary);
+  white-space: nowrap;
 }
 
 .btn:active { transform: scale(0.97); }
@@ -318,11 +325,16 @@ body {
 .btn-secondary:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
 
 .btn-danger { 
-  background: linear-gradient(135deg, var(--accent-error) 0%, #ff5577 100%);
+  background: linear-gradient(135deg, var(--accent-error) 0%, #ef4444 100%);
   color: #fff;
 }
 
 .btn-danger:hover { transform: translateY(-2px); }
+
+.btn-success {
+  background: linear-gradient(135deg, var(--accent-success) 0%, #22c55e 100%);
+  color: #000;
+}
 
 /* CONSOLE */
 .console-log {
@@ -340,7 +352,7 @@ body {
 
 .console-log .error { color: var(--accent-error); }
 .console-log .warn { color: var(--accent-warning); }
-.console-log .info { color: var(--accent-neon); }
+.console-log .info { color: var(--accent-gold); }
 
 /* LOADING */
 .loading { text-align: center; padding: 80px 40px; opacity: 0.6; }
@@ -409,9 +421,24 @@ body {
 /* RESPONSIVE */
 @media (max-width: 768px) {
   body { padding: 0; }
-  .header { margin: 10px; padding: 16px 20px; border-radius: var(--radius-md); }
-  .header h1 { font-size: 1.3em; }
+  .header { 
+    margin: 10px; 
+    padding: 14px 16px; 
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+  }
+  .header h1 { font-size: 1.2em; }
+  .header h1 i { font-size: 0.9em; }
+  .hamburger { width: 40px; height: 40px; }
   .main-content { padding: 0 12px 40px; }
+  .dev-panel { padding: 20px; }
+  .module-item { flex-direction: column; align-items: flex-start; }
+  .module-item > div:last-child { width: 100%; justify-content: flex-end; }
+}
+
+@media (max-width: 480px) {
+  .header h1 { font-size: 1em; gap: 8px; }
+  .header-left { gap: 10px; }
 }
 </style>
 </head>
@@ -425,19 +452,18 @@ body {
   </div>
   <div class="sidebar-section" id="sidebarMenu">
     <div class="sidebar-section-title">Навигация</div>
-    <!-- Кнопки добавляются динамически -->
   </div>
 </aside>
 
 <!-- HEADER -->
 <div style="max-width:1200px;margin:0 auto;padding:10px">
   <div class="header" id="mainHeader" onclick="goHome()">
-    <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-    <h1><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
+    <div class="header-left">
+      <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <h1><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
+    </div>
   </div>
 </div>
 
@@ -507,51 +533,34 @@ const Logger = {
 };
 
 const MODULE_REGISTRY = {
-  'core': {
-    name: 'Ядро системы', version: '2.0.0',
+  'core': { name: 'Ядро системы', version: '2.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
-    required: true, description: 'Базовый функционал: навигация, хранилище, утилиты'
-  },
-  'welcome': {
-    name: 'Главная', version: '5.0.0',
+    required: true, description: 'Базовый функционал' },
+  'welcome': { name: 'Главная', version: '5.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
-    required: false, description: 'Экран приветствия'
-  },
-  'exercises': {
-    name: 'База упражнений', version: '4.0.0',
+    required: false, description: 'Экран приветствия' },
+  'exercises': { name: 'База упражнений', version: '4.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
-    required: false, description: 'CRUD упражнений'
-  },
-  'plan': {
-    name: 'План тренировок', version: '3.0.0',
+    required: false, description: 'CRUD упражнений' },
+  'plan': { name: 'План тренировок', version: '3.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
-    required: false, description: 'Настройка плана на неделю'
-  },
-  'workout': {
-    name: 'Тренировка', version: '2.0.0',
+    required: false, description: 'Настройка плана' },
+  'workout': { name: 'Тренировка', version: '2.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js',
-    required: false, description: 'Экран тренировки'
-  },
-  'stats': {
-    name: 'Статистика', version: '2.0.0',
+    required: false, description: 'Экран тренировки' },
+  'stats': { name: 'Статистика', version: '2.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js',
-    required: false, description: 'Графики и аналитика'
-  },
-  'survey': {
-    name: 'Опросы', version: '2.0.0',
+    required: false, description: 'Графики и аналитика' },
+  'survey': { name: 'Опросы', version: '2.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js',
-    required: false, description: 'Конструктор опросов'
-  },
-  'settings': {
-    name: 'Настройки', version: '2.0.0',
+    required: false, description: 'Конструктор опросов' },
+  'settings': { name: 'Настройки', version: '2.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js',
-    required: false, description: 'Профиль и параметры'
-  }
+    required: false, description: 'Профиль и параметры' }
 };
 
 const STORAGE_PREFIX = 'ft_module_';
 
-// Sidebar
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('sidebarOverlay').classList.toggle('active');
@@ -572,10 +581,7 @@ function switchMode(mode) {
 function clearConsole() { Logger.clear(); }
 
 class ModuleManager {
-  constructor() {
-    this.loadedModules = new Map();
-    this.moduleStatus = new Map();
-  }
+  constructor() { this.loadedModules = new Map(); this.moduleStatus = new Map(); }
 
   async init() {
     Logger.log('Инициализация менеджера модулей...', 'info');
@@ -585,9 +591,7 @@ class ModuleManager {
     setTimeout(function() { self.initializeUserInterface(); }, 100);
   }
 
-  async loadAllModules() {
-    for (var id in MODULE_REGISTRY) await this.loadModule(id, MODULE_REGISTRY[id]);
-  }
+  async loadAllModules() { for (var id in MODULE_REGISTRY) await this.loadModule(id, MODULE_REGISTRY[id]); }
 
   async loadModule(id, config) {
     var storageKey = STORAGE_PREFIX + id;
@@ -650,7 +654,7 @@ class ModuleManager {
       var status = this.moduleStatus.get(id) || 'loading';
       var statusText = { 'loaded': 'Загружен', 'loading': 'Загрузка...', 'error': 'Ошибка' }[status];
       html += '<div class="module-item ' + status + '">';
-      html += '<div style="flex:1"><div style="font-weight:600;font-size:1.05em">' + config.name + '</div>';
+      html += '<div style="flex:1;min-width:200px"><div style="font-weight:600;font-size:1.05em">' + config.name + '</div>';
       html += '<div class="text-small" style="margin-top:4px">' + config.description + '</div>';
       html += '<div class="text-small" style="margin-top:4px">v' + config.version + ' · ' + statusText + '</div></div>';
       html += '<div style="display:flex;gap:8px">';
@@ -675,7 +679,6 @@ class ModuleManager {
         }
       }
     });
-    // Добавляем пункт "Панель разработчика" после всех модулей
     addDevMenuItem();
   }
 
@@ -714,26 +717,19 @@ class ModuleManager {
   }
 }
 
-// Добавляем пункт "Панель разработчика" как обычный пункт меню
 function addDevMenuItem() {
   var menu = document.getElementById('sidebarMenu');
   if (!menu) return;
-  // Проверяем, не добавлен ли уже
   if (menu.querySelector('[data-screen="dev"]')) return;
-  
   var item = document.createElement('div');
   item.className = 'sidebar-item';
   item.setAttribute('data-screen', 'dev');
   item.innerHTML = '<i class="ph ph-code"></i> Панель разработчика';
   item.onclick = function() {
-    // Закрываем sidebar
     if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
-    // Переключаем режим
     switchMode('dev');
-    // Обновляем активный пункт
     document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
     item.classList.add('active');
-    // Скролл вверх
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   menu.appendChild(item);

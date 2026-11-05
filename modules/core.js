@@ -2,14 +2,10 @@
 
 const CoreModule = {
   storage: {
-    get: function(key) {
-      try { return JSON.parse(localStorage.getItem('ft_' + key)); }
-      catch (e) { return null; }
-    },
+    get: function(key) { try { return JSON.parse(localStorage.getItem('ft_' + key)); } catch (e) { return null; } },
     set: function(key, value) { localStorage.setItem('ft_' + key, JSON.stringify(value)); },
     remove: function(key) { localStorage.removeItem('ft_' + key); }
   },
-
   utils: {
     escapeHtml: function(text) {
       if (text == null) return '';
@@ -17,9 +13,7 @@ const CoreModule = {
     },
     generateId: function() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); }
   },
-
   navigate: function(screenId) {
-    // Если это панель разработчика - обрабатываем отдельно
     if (screenId === 'dev') {
       if (typeof switchMode === 'function') switchMode('dev');
       document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
@@ -27,29 +21,15 @@ const CoreModule = {
       if (devItem) devItem.classList.add('active');
       return;
     }
-    
-    // Обычная навигация
     document.querySelectorAll('#userInterface .screen').forEach(function(s) { s.classList.remove('active'); });
     var target = document.getElementById('screen-' + screenId);
-    if (target) {
-      target.classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    // Переключаем режим на user если был dev
+    if (target) { target.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     if (typeof switchMode === 'function') switchMode('user');
-    
-    // Обновляем активный пункт меню
     document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
     var activeBtn = document.querySelector('.sidebar-item[data-screen="' + screenId + '"]');
     if (activeBtn) activeBtn.classList.add('active');
-    
-    // Закрываем sidebar если открыт
-    if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) {
-      toggleSidebar();
-    }
+    if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
   },
-
   addNavButton: function(label, screenId, icon) {
     icon = icon || '<i class="ph ph-circle"></i>';
     var menu = document.getElementById('sidebarMenu');
@@ -63,7 +43,6 @@ const CoreModule = {
     item.onclick = function() { CoreModule.navigate(screenId); };
     menu.appendChild(item);
   },
-
   init: function() {
     console.log('Core module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Ядро системы загружено', 'info');
