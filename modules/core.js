@@ -13,42 +13,40 @@ const CoreModule = {
     },
     generateId: function() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); }
   },
-	navigate: function(screenId) {
-		if (screenId === 'dev') {
-			if (typeof switchMode === 'function') switchMode('dev');
-			document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
-			var devItem = document.querySelector('.sidebar-item[data-screen="dev"]');
-			if (devItem) devItem.classList.add('active');
-			return;
-		}
-		document.querySelectorAll('#userInterface .screen').forEach(function(s) { s.classList.remove('active'); });
-		var target = document.getElementById('screen-' + screenId);
-		if (target) { target.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-		if (typeof switchMode === 'function') switchMode('user');
-		document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
-		var activeBtn = document.querySelector('.sidebar-item[data-screen="' + screenId + '"]');
-		if (activeBtn) activeBtn.classList.add('active');
-		if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
-		if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
-		// Перезагрузить текущий экран для применения изменений
-		setTimeout(function() {
-			if (screenId && screenId !== 'welcome' && screenId !== 'dev') {
-				var module = null;
-				if (typeof moduleManager !== 'undefined' && moduleManager.loadedModules) {
-					module = moduleManager.loadedModules.get(screenId);
-				}
-				if (module) {
-					if (module.createWelcomeScreen) module.createWelcomeScreen();
-					if (module.createStatsScreen) module.createStatsScreen();
-					if (module.createSurveyScreen) module.createSurveyScreen();
-					if (module.createSettingsScreen) module.createSettingsScreen();
-					if (module.createExercisesScreen) module.createExercisesScreen();
-					if (module.createPlanScreen) module.createPlanScreen();
-					if (module.createWorkoutScreen) module.createWorkoutScreen();
-				}
-			}
-		}, 400);
-	},
+  navigate: function(screenId) {
+    if (screenId === 'dev') {
+      if (typeof switchMode === 'function') switchMode('dev');
+      document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
+      var devItem = document.querySelector('.sidebar-item[data-screen="dev"]');
+      if (devItem) devItem.classList.add('active');
+      return;
+    }
+    document.querySelectorAll('#userInterface .screen').forEach(function(s) { s.classList.remove('active'); });
+    var target = document.getElementById('screen-' + screenId);
+    if (target) { target.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    if (typeof switchMode === 'function') switchMode('user');
+    document.querySelectorAll('.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
+    var activeBtn = document.querySelector('.sidebar-item[data-screen="' + screenId + '"]');
+    if (activeBtn) activeBtn.classList.add('active');
+    if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+    if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
+    setTimeout(function() {
+      if (screenId && screenId !== 'welcome' && screenId !== 'dev') {
+        var module = null;
+        if (typeof moduleManager !== 'undefined' && moduleManager.loadedModules) {
+          module = moduleManager.loadedModules.get(screenId);
+        }
+        if (module) {
+          if (module.createWelcomeScreen) module.createWelcomeScreen();
+          if (module.createStatsScreen) module.createStatsScreen();
+          if (module.createSurveyScreen) module.createSurveyScreen();
+          if (module.createSettingsScreen) module.createSettingsScreen();
+          if (module.createExercisesScreen) module.createExercisesScreen();
+          if (module.createPlanScreen) module.createPlanScreen();
+        }
+      }
+    }, 400);
+  },
   addNavButton: function(label, screenId, icon) {
     icon = icon || '<i class="ph ph-circle"></i>';
     var menu = document.getElementById('sidebarMenu');
@@ -69,7 +67,6 @@ const CoreModule = {
     window.FTStorage = this.storage;
     window.FTUtils = this.utils;
     window.FTNavigate = this.navigate.bind(this);
-    // Глобальная функция проверки хинтов
     window.shouldShowHints = function() {
       try {
         var settings = JSON.parse(localStorage.getItem('ft_settings')) || {};
