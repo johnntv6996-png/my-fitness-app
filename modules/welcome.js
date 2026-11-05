@@ -8,11 +8,17 @@ const WelcomeModule = {
       document.addEventListener('DOMContentLoaded', function() { WelcomeModule.setup(); });
     } else { this.setup(); }
   },
+
   setup: function() {
     this.createWelcomeScreen();
     if (typeof Core !== 'undefined') Core.addNavButton('Главная', 'welcome', '<i class="ph ph-house"></i>');
   },
-  getUserName: function() { if (typeof FTStorage !== 'undefined') return FTStorage.get('user_name') || ''; return ''; },
+
+  getUserName: function() {
+    if (typeof FTStorage !== 'undefined') return FTStorage.get('user_name') || '';
+    return '';
+  },
+
   getUserAvatar: function() {
     if (typeof FTStorage !== 'undefined') {
       var avatar = FTStorage.get('user_avatar');
@@ -20,10 +26,12 @@ const WelcomeModule = {
     }
     return null;
   },
+
   getStats: function() {
     if (typeof FTStorage !== 'undefined') return FTStorage.get('stats') || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
     return {yes:0, later:0, no:0, xp:0, level:1, streak:0};
   },
+
   getMotivationalMessage: function(stats) {
     var streak = stats.streak || 0;
     if (streak === 0) return {text: 'Начни свой путь сегодня!', icon: 'ph-rocket-launch'};
@@ -34,6 +42,7 @@ const WelcomeModule = {
     if (streak < 60) return {text: 'Месяц! Ты легенда', icon: 'ph-crown'};
     return {text: 'Ты непобедим', icon: 'ph-trophy'};
   },
+
   getLevelIcon: function(level) {
     if (level < 5) return 'ph-star';
     if (level < 10) return 'ph-star-four';
@@ -41,6 +50,7 @@ const WelcomeModule = {
     if (level < 50) return 'ph-crown';
     return 'ph-diamond';
   },
+
   animateValue: function(element, start, end, duration) {
     var startTime = null;
     var range = end - start;
@@ -62,19 +72,20 @@ const WelcomeModule = {
       screen.className = 'screen active';
       document.getElementById('userInterface').appendChild(screen);
     }
+
     var userName = this.getUserName();
     var userAvatar = this.getUserAvatar();
     var greeting = userName ? 'Приветствую, ' + userName + '!' : 'Приветствую!';
     var stats = this.getStats();
-    var xpNeeded = stats.level * 100;
-    var xpPercent = Math.min(100, Math.round((stats.xp / xpNeeded) * 100));
     var todayIdx = (new Date().getDay() + 6) % 7;
     var days = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
     var dayName = days[todayIdx];
+
     var plan = [];
     if (typeof FTStorage !== 'undefined') plan = FTStorage.get('plan') || [];
     var todayPlan = plan[todayIdx] || null;
     var exCount = todayPlan ? todayPlan.exercises.length : 0;
+
     var history = [];
     if (typeof FTStorage !== 'undefined') history = FTStorage.get('history') || [];
     var todayStr = new Date().toISOString().slice(0, 10);
@@ -82,10 +93,11 @@ const WelcomeModule = {
     for (var i = 0; i < history.length; i++) {
       if (history[i].date === todayStr && history[i].dayName === dayName) { todayRecord = history[i]; break; }
     }
+
     var motivation = this.getMotivationalMessage(stats);
-    var levelIcon = this.getLevelIcon(stats.level);
     var totalXp = stats.xp + (stats.level - 1) * 100;
 
+    // Аватар: картинка или иконка
     var avatarHtml = '';
     if (userAvatar && userAvatar.startsWith('data:image')) {
       avatarHtml = '<img src="' + userAvatar + '" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-gold)">';
@@ -97,15 +109,11 @@ const WelcomeModule = {
 
     var css = '<style>' +
       '@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }' +
-      '@keyframes fillBar { from { width:0%; } }' +
       '@keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.1); } }' +
-      '@keyframes glow { 0%,100% { box-shadow:0 0 10px rgba(212,175,55,0.2); } 50% { box-shadow:0 0 25px rgba(212,175,55,0.4); } }' +
       '.w-fade { animation:fadeInUp 0.5s ease-out both; }' +
       '.w-delay-1 { animation-delay:0.1s; } .w-delay-2 { animation-delay:0.2s; }' +
       '.w-delay-3 { animation-delay:0.3s; } .w-delay-4 { animation-delay:0.4s; }' +
       '.w-pulse { animation:pulse 2s ease-in-out infinite; display:inline-block; }' +
-      '.w-glow { animation:glow 2s ease-in-out infinite; }' +
-      '.w-xp-bar { animation:fillBar 1.2s ease-out both; }' +
       '.w-card { transition:transform 0.2s, box-shadow 0.2s; }' +
       '.w-card:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,0.3); }' +
       '.w-btn { transition:all 0.2s; cursor:pointer; flex:1; min-width:0; }' +
@@ -115,6 +123,7 @@ const WelcomeModule = {
       '@media (max-width: 480px) { .w-btn { padding:12px 6px !important; font-size:0.85em !important; } .w-btn i { font-size:1em !important; } }' +
     '</style>';
 
+    // Статус дня
     var statusHtml = '';
     if (todayRecord) {
       if (todayRecord.skipped) {
@@ -124,26 +133,18 @@ const WelcomeModule = {
       }
     }
 
-    var yesButton = '';
+    // Кнопка действия
+    var actionButton = '';
     if (exCount > 0) {
-      yesButton = '<button class="btn w-btn btn-success" id="btnStartWorkout"><i class="ph ph-play-circle"></i> Начать</button>';
+      actionButton = '<button class="btn w-btn btn-success" id="btnStartWorkout"><i class="ph ph-play-circle"></i> Начать</button>';
     } else {
-      yesButton = '<button class="btn w-btn btn-primary" onclick="WelcomeModule.goToPlan()"><i class="ph ph-calendar-plus"></i> План</button>';
+      actionButton = '<button class="btn w-btn btn-primary" onclick="WelcomeModule.goToPlan()"><i class="ph ph-calendar-plus"></i> План</button>';
     }
 
     screen.innerHTML = css +
       '<div style="padding:16px;max-width:500px;margin:0 auto">' +
-      '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #1a1a2e 0%, #151520 100%);border-radius:16px;padding:16px 20px;margin-bottom:16px;border:1px solid var(--border-gold)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-          '<div style="display:flex;align-items:center;gap:10px">' +
-            '<i class="ph ' + levelIcon + ' w-icon w-pulse" style="font-size:1.8em"></i>' +
-            '<div style="font-size:1.8em;font-weight:bold;color:var(--accent-gold);line-height:1" class="w-anim-level">' + stats.level + '</div>' +
-            '<div style="font-size:0.75em;opacity:0.7">уровень</div>' +
-          '</div>' +
-          '<div style="text-align:right"><div style="font-size:0.75em;opacity:0.7">XP</div><div style="font-size:1em;font-weight:bold"><span class="w-anim-xp">0</span><span style="font-size:0.7em;opacity:0.6">/' + xpNeeded + '</span></div></div>' +
-        '</div>' +
-        '<div style="height:6px;background:rgba(0,0,0,0.3);border-radius:3px;overflow:hidden;border:1px solid var(--border-subtle)"><div class="w-xp-bar" style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));border-radius:3px"></div></div>' +
-      '</div>' +
+
+      // Карточка приветствия
       '<div class="w-fade w-delay-1" style="background:var(--bg-card);border-radius:16px;padding:16px 20px;border:1px solid var(--border-subtle);margin-bottom:16px">' +
         '<div style="display:flex;align-items:center;gap:12px">' +
           avatarHtml +
@@ -151,21 +152,30 @@ const WelcomeModule = {
           '<div style="font-size:0.8em;color:var(--accent-gold);text-align:right;flex-shrink:0"><i class="ph ph-list-checks"></i> ' + (exCount > 0 ? exCount + ' упр.' : 'нет плана') + '</div>' +
         '</div>' +
       '</div>' +
+
+      // Кнопки действий
       '<div class="w-fade w-delay-2" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">' +
-        yesButton +
+        actionButton +
         '<button class="btn w-btn btn-secondary" onclick="WelcomeModule.handleAnswer(\'later\')"><i class="ph ph-clock"></i> Позже</button>' +
         '<button class="btn w-btn btn-danger" onclick="WelcomeModule.handleAnswer(\'no\')"><i class="ph ph-x"></i> Пропустить</button>' +
       '</div>' +
+
       statusHtml +
+
+      // Карточки статистики
       '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));gap:8px;margin:16px 0">' +
         '<div class="w-card w-fade w-delay-2" style="background:var(--bg-card);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-flame w-pulse w-icon" style="font-size:1.5em"></i><div style="font-size:1.3em;font-weight:bold;color:var(--accent-gold);line-height:1.2;margin-top:4px"><span class="w-anim-streak">0</span></div><div style="font-size:0.7em;opacity:0.7">стрик</div></div>' +
         '<div class="w-card w-fade w-delay-3" style="background:var(--bg-card);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-barbell w-icon" style="font-size:1.5em"></i><div style="font-size:1.3em;font-weight:bold;color:var(--accent-gold);line-height:1.2;margin-top:4px"><span class="w-anim-workouts">0</span></div><div style="font-size:0.7em;opacity:0.7">тренировок</div></div>' +
         '<div class="w-card w-fade w-delay-4" style="background:var(--bg-card);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-lightning w-icon" style="font-size:1.5em"></i><div style="font-size:1.3em;font-weight:bold;color:var(--accent-gold);line-height:1.2;margin-top:4px"><span class="w-anim-totalxp">0</span></div><div style="font-size:0.7em;opacity:0.7">всего XP</div></div>' +
       '</div>' +
+
+      // Мотивация
       '<div class="w-fade w-delay-4" style="background:var(--bg-card);border-radius:12px;padding:12px 16px;margin-bottom:16px;border-left:3px solid var(--accent-gold);font-size:0.9em;display:flex;align-items:center;gap:10px">' +
         '<i class="ph ' + motivation.icon + ' w-icon" style="font-size:1.3em"></i>' +
         '<div style="color:var(--accent-gold);font-weight:600">' + motivation.text + '</div>' +
       '</div>' +
+
+      // Подсказка про XP (если хинты включены)
       '<details class="w-fade w-delay-4" style="background:var(--bg-card);border-radius:12px;padding:12px 16px;font-size:0.8em;opacity:0.85;cursor:pointer;border:1px solid var(--border-subtle)">' +
         '<summary style="font-weight:600;color:var(--accent-gold);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ph ph-info"></i> Как получать XP</summary>' +
         '<div style="margin-top:8px;line-height:1.6">' +
@@ -175,19 +185,18 @@ const WelcomeModule = {
           '<div style="display:flex;align-items:center;gap:8px"><i class="ph ph-chart-bar" style="color:var(--accent-success)"></i> Данные: <strong>+10 XP</strong></div>' +
         '</div>' +
       '</details>' +
+
       '</div>';
 
+    // Навесить обработчик и анимации
     var self = this;
     setTimeout(function() {
       var btnStart = document.getElementById('btnStartWorkout');
       if (btnStart) btnStart.onclick = function() { self.startWorkout(); };
-      var levelEl = document.querySelector('.w-anim-level');
-      var xpEl = document.querySelector('.w-anim-xp');
+
       var streakEl = document.querySelector('.w-anim-streak');
       var workoutsEl = document.querySelector('.w-anim-workouts');
       var totalXpEl = document.querySelector('.w-anim-totalxp');
-      if (levelEl) self.animateValue(levelEl, 0, stats.level, 800);
-      if (xpEl) self.animateValue(xpEl, 0, stats.xp, 1000);
       if (streakEl) self.animateValue(streakEl, 0, stats.streak || 0, 800);
       if (workoutsEl) self.animateValue(workoutsEl, 0, stats.yes, 1000);
       if (totalXpEl) self.animateValue(totalXpEl, 0, totalXp, 1200);
@@ -202,15 +211,21 @@ const WelcomeModule = {
     var stats = this.getStats();
     var history = [];
     if (typeof FTStorage !== 'undefined') history = FTStorage.get('history') || [];
+
+    // Убрать пропуск если был
     var filtered = [];
     for (var i = 0; i < history.length; i++) {
       if (!(history[i].date === todayStr && history[i].dayName === dayName && history[i].skipped)) filtered.push(history[i]);
     }
     if (typeof FTStorage !== 'undefined') FTStorage.set('history', filtered);
+
     stats.yes++;
     stats.streak = (stats.streak || 0) + 1;
     if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+
+    // Обновить шапку
     if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
+
     if (typeof WorkoutModule !== 'undefined' && WorkoutModule.openWorkoutModal) {
       WorkoutModule.openWorkoutModal();
     } else {
@@ -236,6 +251,7 @@ const WelcomeModule = {
     if (typeof FTStorage !== 'undefined') history = FTStorage.get('history') || [];
     var plan = [];
     if (typeof FTStorage !== 'undefined') plan = FTStorage.get('plan') || [];
+
     if (answer === 'later') {
       stats.later++;
       if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
@@ -245,6 +261,7 @@ const WelcomeModule = {
       stats.no++;
       stats.streak = 0;
       if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+
       var dayRecord = null;
       for (var i = 0; i < history.length; i++) if (history[i].date === todayStr && history[i].dayName === dayName) { dayRecord = history[i]; break; }
       if (!dayRecord) {
@@ -252,11 +269,15 @@ const WelcomeModule = {
         if (plan[todayIdx] && plan[todayIdx].muscleGroup) muscleGroup = plan[todayIdx].muscleGroup;
         dayRecord = { date: todayStr, dayName: dayName, muscleGroup: muscleGroup, exercises: [], details: [], duration: 0, skipped: true, timestamp: Date.now() };
         history.push(dayRecord);
-      } else { dayRecord.skipped = true; }
+      } else {
+        dayRecord.skipped = true;
+      }
       if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
       alert('Понял, день пропущен. Завтра новый шанс!');
       this.createWelcomeScreen();
     }
+
+    // Обновить шапку
     if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
   }
 };
