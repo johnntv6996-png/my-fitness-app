@@ -11,6 +11,8 @@ const StatsModule = {
   firstDayIndex: 0,
   calendarMonth: new Date().getMonth(),
   calendarYear: new Date().getFullYear(),
+  lastMouseX: -1,
+  lastMouseY: -1,
 
   init: function() {
     console.log('Stats module initialized');
@@ -188,11 +190,6 @@ const StatsModule = {
       '.chart-container { position:relative; border-radius:12px; background:var(--bg-primary); border:1px solid var(--border-subtle); overflow:hidden; }' +
       '.chart-canvas-wrap { position:relative; width:100%; height:420px; cursor:crosshair; }' +
       '.chart-canvas-wrap canvas { display:block; width:100%; height:100%; }' +
-      '.chart-nav-btn { position:absolute; top:50%; transform:translateY(-50%); width:36px; height:36px; border-radius:50%; background:rgba(212,175,55,0.15); backdrop-filter:blur(8px); border:1px solid rgba(212,175,55,0.3); color:var(--accent-gold); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; z-index:10; }' +
-      '.chart-nav-btn:hover { background:rgba(212,175,55,0.3); }' +
-      '.chart-nav-btn:disabled { opacity:0.3; cursor:not-allowed; }' +
-      '.chart-nav-btn.prev { left:8px; }' +
-      '.chart-nav-btn.next { right:8px; }' +
       '.metrics-strip { display:flex; gap:6px; overflow-x:auto; padding:10px 4px; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; border-top:1px solid var(--border-subtle); }' +
       '.metrics-strip::-webkit-scrollbar { height: 4px; }' +
       '.metrics-strip::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
@@ -215,8 +212,8 @@ const StatsModule = {
       '.tooltip-date { font-weight:600; color:var(--accent-gold); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-subtle); }' +
       '.calendar-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:2000; display:flex; justify-content:center; align-items:center; padding:20px; }' +
       '.calendar-content { background:var(--bg-secondary); padding:28px; border-radius:20px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
-      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; position:relative; }' +
-      '.calendar-day:hover { transform:scale(1.1); z-index:5; }' +
+      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; }' +
+      '.calendar-day:hover { transform:scale(1.1); }' +
       '.calendar-day.full { background:rgba(74,222,128,0.2); border-color:var(--accent-success); }' +
       '.calendar-day.partial { background:rgba(251,191,36,0.2); border-color:var(--accent-warning); }' +
       '.calendar-day.skipped { background:rgba(248,113,113,0.2); border-color:var(--accent-error); }' +
@@ -250,8 +247,6 @@ const StatsModule = {
     chartHtml += '<canvas id="activityChart"></canvas>';
     chartHtml += '<button class="chart-reset-btn" onclick="StatsModule.resetZoom()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить</button>';
     chartHtml += '<div class="chart-zoom-info" id="zoomInfo">100%</div>';
-    chartHtml += '<button class="chart-nav-btn prev" onclick="StatsModule.panChart(-5)"><i class="ph ph-caret-left"></i></button>';
-    chartHtml += '<button class="chart-nav-btn next" onclick="StatsModule.panChart(5)"><i class="ph ph-caret-right"></i></button>';
     chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
@@ -332,7 +327,10 @@ const StatsModule = {
     });
 
     document.addEventListener('mousemove', function(e) {
-      if (!self.isPanning) { self.handleTooltip(e); return; }
+      if (!self.isPanning) {
+        self.handleTooltip(e);
+        return;
+      }
       var rect = canvas.getBoundingClientRect();
       var dx = e.clientX - self.panStart.x;
       var dy = e.clientY - self.panStart.y;
@@ -348,6 +346,14 @@ const StatsModule = {
 
     document.addEventListener('mouseup', function() {
       if (self.isPanning) { self.isPanning = false; wrap.style.cursor = 'crosshair'; }
+    });
+
+    // Отслеживаем уход мыши за пределы canvas
+    canvas.addEventListener('mouseleave', function() {
+      self.lastMouseX = -1;
+      self.lastMouseY = -1;
+      var tooltip = document.getElementById('chartTooltip');
+      if (tooltip) tooltip.style.display = 'none';
     });
 
     var touchStartDist = 0;
@@ -402,7 +408,18 @@ const StatsModule = {
     var canvas = document.getElementById('activityChart');
     var tooltip = document.getElementById('chartTooltip');
     if (!canvas || !tooltip) return;
+
     var rect = canvas.getBoundingClientRect();
+
+    // ПРОВЕРКА: курсор должен быть внутри canvas
+    if (e.clientX < rect.left || e.clientX > rect.right ||
+        e.clientY < rect.top || e.clientY > rect.bottom) {
+      tooltip.style.display = 'none';
+      this.lastMouseX = -1;
+      this.lastMouseY = -1;
+      return;
+    }
+
     var x = e.clientX - rect.left;
     var y = e.clientY - rect.top;
     var width = canvas.width, height = canvas.height;
@@ -410,7 +427,9 @@ const StatsModule = {
     var chartWidth = width - padding.left - padding.right;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var dayIdx = Math.round(this.zoom.xMin + (x - padding.left) / chartWidth * xRange);
+
     if (dayIdx < 0 || dayIdx >= this.totalDays) { tooltip.style.display = 'none'; return; }
+
     var history = this.getHistory();
     var chartData = this.buildChartData();
     var firstDate = new Date(history.length > 0 ? history[0].date + 'T00:00:00' : new Date());
@@ -419,6 +438,7 @@ const StatsModule = {
     var dateStr = date.toISOString().slice(0, 10);
     var dayRecord = null;
     for (var i = 0; i < history.length; i++) if (history[i].date === dateStr) { dayRecord = history[i]; break; }
+
     if (!dayRecord) { tooltip.style.display = 'none'; return; }
 
     var html = '<div class="tooltip-date">📅 ' + dateStr + '</div>';
@@ -434,6 +454,10 @@ const StatsModule = {
       html += '<div class="tooltip-value">' + this.formatMetricValue(val, m) + '</div>';
       html += '</div>';
     }
+
+    // Если содержимое не изменилось — не перерисовываем (оптимизация)
+    if (html === tooltip.innerHTML && this.lastMouseX === x && this.lastMouseY === y) return;
+
     tooltip.innerHTML = html;
     tooltip.style.display = 'block';
     var tooltipX = x + 15;
@@ -442,6 +466,9 @@ const StatsModule = {
     if (tooltipY < 0) tooltipY = 10;
     tooltip.style.left = tooltipX + 'px';
     tooltip.style.top = tooltipY + 'px';
+
+    this.lastMouseX = x;
+    this.lastMouseY = y;
   },
 
   getMetricValue: function(dayRecord, key, metric) {
@@ -544,13 +571,6 @@ const StatsModule = {
     }
   },
 
-  panChart: function(delta) {
-    this.zoom.xMin += delta;
-    this.zoom.xMax += delta;
-    this.clampZoom();
-    this.drawChart();
-  },
-
   resetZoom: function() {
     this.zoom.xMin = 0;
     this.zoom.xMax = this.totalDays - 1;
@@ -578,7 +598,6 @@ const StatsModule = {
     var labels = chartData.labels;
     this.totalDays = chartData.totalDays;
 
-    // ВАЖНО: Y всегда начинается с 0
     this.zoom.yMin = 0;
     this.zoom.yMax = this.findMaxY(data);
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
@@ -590,14 +609,12 @@ const StatsModule = {
     var yRange = this.zoom.yMax - this.zoom.yMin;
     if (yRange <= 0) yRange = 10;
 
-    // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for (var i = 0; i <= 4; i++) {
       var y = padding.top + (i / 4) * chartHeight;
       ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(width - padding.right, y); ctx.stroke();
     }
-    // Оси
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
@@ -633,7 +650,6 @@ const StatsModule = {
       }
     }
 
-    // Подписи оси X
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -645,7 +661,6 @@ const StatsModule = {
       }
     }
 
-    // Подписи оси Y
     ctx.textAlign = 'right';
     var yStep = Math.max(1, Math.ceil(yRange / 5));
     for (var v = Math.ceil(this.zoom.yMin); v <= Math.floor(this.zoom.yMax); v += yStep) {
@@ -653,7 +668,6 @@ const StatsModule = {
       ctx.fillText(v, padding.left - 4, y + 4);
     }
 
-    // Легенда
     var legendY = padding.top + 10;
     ctx.textAlign = 'left';
     ctx.font = '12px Inter, sans-serif';
@@ -668,9 +682,7 @@ const StatsModule = {
     }
   },
 
-  // === КАЛЕНДАРЬ С TOOLTIP ===
   openCalendar: function() {
-    // Удаляем старый tooltip если есть
     var oldTooltip = document.getElementById('calendarTooltip');
     if (oldTooltip) oldTooltip.remove();
 
@@ -795,7 +807,6 @@ const StatsModule = {
       }
 
       var isToday = date.getTime() === today.getTime();
-      // Сохраняем данные дня в data-атрибуты для tooltip
       var dataAttrs = 'data-date="' + dateStr + '" data-status="' + statusText + '"';
       if (dayRecord) {
         if (dayRecord.exercises) dataAttrs += ' data-exercises="' + dayRecord.exercises.length + '"';
@@ -810,7 +821,6 @@ const StatsModule = {
     }
     grid.innerHTML = html;
 
-    // Навешиваем обработчики tooltip
     this.setupCalendarTooltips();
   },
 
@@ -846,7 +856,6 @@ const StatsModule = {
         var duration = dayEl.getAttribute('data-duration');
         if (duration) html += '<div class="ct-row"><div class="ct-dot" style="background:#a78bfa"></div><div class="ct-label">Длительность:</div><div class="ct-value">' + duration + ' мин</div></div>';
 
-        // Показываем ответы опросов
         var history = self.getHistory();
         var dayRecord = null;
         for (var i = 0; i < history.length; i++) if (history[i].date === dateStr) { dayRecord = history[i]; break; }
