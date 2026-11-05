@@ -175,28 +175,35 @@ const PlanModule = {
     this.renderPickList();
   },
 
-  renderPickList: function() {
-    var search = document.getElementById('pickSearch') ? document.getElementById('pickSearch').value.toLowerCase() : '';
-    var db = typeof ExercisesModule !== 'undefined' ? ExercisesModule.getDB() : [];
-    var filtered = [];
-    for (var i = 0; i < db.length; i++) {
-      if (db[i].name.toLowerCase().indexOf(search) !== -1 || (db[i].muscleGroup || '').toLowerCase().indexOf(search) !== -1) filtered.push(db[i]);
-    }
-    var list = document.getElementById('pickList');
-    if (!list) return;
-    if (filtered.length === 0) {
-      list.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.6"><i class="ph ph-magnifying-glass" style="font-size:2em;color:var(--accent-gold);margin-bottom:8px;display:block"></i>Ничего не найдено</div>';
-    } else {
-      var html = '';
-      for (var i = 0; i < filtered.length; i++) {
-        var ex = filtered[i];
-        html += '<div onclick="PlanModule.addExToPlan(\'' + ex.id + '\')" style="background:var(--bg-card);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border-subtle);cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor=\'var(--border-gold)\'" onmouseout="this.style.borderColor=\'var(--border-subtle)\'">' +
-          '<h4 style="margin:0 0 6px 0;color:var(--accent-gold);display:flex;align-items:center;gap:8px"><i class="ph ph-barbell"></i> ' + ex.name + '</h4>' +
-          '<div style="font-size:0.85em;opacity:0.7;display:flex;align-items:center;gap:4px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + '</div></div>';
-      }
-      list.innerHTML = html;
-    }
-  },
+	renderPickList: function() {
+		var search = document.getElementById('pickSearch') ? document.getElementById('pickSearch').value.toLowerCase() : '';
+		var db = typeof ExercisesModule !== 'undefined' ? ExercisesModule.getDB() : [];
+		var filtered = [];
+		for (var i = 0; i < db.length; i++) {
+			if (db[i].name.toLowerCase().indexOf(search) !== -1 || (db[i].muscleGroup || '').toLowerCase().indexOf(search) !== -1) filtered.push(db[i]);
+		}
+		var list = document.getElementById('pickList');
+		if (!list) return;
+		if (filtered.length === 0) {
+			list.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.6">' +
+				'<i class="ph ph-magnifying-glass" style="font-size:2em;color:var(--accent-gold);margin-bottom:8px;display:block"></i>' +
+				'<div style="margin-bottom:16px">Ничего не найдено</div>' +
+				'<button class="btn btn-primary" onclick="document.getElementById(\'pickExModal\').remove();Core.navigate(\'exercises\')" style="padding:10px 20px;font-size:0.9em">' +
+					'<i class="ph ph-arrow-right"></i> Перейти в базу упражнений' +
+				'</button>' +
+				'<div style="font-size:0.75em;opacity:0.5;margin-top:10px">Добавь упражнения, чтобы использовать их в плане</div>' +
+			'</div>';
+		} else {
+			var html = '';
+			for (var i = 0; i < filtered.length; i++) {
+				var ex = filtered[i];
+				html += '<div onclick="PlanModule.addExToPlan(\'' + ex.id + '\')" style="background:var(--bg-card);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border-subtle);cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor=\'var(--border-gold)\'" onmouseout="this.style.borderColor=\'var(--border-subtle)\'">' +
+					'<h4 style="margin:0 0 6px 0;color:var(--accent-gold);display:flex;align-items:center;gap:8px"><i class="ph ph-barbell"></i> ' + ex.name + '</h4>' +
+					'<div style="font-size:0.85em;opacity:0.7;display:flex;align-items:center;gap:4px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + '</div></div>';
+			}
+			list.innerHTML = html;
+		}
+	},
 
   addExToPlan: function(exId) {
     if (this.pickingForDay === null) return;
