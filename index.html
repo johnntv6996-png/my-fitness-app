@@ -34,7 +34,6 @@
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* СВЕТЛАЯ ТЕМА */
 body.light-theme {
   --bg-primary: #f5f2eb;
   --bg-secondary: #ebe7dd;
@@ -60,10 +59,6 @@ body.light-theme .header {
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
 }
 
-body.light-theme .sidebar {
-  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-}
-
 body.light-theme .workout-modal,
 body.light-theme .survey-modal,
 body.light-theme .ex-modal,
@@ -74,6 +69,14 @@ body.light-theme .calendar-modal {
 body.light-theme .console-log {
   background: #1a1a1f;
   color: #4ade80;
+}
+
+body.light-theme .chart-container,
+body.light-theme .workout-modal-content,
+body.light-theme .survey-modal-content,
+body.light-theme .ex-modal-content,
+body.light-theme .calendar-content {
+  background: var(--bg-secondary);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -159,8 +162,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 .header h1 i { font-size: 1.1em; -webkit-text-fill-color: var(--accent-gold); }
 
 .theme-btn {
-  width: 42px;
-  height: 42px;
+  width: 42px; height: 42px;
   border-radius: 50%;
   background: var(--bg-glass);
   border: 1px solid var(--border-subtle);
@@ -249,7 +251,6 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   gap: 10px;
 }
 
-/* ПРОФИЛЬ В SIDEBAR */
 .sidebar-profile {
   padding: 16px 20px;
   margin: 0 16px 16px;
@@ -511,14 +512,12 @@ body.light-theme .calendar-modal {
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <h2><i class="ph ph-barbell"></i> FITNESS ELITE</h2>
   </div>
   
-  <!-- ПРОФИЛЬ -->
   <div class="sidebar-profile" id="sidebarProfile" onclick="openProfileModal()">
     <div class="sidebar-profile-content">
       <div class="sidebar-profile-avatar" id="sidebarAvatar">
@@ -550,7 +549,6 @@ body.light-theme .calendar-modal {
   </div>
 </aside>
 
-<!-- HEADER -->
 <div style="max-width:1200px;margin:0 auto;padding:10px">
   <div class="header" id="mainHeader" onclick="goHome()">
     <div class="header-left">
@@ -570,7 +568,6 @@ body.light-theme .calendar-modal {
   </div>
 </div>
 
-<!-- MAIN CONTENT -->
 <div class="main-content">
   <div id="userInterface">
     <div id="screen-welcome" class="screen active">
@@ -645,35 +642,37 @@ const Logger = {
 };
 
 const MODULE_REGISTRY = {
-  'core': { name: 'Ядро системы', version: '3.0.0',
+  'core': { name: 'Ядро системы', version: '3.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
     required: true, description: 'Базовый функционал' },
-  'welcome': { name: 'Главная', version: '6.0.0',
+  'welcome': { name: 'Главная', version: '6.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
     required: false, description: 'Экран приветствия' },
-  'exercises': { name: 'База упражнений', version: '5.0.0',
+  'exercises': { name: 'База упражнений', version: '5.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
-    required: false, description: 'CRUD упражнений' },
-  'plan': { name: 'План тренировок', version: '4.0.0',
+    required: false, description: 'CRUD упражнений с избранным' },
+  'plan': { name: 'План тренировок', version: '4.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
     required: false, description: 'Настройка плана' },
-  'workout': { name: 'Тренировка', version: '3.0.0',
+  'workout': { name: 'Тренировка', version: '3.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js',
     required: false, description: 'Экран тренировки' },
-  'stats': { name: 'Статистика', version: '4.0.0',
+  'stats': { name: 'Статистика', version: '4.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js',
     required: false, description: 'Графики и аналитика' },
-  'survey': { name: 'Опросы', version: '3.0.0',
+  'survey': { name: 'Опросы', version: '3.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js',
     required: false, description: 'Конструктор опросов' },
-  'settings': { name: 'Настройки', version: '3.0.0',
+  'achievements': { name: 'Достижения', version: '1.0.0',
+    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js',
+    required: false, description: 'Система достижений' },
+  'settings': { name: 'Настройки', version: '3.1.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js',
     required: false, description: 'Параметры и данные' }
 };
 
 const STORAGE_PREFIX = 'ft_module_';
 
-// === ТЕМА ===
 function getTheme() {
   try {
     var settings = JSON.parse(localStorage.getItem('ft_settings')) || {};
@@ -704,7 +703,6 @@ function applyTheme() {
   document.getElementById('themeLightBtn').classList.toggle('active', theme === 'light');
 }
 
-// === SIDEBAR ===
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('sidebarOverlay').classList.toggle('active');
@@ -725,7 +723,6 @@ function switchMode(mode) {
 
 function clearConsole() { Logger.clear(); }
 
-// === ПРОФИЛЬ ===
 function updateSidebarProfile() {
   var nameEl = document.getElementById('sidebarName');
   var avatarEl = document.getElementById('sidebarAvatar');
@@ -872,7 +869,6 @@ function saveProfileFromModal() {
   alert('Профиль сохранён!');
 }
 
-// === БАГ-РЕПОРТ ===
 function getBugReports() {
   try { return JSON.parse(localStorage.getItem('ft_bug_reports')) || []; }
   catch (e) { return []; }
@@ -1026,7 +1022,6 @@ function clearBugReports() {
   alert('Все репорты удалены');
 }
 
-// === MODULE MANAGER ===
 class ModuleManager {
   constructor() { this.loadedModules = new Map(); this.moduleStatus = new Map(); }
 
@@ -1128,7 +1123,6 @@ class ModuleManager {
         }
       }
     });
-    addDevMenuItem();
     updateSidebarProfile();
   }
 
@@ -1165,12 +1159,6 @@ class ModuleManager {
       location.reload();
     }
   }
-}
-
-function addDevMenuItem() {
-  var menu = document.getElementById('sidebarMenu');
-  if (!menu) return;
-  if (menu.querySelector('[data-screen="dev"]')) return;
 }
 
 var moduleManager = new ModuleManager();

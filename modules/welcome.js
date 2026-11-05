@@ -53,6 +53,7 @@ const WelcomeModule = {
     };
     window.requestAnimationFrame(step);
   },
+
   createWelcomeScreen: function() {
     var screen = document.getElementById('screen-welcome');
     if (!screen) {
@@ -85,7 +86,6 @@ const WelcomeModule = {
     var levelIcon = this.getLevelIcon(stats.level);
     var totalXp = stats.xp + (stats.level - 1) * 100;
 
-    // Аватар: если есть картинка — показываем img, иначе иконку
     var avatarHtml = '';
     if (userAvatar && userAvatar.startsWith('data:image')) {
       avatarHtml = '<img src="' + userAvatar + '" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-gold)">';
@@ -142,7 +142,7 @@ const WelcomeModule = {
           '</div>' +
           '<div style="text-align:right"><div style="font-size:0.75em;opacity:0.7">XP</div><div style="font-size:1em;font-weight:bold"><span class="w-anim-xp">0</span><span style="font-size:0.7em;opacity:0.6">/' + xpNeeded + '</span></div></div>' +
         '</div>' +
-        '<div style="height:6px;background:var(--bg-primary);border-radius:3px;overflow:hidden;border:1px solid var(--border-subtle)"><div class="w-xp-bar" style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));border-radius:3px"></div></div>' +
+        '<div style="height:6px;background:rgba(0,0,0,0.3);border-radius:3px;overflow:hidden;border:1px solid var(--border-subtle)"><div class="w-xp-bar" style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));border-radius:3px"></div></div>' +
       '</div>' +
       '<div class="w-fade w-delay-1" style="background:var(--bg-card);border-radius:16px;padding:16px 20px;border:1px solid var(--border-subtle);margin-bottom:16px">' +
         '<div style="display:flex;align-items:center;gap:12px">' +
@@ -193,6 +193,7 @@ const WelcomeModule = {
       if (totalXpEl) self.animateValue(totalXpEl, 0, totalXp, 1200);
     }, 300);
   },
+
   startWorkout: function() {
     var todayIdx = (new Date().getDay() + 6) % 7;
     var days = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
@@ -215,6 +216,7 @@ const WelcomeModule = {
       alert('Модуль тренировки ещё не загружен');
     }
   },
+
   goToPlan: function() {
     if (typeof moduleManager !== 'undefined' && moduleManager.loadedModules && moduleManager.loadedModules.has('plan')) {
       Core.navigate('plan');
@@ -222,6 +224,7 @@ const WelcomeModule = {
       alert('Модуль "План" ещё не добавлен.');
     }
   },
+
   handleAnswer: function(answer) {
     var todayIdx = (new Date().getDay() + 6) % 7;
     var days = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];

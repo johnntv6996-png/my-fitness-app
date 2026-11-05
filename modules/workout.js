@@ -55,27 +55,31 @@ const WorkoutModule = {
     var content = document.createElement('div');
     content.className = 'workout-modal-content';
 
+    // Статус-бар
     var statusBar = document.createElement('div');
     statusBar.style.cssText = 'background:linear-gradient(135deg, #1a1a2e 0%, #151520 100%); border-radius:16px 16px 0 0; padding:16px 20px; border-bottom:1px solid var(--border-gold);';
     statusBar.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
       '<div style="display:flex;align-items:center;gap:10px"><i class="ph ph-star" style="font-size:1.4em;color:var(--accent-gold)"></i><span style="font-size:1.4em;font-weight:bold;color:var(--accent-gold)">' + stats.level + '</span><span style="font-size:0.75em;opacity:0.7">уровень</span></div>' +
       '<div style="text-align:right"><div style="font-size:0.75em;opacity:0.7">XP</div><div style="font-size:1em;font-weight:bold">' + stats.xp + '/' + xpNeeded + '</div></div></div>' +
-      '<div style="height:6px;background:var(--bg-primary);border-radius:3px;overflow:hidden;border:1px solid var(--border-subtle)"><div style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));border-radius:3px"></div></div>' +
+      '<div style="height:6px;background:rgba(0,0,0,0.3);border-radius:3px;overflow:hidden;border:1px solid var(--border-subtle)"><div style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));border-radius:3px"></div></div>' +
       '<div style="text-align:center;font-size:0.7em;opacity:0.6;margin-top:6px">До следующего уровня: ' + (xpNeeded - stats.xp) + ' XP</div>';
     content.appendChild(statusBar);
 
+    // Кнопка закрытия
     var closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="ph ph-x"></i>';
     closeBtn.style.cssText = 'position:sticky; top:10px; float:right; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-secondary); width:36px; height:36px; border-radius:50%; font-size:1.2em; cursor:pointer; z-index:10; margin:12px; display:flex; align-items:center; justify-content:center;';
     closeBtn.onclick = function() { self.closeWorkoutModal(); };
     content.appendChild(closeBtn);
 
+    // Заголовок дня
     var header = document.createElement('div');
     header.style.cssText = 'text-align:center; padding:10px 20px;';
     header.innerHTML = '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;justify-content:center;gap:10px"><i class="ph ph-barbell"></i> ' + todayPlan.dayName + '</h2>' +
       '<div style="font-size:0.9em;opacity:0.7;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ph ph-tag"></i> ' + (todayPlan.muscleGroup || 'Тренировка') + ' · <i class="ph ph-list-dashes"></i> ' + todayPlan.exercises.length + ' упражнений</div>';
     content.appendChild(header);
 
+    // Список упражнений
     if (todayPlan.exercises.length === 0) {
       var empty = document.createElement('div');
       empty.style.cssText = 'text-align:center; padding:40px; opacity:0.6;';
@@ -99,7 +103,7 @@ const WorkoutModule = {
 
           var headerDiv = document.createElement('div');
           headerDiv.style.cssText = 'padding:14px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;';
-          headerDiv.innerHTML = '<div style="flex:1"><div style="font-weight:700;font-size:1.05em;color:var(--accent-gold);display:flex;align-items:center;gap:8px"><span style="color:var(--accent-gold);font-weight:700">' + (idx + 1) + '.</span> ' + ex.name + '</div><div style="font-size:0.8em;opacity:0.7;margin-top:4px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + ' · <i class="ph ph-list-numbers"></i> ' + setsStr + '</div></div><i class="ph ph-caret-down" style="font-size:1.2em;opacity:0.7" class="ex-arrow"></i>';
+          headerDiv.innerHTML = '<div style="flex:1"><div style="font-weight:700;font-size:1.05em;color:var(--accent-gold);display:flex;align-items:center;gap:8px"><span style="color:var(--accent-gold);font-weight:700">' + (idx + 1) + '.</span> ' + ex.name + '</div><div style="font-size:0.8em;opacity:0.7;margin-top:4px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + ' · <i class="ph ph-list-numbers"></i> ' + setsStr + '</div></div><i class="ph ph-caret-down" style="font-size:1.2em;opacity:0.7"></i>';
 
           var bodyDiv = document.createElement('div');
           bodyDiv.style.cssText = 'display:none; padding:0 16px 16px; border-top:1px solid var(--border-subtle);';
@@ -126,7 +130,7 @@ const WorkoutModule = {
           var goBtn = document.createElement('button');
           goBtn.className = 'go-btn';
           goBtn.innerHTML = '<i class="ph ph-play-circle" style="font-size:1.5em"></i><br>Начать';
-          goBtn.style.cssText = 'display:block; margin:18px auto; width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%); color:#000; border:none; font-size:0.85em; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(212,175,55,0.4); transition:all 0.2s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;';
+          goBtn.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; margin:18px auto; width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%); color:#000; border:none; font-size:0.85em; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(212,175,55,0.4); transition:all 0.2s;';
           goBtn.onmouseover = function() { this.style.transform = 'scale(1.05)'; this.style.boxShadow = '0 8px 30px rgba(212,175,55,0.6)'; };
           goBtn.onmouseout = function() { this.style.transform = 'scale(1)'; this.style.boxShadow = '0 4px 20px rgba(212,175,55,0.4)'; };
           goBtn.onclick = function() { self.startExercise(ex.id); };

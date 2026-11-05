@@ -8,7 +8,6 @@ const StatsModule = {
   activeMetrics: {},
   allMetrics: {},
   totalDays: 30,
-  firstDayIndex: 0,
   calendarMonth: new Date().getMonth(),
   calendarYear: new Date().getFullYear(),
   lastMouseX: -1,
@@ -178,7 +177,7 @@ const StatsModule = {
     }
 
     var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
-    var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования.</div>' : '';
+    var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования. Кликни на метрику ниже.</div>' : '';
 
     var css = '<style>' +
       '.stat-card { background:var(--bg-card); border-radius:14px; padding:18px; margin-bottom:16px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
@@ -203,6 +202,14 @@ const StatsModule = {
       '.chart-zoom-info { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-secondary); z-index:5; pointer-events:none; }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
+      '.chart-legend { position:absolute; top:10px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; }' +
+      'body.light-theme .chart-legend { background:rgba(245,242,235,0.9); }' +
+      '.chart-legend::-webkit-scrollbar { width:4px; }' +
+      '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
+      '.legend-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.8em; }' +
+      '.legend-item:last-child { margin-bottom:0; }' +
+      '.legend-color { width:12px; height:12px; border-radius:3px; flex-shrink:0; }' +
+      '.legend-label { color:var(--text-secondary); flex:1; }' +
       '.tooltip { position:absolute; background:var(--bg-secondary); border:1px solid var(--border-gold); border-radius:8px; padding:10px 14px; font-size:0.8em; pointer-events:none; z-index:20; box-shadow:0 4px 12px rgba(0,0,0,0.5); max-width:250px; }' +
       '.tooltip-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }' +
       '.tooltip-row:last-child { margin-bottom:0; }' +
@@ -211,9 +218,10 @@ const StatsModule = {
       '.tooltip-value { font-weight:600; color:var(--accent-gold); }' +
       '.tooltip-date { font-weight:600; color:var(--accent-gold); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-subtle); }' +
       '.calendar-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:2000; display:flex; justify-content:center; align-items:center; padding:20px; }' +
+      'body.light-theme .calendar-modal { background:rgba(245,242,235,0.9); }' +
       '.calendar-content { background:var(--bg-secondary); padding:28px; border-radius:20px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
-      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; }' +
-      '.calendar-day:hover { transform:scale(1.1); }' +
+      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; position:relative; }' +
+      '.calendar-day:hover { transform:scale(1.1); z-index:5; }' +
       '.calendar-day.full { background:rgba(74,222,128,0.2); border-color:var(--accent-success); }' +
       '.calendar-day.partial { background:rgba(251,191,36,0.2); border-color:var(--accent-warning); }' +
       '.calendar-day.skipped { background:rgba(248,113,113,0.2); border-color:var(--accent-error); }' +
@@ -327,10 +335,7 @@ const StatsModule = {
     });
 
     document.addEventListener('mousemove', function(e) {
-      if (!self.isPanning) {
-        self.handleTooltip(e);
-        return;
-      }
+      if (!self.isPanning) { self.handleTooltip(e); return; }
       var rect = canvas.getBoundingClientRect();
       var dx = e.clientX - self.panStart.x;
       var dy = e.clientY - self.panStart.y;
@@ -348,7 +353,6 @@ const StatsModule = {
       if (self.isPanning) { self.isPanning = false; wrap.style.cursor = 'crosshair'; }
     });
 
-    // Отслеживаем уход мыши за пределы canvas
     canvas.addEventListener('mouseleave', function() {
       self.lastMouseX = -1;
       self.lastMouseY = -1;
@@ -410,8 +414,6 @@ const StatsModule = {
     if (!canvas || !tooltip) return;
 
     var rect = canvas.getBoundingClientRect();
-
-    // ПРОВЕРКА: курсор должен быть внутри canvas
     if (e.clientX < rect.left || e.clientX > rect.right ||
         e.clientY < rect.top || e.clientY > rect.bottom) {
       tooltip.style.display = 'none';
@@ -427,18 +429,15 @@ const StatsModule = {
     var chartWidth = width - padding.left - padding.right;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var dayIdx = Math.round(this.zoom.xMin + (x - padding.left) / chartWidth * xRange);
-
     if (dayIdx < 0 || dayIdx >= this.totalDays) { tooltip.style.display = 'none'; return; }
 
     var history = this.getHistory();
-    var chartData = this.buildChartData();
     var firstDate = new Date(history.length > 0 ? history[0].date + 'T00:00:00' : new Date());
     var date = new Date(firstDate);
     date.setDate(date.getDate() + dayIdx);
     var dateStr = date.toISOString().slice(0, 10);
     var dayRecord = null;
     for (var i = 0; i < history.length; i++) if (history[i].date === dateStr) { dayRecord = history[i]; break; }
-
     if (!dayRecord) { tooltip.style.display = 'none'; return; }
 
     var html = '<div class="tooltip-date">📅 ' + dateStr + '</div>';
@@ -455,7 +454,6 @@ const StatsModule = {
       html += '</div>';
     }
 
-    // Если содержимое не изменилось — не перерисовываем (оптимизация)
     if (html === tooltip.innerHTML && this.lastMouseX === x && this.lastMouseY === y) return;
 
     tooltip.innerHTML = html;
@@ -501,7 +499,6 @@ const StatsModule = {
     var dayIdx = Math.round(this.zoom.xMin + (x - padding.left) / chartWidth * xRange);
     if (dayIdx < 0 || dayIdx >= this.totalDays) return;
     var history = this.getHistory();
-    var chartData = this.buildChartData();
     var firstDate = new Date(history.length > 0 ? history[0].date + 'T00:00:00' : new Date());
     var date = new Date(firstDate);
     date.setDate(date.getDate() + dayIdx);
@@ -668,18 +665,23 @@ const StatsModule = {
       ctx.fillText(v, padding.left - 4, y + 4);
     }
 
-    var legendY = padding.top + 10;
-    ctx.textAlign = 'left';
-    ctx.font = '12px Inter, sans-serif';
+    // DOM-легенда поверх графика (скроллируемая)
+    var oldLegend = document.getElementById('chartLegend');
+    if (oldLegend) oldLegend.remove();
+    var legendDiv = document.createElement('div');
+    legendDiv.id = 'chartLegend';
+    legendDiv.className = 'chart-legend';
+    var hasAny = false;
     for (var key in metrics) {
       var m = metrics[key];
       if (!this.activeMetrics[key]) continue;
-      ctx.fillStyle = m.color;
-      ctx.fillRect(width - padding.right - 130, legendY, 12, 12);
-      ctx.fillStyle = '#a0a0b0';
-      ctx.fillText(m.label, width - padding.right - 114, legendY + 10);
-      legendY += 18;
+      hasAny = true;
+      var item = document.createElement('div');
+      item.className = 'legend-item';
+      item.innerHTML = '<div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + m.label + '</div>';
+      legendDiv.appendChild(item);
     }
+    if (hasAny) wrap.appendChild(legendDiv);
   },
 
   openCalendar: function() {

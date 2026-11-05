@@ -43,6 +43,7 @@ const CoreModule = {
           if (module.createSettingsScreen) module.createSettingsScreen();
           if (module.createExercisesScreen) module.createExercisesScreen();
           if (module.createPlanScreen) module.createPlanScreen();
+          if (module.createAchievementsScreen) module.createAchievementsScreen();
         }
       }
     }, 400);

@@ -3,7 +3,6 @@
 const ExercisesModule = {
   editingId: null,
   currentFilter: 'all',
-  categoryScrollOffset: 0,
 
   init: function() {
     console.log('Exercises module initialized');
@@ -24,7 +23,19 @@ const ExercisesModule = {
   saveCategories: function(c) { if (typeof FTStorage !== 'undefined') FTStorage.set('categories', c); },
 
   getDefaultExercise: function() {
-    return { name: '', muscleGroup: '', description: '', videoUrl: '', imageUrl: '', notes: '', inventory: '', difficulty: 3, effectiveness: 3 };
+    return { name: '', muscleGroup: '', description: '', videoUrl: '', imageUrl: '', notes: '', inventory: '', difficulty: 3, effectiveness: 3, favorite: false };
+  },
+
+  toggleFavorite: function(id) {
+    var db = this.getDB();
+    for (var i = 0; i < db.length; i++) {
+      if (db[i].id === id) {
+        db[i].favorite = !db[i].favorite;
+        break;
+      }
+    }
+    this.saveDB(db);
+    this.createExercisesScreen();
   },
 
   renderStars: function(count) {
@@ -59,8 +70,16 @@ const ExercisesModule = {
 
     var db = this.getDB();
     var categories = this.getCategories();
+    
+    // Подсчёт избранного
+    var favCount = 0;
+    for (var i = 0; i < db.length; i++) if (db[i].favorite) favCount++;
+
     var filtered = db;
-    if (this.currentFilter === 'uncategorized') {
+    if (this.currentFilter === 'favorites') {
+      filtered = [];
+      for (var i = 0; i < db.length; i++) if (db[i].favorite) filtered.push(db[i]);
+    } else if (this.currentFilter === 'uncategorized') {
       filtered = [];
       for (var i = 0; i < db.length; i++) if (!db[i].muscleGroup || db[i].muscleGroup === '') filtered.push(db[i]);
     } else if (this.currentFilter !== 'all') {
@@ -69,60 +88,46 @@ const ExercisesModule = {
     }
 
     var css = '<style>' +
-      '.ex-card { background:var(--bg-card); border-radius:12px; padding:16px; margin-bottom:12px; border:1px solid var(--border-subtle); cursor:pointer; transition:all 0.2s; }' +
+      '.ex-card { background:var(--bg-card); border-radius:12px; padding:16px; margin-bottom:12px; border:1px solid var(--border-subtle); cursor:pointer; transition:all 0.2s; position:relative; }' +
       '.ex-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); border-color:var(--border-gold); }' +
+      '.ex-card.favorite { border-left:3px solid var(--accent-gold); }' +
       '.ex-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:1000; display:flex; justify-content:center; align-items:center; padding:15px; }' +
       '.ex-modal-content { background:var(--bg-secondary); padding:28px; border-radius:24px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
-      '.cat-scroll-wrapper { position:relative; }' +
-      '.cat-scroll-btn { position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; background:var(--bg-secondary); border:1px solid var(--border-gold); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--accent-gold); z-index:10; transition:all 0.2s; }' +
-      '.cat-scroll-btn:hover { background:var(--accent-gold); color:#000; }' +
-      '.cat-scroll-btn.left { left:0; }' +
-      '.cat-scroll-btn.right { right:0; }' +
-      '.cat-scroll-container { display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:8px 4px; scrollbar-width:none; }' +
+      '.cat-scroll-container { display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:8px 4px; scrollbar-width:none; cursor:grab; user-select:none; }' +
+      '.cat-scroll-container:active { cursor:grabbing; }' +
       '.cat-scroll-container::-webkit-scrollbar { display:none; }' +
       '.cat-btn { padding:8px 14px; font-size:0.85em; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; transition:all 0.2s; background:var(--bg-card); color:var(--text-secondary); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0; }' +
       '.cat-btn.active { background:linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); color:#000; border-color:var(--accent-gold); font-weight:600; }' +
       '.cat-btn:not(.active):hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }' +
+      '.fav-btn { background:transparent; border:none; cursor:pointer; font-size:1.3em; padding:4px 8px; transition:all 0.2s; }' +
+      '.fav-btn:hover { transform:scale(1.2); }' +
+      '.fav-btn.active { color:var(--accent-gold); }' +
+      '.fav-btn:not(.active) { color:var(--text-muted); opacity:0.5; }' +
     '</style>';
 
-    // Навигация по категориям с прокруткой
+    // Навигация с drag-scroll (без кнопок)
     var catNavHtml = '<div style="background:var(--bg-card);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
     catNavHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
     catNavHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
     catNavHtml += '<button class="btn btn-primary" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.openCategoryForm()"><i class="ph ph-plus"></i> Добавить</button>';
     catNavHtml += '</div>';
-    
-    if (categories.length > 4) {
-      catNavHtml += '<div class="cat-scroll-wrapper">';
-      catNavHtml += '<button class="cat-scroll-btn left" onclick="ExercisesModule.scrollCategories(-150)"><i class="ph ph-caret-left"></i></button>';
-      catNavHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
-      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
-      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
-      for (var i = 0; i < categories.length; i++) {
-        var count = 0;
-        for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
-        catNavHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
-      }
-      catNavHtml += '</div>';
-      catNavHtml += '<button class="cat-scroll-btn right" onclick="ExercisesModule.scrollCategories(150)"><i class="ph ph-caret-right"></i></button>';
-      catNavHtml += '</div>';
-    } else {
-      catNavHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
-      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
-      for (var i = 0; i < categories.length; i++) {
-        var count = 0;
-        for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
-        catNavHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
-      }
-      catNavHtml += '</div>';
+    catNavHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
+    catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
+    if (favCount > 0) {
+      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
     }
-    
-    catNavHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Кликни на категорию для фильтрации. Выбрав её, справа появятся кнопки управления.</div>';
+    catNavHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
+    for (var i = 0; i < categories.length; i++) {
+      var count = 0;
+      for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
+      catNavHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
+    }
+    catNavHtml += '</div>';
+    catNavHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Перетаскивай мышкой для навигации. Кликни на категорию для фильтрации.</div>';
     catNavHtml += '</div>';
 
-    var isRegular = this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized';
+    var isRegular = this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites';
     if (isRegular) {
       catNavHtml += '<div style="display:flex;gap:8px;margin-bottom:16px">';
       catNavHtml += '<button class="btn btn-secondary" style="padding:8px 14px;font-size:0.85em" onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')"><i class="ph ph-pencil-simple"></i> Редактировать "' + this.currentFilter + '"</button>';
@@ -132,13 +137,16 @@ const ExercisesModule = {
 
     var listHtml = '';
     if (filtered.length === 0) {
-      listHtml = '<div style="text-align:center;padding:40px;opacity:0.6"><i class="ph ph-books" style="font-size:3em;color:var(--accent-gold);margin-bottom:10px;display:block"></i><p>Ничего не найдено</p></div>';
+      var emptyIcon = this.currentFilter === 'favorites' ? 'ph-star' : 'ph-books';
+      var emptyText = this.currentFilter === 'favorites' ? 'Нет избранных упражнений. Нажми ☆ на упражнении, чтобы добавить.' : 'Ничего не найдено';
+      listHtml = '<div style="text-align:center;padding:40px;opacity:0.6"><i class="ph ' + emptyIcon + '" style="font-size:3em;color:var(--accent-gold);margin-bottom:10px;display:block"></i><p>' + emptyText + '</p></div>';
     } else {
       for (var i = 0; i < filtered.length; i++) {
         var ex = filtered[i];
         var diff = ex.difficulty || 3;
         var eff = ex.effectiveness || 3;
-        listHtml += '<div class="ex-card" onclick="ExercisesModule.viewExercise(\'' + ex.id + '\')">';
+        var isFav = ex.favorite ? 'favorite' : '';
+        listHtml += '<div class="ex-card ' + isFav + '" onclick="ExercisesModule.viewExercise(\'' + ex.id + '\')">';
         listHtml += '<div style="display:flex;justify-content:space-between;align-items:start">';
         listHtml += '<div style="flex:1">';
         listHtml += '<h4 style="margin:0 0 6px 0;color:var(--accent-gold);font-size:1.05em;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + ex.name;
@@ -151,7 +159,8 @@ const ExercisesModule = {
         listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-target" style="color:var(--accent-success)"></i> ' + this.renderStars(eff) + '</span>';
         listHtml += '</div>';
         listHtml += '</div>';
-        listHtml += '<div style="display:flex;gap:6px;margin-left:10px">';
+        listHtml += '<div style="display:flex;gap:6px;margin-left:10px;align-items:center">';
+        listHtml += '<button class="fav-btn ' + (ex.favorite ? 'active' : '') + '" onclick="event.stopPropagation();ExercisesModule.toggleFavorite(\'' + ex.id + '\')" title="В избранное"><i class="' + (ex.favorite ? 'ph-fill' : 'ph') + ' ph-star"></i></button>';
         listHtml += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" onclick="event.stopPropagation();ExercisesModule.editExercise(\'' + ex.id + '\')"><i class="ph ph-pencil-simple"></i></button>';
         listHtml += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="event.stopPropagation();ExercisesModule.deleteExercise(\'' + ex.id + '\')"><i class="ph ph-trash"></i></button>';
         listHtml += '</div></div></div>';
@@ -164,11 +173,58 @@ const ExercisesModule = {
         '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:16px" onclick="ExercisesModule.openExForm()"><i class="ph ph-plus-circle"></i> Добавить упражнение</button>' +
         catNavHtml + listHtml +
       '</div>';
+
+    // Инициализация drag-scroll
+    setTimeout(function() { ExercisesModule.initDragScroll(); }, 100);
   },
 
-  scrollCategories: function(delta) {
+  initDragScroll: function() {
     var container = document.getElementById('catScrollContainer');
-    if (container) container.scrollBy({ left: delta, behavior: 'smooth' });
+    if (!container) return;
+    
+    var isDown = false;
+    var startX;
+    var scrollLeft;
+
+    container.addEventListener('mousedown', function(e) {
+      isDown = true;
+      startX = e.pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
+      container.style.cursor = 'grabbing';
+    });
+
+    container.addEventListener('mouseleave', function() {
+      isDown = false;
+      container.style.cursor = 'grab';
+    });
+
+    container.addEventListener('mouseup', function() {
+      isDown = false;
+      container.style.cursor = 'grab';
+    });
+
+    container.addEventListener('mousemove', function(e) {
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - container.offsetLeft;
+      var walk = (x - startX) * 2;
+      container.scrollLeft = scrollLeft - walk;
+    });
+
+    // Touch support
+    var touchStartX = 0;
+    var touchScrollLeft = 0;
+
+    container.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].pageX - container.offsetLeft;
+      touchScrollLeft = container.scrollLeft;
+    }, { passive: true });
+
+    container.addEventListener('touchmove', function(e) {
+      var x = e.touches[0].pageX - container.offsetLeft;
+      var walk = (x - touchStartX) * 2;
+      container.scrollLeft = touchScrollLeft - walk;
+    }, { passive: true });
   },
 
   setFilter: function(f) { this.currentFilter = f; this.createExercisesScreen(); },
@@ -302,10 +358,15 @@ const ExercisesModule = {
       updatedAt: Date.now()
     };
     if (this.editingId) {
-      for (var i = 0; i < db.length; i++) if (db[i].id === this.editingId) { db[i] = Object.assign({}, db[i], exData); break; }
+      for (var i = 0; i < db.length; i++) if (db[i].id === this.editingId) {
+        exData.favorite = db[i].favorite || false;
+        db[i] = Object.assign({}, db[i], exData);
+        break;
+      }
     } else {
       exData.id = 'ex_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       exData.createdAt = Date.now();
+      exData.favorite = false;
       db.push(exData);
     }
     this.saveDB(db);
@@ -331,17 +392,15 @@ const ExercisesModule = {
     for (var i = 0; i < db.length; i++) if (db[i].id === id) { ex = db[i]; break; }
     if (!ex) return;
 
-    // Исправлено: картинка с правильным обработчиком ошибок
     var imageHtml = '';
     if (ex.imageUrl) {
       imageHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
         '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-image"></i> Изображение</h3>' +
         '<div style="position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:100px">' +
-          '<img src="' + ex.imageUrl + '" alt="' + ex.name + '" style="width:100%;max-height:300px;object-fit:contain;display:block" onload="this.style.opacity=1" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:30px;text-align:center;opacity:0.6\\\'><i class=\\\'ph ph-image-broken\\\' style=\\\'font-size:2em;color:var(--accent-warning)\\\'></i><div style=\\\'margin-top:8px;font-size:0.9em\\\'">Не удалось загрузить изображение</div></div>\'">' +
+          '<img src="' + ex.imageUrl + '" alt="' + ex.name + '" style="width:100%;max-height:300px;object-fit:contain;display:block" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:30px;text-align:center;opacity:0.6\\\'><i class=\\\'ph ph-image-broken\\\' style=\\\'font-size:2em;color:var(--accent-warning)\\\'></i><div style=\\\'margin-top:8px;font-size:0.9em\\\'">Не удалось загрузить</div></div>\'">' +
         '</div></div>';
     }
 
-    // Видео как полноценный плеер
     var videoHtml = '';
     if (ex.videoUrl) {
       var videoInfo = this.parseVideoUrl(ex.videoUrl);
@@ -370,7 +429,9 @@ const ExercisesModule = {
     modal.innerHTML =
       '<div class="ex-modal-content">' +
         '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exViewModal\').remove()"><i class="ph ph-x"></i></button>' +
-        '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0">' + ex.name + '</h2>' +
+        '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px">' + ex.name +
+          '<button class="fav-btn ' + (ex.favorite ? 'active' : '') + '" onclick="ExercisesModule.toggleFavorite(\'' + ex.id + '\');document.getElementById(\'exViewModal\').remove();" style="margin-left:auto" title="В избранное"><i class="' + (ex.favorite ? 'ph-fill' : 'ph') + ' ph-star"></i></button>' +
+        '</h2>' +
         '<div style="font-size:0.9em;opacity:0.7;margin-bottom:12px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + '</div>' +
         '<div style="display:flex;gap:20px;margin-bottom:16px;font-size:0.9em;flex-wrap:wrap">' +
           '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> Сложность: ' + this.renderStars(ex.difficulty || 3) + '</div>' +
