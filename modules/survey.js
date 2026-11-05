@@ -5,7 +5,6 @@ const SurveyModule = {
   _answers: {},
   _surveyCallback: null,
 
-  // Наборы эмодзи для разных типов вопросов
   EMOJI_SETS: {
     mood: { label: 'Настроение', emojis: { 1: '😢', 2: '😟', 3: '😐', 4: '🙂', 5: '😊', 6: '😄', 7: '🤩' } },
     energy: { label: 'Энергия', emojis: { 1: '🪫', 2: '😴', 3: '😌', 4: '🙂', 5: '⚡', 6: '🔥', 7: '🚀' } },
@@ -56,6 +55,8 @@ const SurveyModule = {
     var config = this.getSurveyConfig();
     if (!config) config = this.getDefaultSurvey();
 
+    var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
+
     var css = '<style>' +
       '.survey-q { background:var(--bg-card); border-radius:12px; padding:16px; margin-bottom:12px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
       '.survey-q:hover { border-color:var(--border-gold); }' +
@@ -71,11 +72,11 @@ const SurveyModule = {
 
     var html = css + '<div style="padding:16px;max-width:700px;margin:0 auto">';
     html += '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-clipboard-text"></i> Конструктор опросов</h2>';
-    html += '<div class="hint" style="margin-bottom:18px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Числовые вопросы (оценка, диапазон, эмодзи, число) автоматически появятся на графике в статистике.</div>';
+    if (hintsEnabled) html += '<div class="hint" style="margin-bottom:18px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Числовые вопросы автоматически появятся на графике в статистике.</div>';
 
     html += '<div style="background:var(--accent-gold-dim);border:1px solid var(--border-gold);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:0.9em;display:flex;align-items:start;gap:10px">';
     html += '<i class="ph ph-chart-line-up" style="color:var(--accent-gold);font-size:1.2em;margin-top:2px"></i>';
-    html += '<div><strong style="color:var(--accent-gold)">Связь со статистикой:</strong><div style="margin-top:4px;opacity:0.8">Числовые вопросы автоматически становятся метриками на графике. Ответы сохраняются в историю тренировок.</div></div>';
+    html += '<div><strong style="color:var(--accent-gold)">Связь со статистикой:</strong><div style="margin-top:4px;opacity:0.8">Числовые вопросы автоматически становятся метриками на графике.</div></div>';
     html += '</div>';
 
     html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:18px" onclick="SurveyModule.openAddQuestionModal()"><i class="ph ph-plus-circle"></i> Добавить вопрос</button>';
@@ -118,7 +119,6 @@ const SurveyModule = {
     this.createSurveyScreen();
   },
 
-  // === МОДАЛКА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ ВОПРОСА ===
   openAddQuestionModal: function(editIdx) {
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
     var q = editIdx !== undefined ? config.questions[editIdx] : null;
@@ -136,19 +136,15 @@ const SurveyModule = {
     content.innerHTML =
       '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'questionModal\').remove()"><i class="ph ph-x"></i></button>' +
       '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-plus-circle"></i> ' + (isEdit ? 'Редактировать вопрос' : 'Новый вопрос') + '</h2>' +
-
       '<div style="margin-bottom:14px">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Текст вопроса:</label>' +
         '<input type="text" id="qText" value="' + (q ? q.text : '') + '" placeholder="Например: Как ты себя чувствуешь?" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
       '</div>' +
-
       '<div style="margin-bottom:14px">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Тип вопроса:</label>' +
         '<div id="typeSelector" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>' +
       '</div>' +
-
       '<div id="typeSettings"></div>' +
-
       '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
         '<button class="btn btn-secondary" onclick="document.getElementById(\'questionModal\').remove()">Отмена</button>' +
         '<button class="btn btn-primary" onclick="SurveyModule.saveQuestion(' + (isEdit ? editIdx : 'null') + ')"><i class="ph ph-floppy-disk"></i> Сохранить</button>' +
@@ -157,7 +153,6 @@ const SurveyModule = {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // Типы вопросов
     var types = [
       { id: 'rating', label: 'Оценка', icon: 'ph-star', desc: '1–10' },
       { id: 'emoji', label: 'Эмодзи', icon: 'ph-smiley', desc: 'Выбор эмодзи' },
@@ -199,17 +194,15 @@ const SurveyModule = {
           '<div><label style="font-size:0.8em;opacity:0.7">Мин:</label><input type="number" id="qMin" value="' + (q.min || 1) + '" min="0" max="100" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
           '<div><label style="font-size:0.8em;opacity:0.7">Макс:</label><input type="number" id="qMax" value="' + (q.max || 10) + '" min="1" max="100" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
         '</div>' +
-        '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:8px"><i class="ph ph-info"></i> Числовая оценка, появится на графике</div>' +
       '</div>';
     } else if (type === 'emoji') {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-smiley" style="color:#f472b6"></i> Набор эмодзи:</label>' +
         '<div id="emojiSetSelector" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px"></div>' +
         '<div id="customEmojiEditor" style="display:none">' +
-          '<label style="font-size:0.85em;opacity:0.7">Свои эмодзи (через запятую, по порядку от худшего к лучшему):</label>' +
+          '<label style="font-size:0.85em;opacity:0.7">Свои эмодзи (через запятую, от худшего к лучшему):</label>' +
           '<input type="text" id="qEmojiCustom" value="' + (q.emojiList || '') + '" placeholder="😢,😟,😐,🙂,😊" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);margin-top:4px">' +
         '</div>' +
-        '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:8px"><i class="ph ph-info"></i> Выбор эмодзи, появится на графике</div>' +
       '</div>';
       setTimeout(function() { SurveyModule.renderEmojiSets(q); }, 10);
     } else if (type === 'range') {
@@ -219,7 +212,6 @@ const SurveyModule = {
           '<div><label style="font-size:0.8em;opacity:0.7">От:</label><input type="number" id="qMin" value="' + (q.min || 0) + '" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
           '<div><label style="font-size:0.8em;opacity:0.7">До:</label><input type="number" id="qMax" value="' + (q.max || 10) + '" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
         '</div>' +
-        '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:8px"><i class="ph ph-info"></i> Числовой диапазон, появится на графике</div>' +
       '</div>';
     } else if (type === 'number') {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
@@ -229,17 +221,14 @@ const SurveyModule = {
           '<div><label style="font-size:0.8em;opacity:0.7">Макс (опц.):</label><input type="number" id="qMax" value="' + (q.max || '') + '" placeholder="—" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
         '</div>' +
         '<div style="margin-top:10px"><label style="font-size:0.8em;opacity:0.7">Единица измерения (опц.):</label><input type="text" id="qUnit" value="' + (q.unit || '') + '" placeholder="кг, см, мин..." style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);margin-top:4px"></div>' +
-        '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:8px"><i class="ph ph-info"></i> Произвольное число, появится на графике</div>' +
       '</div>';
     } else if (type === 'yesno') {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-check-circle" style="color:#a78bfa"></i> Да или Нет:</label>' +
-        '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Два варианта ответа. Не числовой — не появится на графике.</div>' +
       '</div>';
     } else if (type === 'text') {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-text-t" style="color:var(--text-secondary)"></i> Текстовый ответ:</label>' +
-        '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Свободный текст. Не числовой — не появится на графике.</div>' +
       '</div>';
     }
     container.innerHTML = html;
@@ -249,7 +238,8 @@ const SurveyModule = {
     var container = document.getElementById('emojiSetSelector');
     if (!container) return;
     var sets = this.EMOJI_SETS;
-    var currentSet = q ? q.emojiSetName : null;
+    var currentSet = q && q.emojiSetName ? q.emojiSetName : 'mood';
+    container.innerHTML = '';
     for (var key in sets) {
       var s = sets[key];
       var btn = document.createElement('div');
@@ -257,16 +247,20 @@ const SurveyModule = {
       btn.style.cssText = 'flex-direction:column;padding:8px;gap:2px;text-align:center;flex:1';
       var preview = Object.values(s.emojis).slice(0, 5).join('');
       btn.innerHTML = '<div style="font-size:1.2em">' + (preview || '⚙️') + '</div><div style="font-size:0.75em;font-weight:600">' + s.label + '</div>';
-      btn.onclick = function() {
-        container.querySelectorAll('.metric-chip').forEach(function(c) { c.classList.remove('active'); });
-        btn.classList.add('active');
-        var customEditor = document.getElementById('customEmojiEditor');
-        if (customEditor) customEditor.style.display = key === 'custom' ? 'block' : 'none';
-        container.dataset.selectedSet = key;
-      };
+      (function(setKey) {
+        btn.onclick = function() {
+          container.querySelectorAll('.metric-chip').forEach(function(c) { c.classList.remove('active'); });
+          btn.classList.add('active');
+          container.dataset.selectedSet = setKey;
+          var customEditor = document.getElementById('customEmojiEditor');
+          if (customEditor) customEditor.style.display = setKey === 'custom' ? 'block' : 'none';
+        };
+      })(key);
       container.appendChild(btn);
     }
-    container.dataset.selectedSet = currentSet || 'mood';
+    container.dataset.selectedSet = currentSet;
+    var customEditor = document.getElementById('customEmojiEditor');
+    if (customEditor) customEditor.style.display = currentSet === 'custom' ? 'block' : 'none';
   },
 
   saveQuestion: function(editIdx) {
@@ -277,7 +271,6 @@ const SurveyModule = {
     var activeType = typeSelector.querySelector('.metric-chip.active');
     var type = 'rating';
     if (activeType) {
-      // Определяем тип по иконке
       var icon = activeType.querySelector('i');
       if (icon) {
         if (icon.classList.contains('ph-smiley')) type = 'emoji';
@@ -290,7 +283,7 @@ const SurveyModule = {
     }
 
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
-    var q = { id: editIdx !== null && config.questions[editIdx] ? config.questions[editIdx].id : 'q_' + Date.now(), type: type, text: text };
+    var q = { id: editIdx !== null && editIdx !== undefined && config.questions[editIdx] ? config.questions[editIdx].id : 'q_' + Date.now(), type: type, text: text };
 
     if (type === 'rating' || type === 'range') {
       var minEl = document.getElementById('qMin');
@@ -307,7 +300,7 @@ const SurveyModule = {
       if (unitEl) q.unit = unitEl.value.trim();
     } else if (type === 'emoji') {
       var setSelector = document.getElementById('emojiSetSelector');
-      var setName = setSelector ? setSelector.dataset.selectedSet : 'mood';
+      var setName = setSelector && setSelector.dataset.selectedSet ? setSelector.dataset.selectedSet : 'mood';
       q.emojiSetName = setName;
       if (setName === 'custom') {
         var customEl = document.getElementById('qEmojiCustom');
@@ -321,7 +314,7 @@ const SurveyModule = {
       } else {
         var preset = this.EMOJI_SETS[setName];
         if (preset) {
-          q.emojiSet = preset.emojis;
+          q.emojiSet = JSON.parse(JSON.stringify(preset.emojis));
           q.min = 1;
           q.max = Object.keys(preset.emojis).length;
         }
@@ -338,9 +331,7 @@ const SurveyModule = {
     this.createSurveyScreen();
   },
 
-  editQuestion: function(idx) {
-    this.openAddQuestionModal(idx);
-  },
+  editQuestion: function(idx) { this.openAddQuestionModal(idx); },
 
   deleteQuestion: function(idx) {
     if (!confirm('Удалить вопрос? Он также исчезнет с графика в статистике.')) return;

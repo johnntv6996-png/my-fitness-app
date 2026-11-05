@@ -1,17 +1,16 @@
 // modules/stats.js
 
 const StatsModule = {
-  zoom: {
-    xMin: 0, xMax: 29,
-    yMin: 0, yMax: 10,
-    xMinLimit: 0, xMaxLimit: 29,
-    yMinLimit: 0, yMaxLimit: 100
-  },
+  zoom: { xMin: 0, xMax: 29, yMin: 0, yMax: 10 },
   isPanning: false,
   panStart: { x: 0, y: 0 },
-  panStartZoom: { xMin: 0, xMax: 29, yMin: 0, yMax: 10 },
+  panStartZoom: null,
   activeMetrics: {},
   allMetrics: {},
+  totalDays: 30,
+  firstDayIndex: 0,
+  calendarMonth: new Date().getMonth(),
+  calendarYear: new Date().getFullYear(),
 
   init: function() {
     console.log('Stats module initialized');
@@ -47,20 +46,15 @@ const StatsModule = {
     if (config && config.questions) {
       for (var i = 0; i < config.questions.length; i++) {
         var q = config.questions[i];
-        if (q.type === 'rating' || q.type === 'emoji' || q.type === 'range' || q.type === 'number') {
+        if (['rating', 'emoji', 'range', 'number'].indexOf(q.type) !== -1) {
           var id = 'survey_' + q.id;
           var shortLabel = q.text.length > 18 ? q.text.substring(0, 18) + '…' : q.text;
           metrics[id] = {
-            id: id,
-            label: shortLabel,
-            color: this.getMetricColor(i + 3),
-            key: 'survey_' + q.id,
-            enabled: false,
-            source: 'survey',
-            questionId: q.id,
-            questionType: q.type,
-            min: q.min || 1,
-            max: q.max || 10,
+            id: id, label: shortLabel, color: this.getMetricColor(i + 3),
+            key: 'survey_' + q.id, enabled: false, source: 'survey',
+            questionId: q.id, questionType: q.type,
+            min: q.min !== undefined ? q.min : 1,
+            max: q.max !== undefined ? q.max : 10,
             unit: q.unit || '',
             emojiSet: q.emojiSet || null
           };
@@ -76,6 +70,85 @@ const StatsModule = {
   getMetricColor: function(index) {
     var colors = ['#d4af37', '#4ade80', '#60a5fa', '#f472b6', '#a78bfa', '#fb923c', '#2dd4bf', '#f87171', '#e879f9', '#38bdf8'];
     return colors[index % colors.length];
+  },
+
+  buildChartData: function() {
+    var history = this.getHistory();
+    if (history.length === 0) return { data: { exercises: [], weight: [], mood: [] }, labels: [], totalDays: 30 };
+
+    var dates = history.map(function(h) { return h.date; }).sort();
+    var firstDate = new Date(dates[0] + 'T00:00:00');
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    var msPerDay = 1000 * 60 * 60 * 24;
+    var totalDays = Math.floor((today - firstDate) / msPerDay) + 1;
+    if (totalDays < 1) totalDays = 1;
+
+    var data = { exercises: [], weight: [], mood: [] };
+    var labels = [];
+    var config = this.getSurveyConfig();
+    var surveyKeys = [];
+    if (config && config.questions) {
+      for (var i = 0; i < config.questions.length; i++) {
+        var q = config.questions[i];
+        if (['rating', 'emoji', 'range', 'number'].indexOf(q.type) !== -1) {
+          var key = 'survey_' + q.id;
+          data[key] = [];
+          surveyKeys.push(key);
+        }
+      }
+    }
+
+    for (var i = 0; i < totalDays; i++) {
+      var date = new Date(firstDate);
+      date.setDate(date.getDate() + i);
+      var dateStr = date.toISOString().slice(0, 10);
+      var dayRecord = null;
+      for (var j = 0; j < history.length; j++) if (history[j].date === dateStr) { dayRecord = history[j]; break; }
+
+      var exCount = 0;
+      if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
+      data.exercises.push(exCount);
+      data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
+      data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
+
+      for (var k = 0; k < surveyKeys.length; k++) {
+        var qId = surveyKeys[k].replace('survey_', '');
+        data[surveyKeys[k]].push(dayRecord && dayRecord.survey && dayRecord.survey[qId] !== undefined ? dayRecord.survey[qId] : null);
+      }
+
+      labels.push(date.getDate() + '.' + (date.getMonth() + 1));
+    }
+
+    this.totalDays = totalDays;
+    this.zoom.xMax = totalDays - 1;
+    this.zoom.xMaxLimit = totalDays - 1;
+    this.zoom.xMinLimit = 0;
+
+    if (this.zoom.xMax > totalDays - 1) this.zoom.xMax = totalDays - 1;
+    if (this.zoom.xMin > this.zoom.xMax - 3) this.zoom.xMin = Math.max(0, this.zoom.xMax - 10);
+
+    return { data: data, labels: labels, totalDays: totalDays };
+  },
+
+  findMaxY: function(data) {
+    var maxVal = 10;
+    var metrics = this.allMetrics;
+    for (var key in metrics) {
+      if (!this.activeMetrics[key]) continue;
+      var series = data[key];
+      if (!series) continue;
+      for (var i = 0; i < series.length; i++) {
+        if (series[i] !== null && series[i] > maxVal) maxVal = series[i];
+      }
+    }
+    if (maxVal <= 10) maxVal = 10;
+    else if (maxVal <= 20) maxVal = 20;
+    else if (maxVal <= 50) maxVal = 50;
+    else if (maxVal <= 100) maxVal = 100;
+    else maxVal = Math.ceil(maxVal / 50) * 50;
+    return maxVal;
   },
 
   createStatsScreen: function() {
@@ -102,14 +175,15 @@ const StatsModule = {
       else break;
     }
 
+    var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
+    var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования.</div>' : '';
+
     var css = '<style>' +
       '.stat-card { background:var(--bg-card); border-radius:14px; padding:18px; margin-bottom:16px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
       '.stat-card:hover { border-color:var(--border-gold); transform:translateY(-2px); }' +
       '.stat-metric { text-align:center; }' +
       '.stat-metric-value { font-size:2.2em; font-weight:bold; color:var(--accent-gold); line-height:1; }' +
       '.stat-metric-label { font-size:0.8em; opacity:0.7; margin-top:6px; display:flex; align-items:center; justify-content:center; gap:4px; color:var(--text-secondary); }' +
-      '.heatmap-cell { width:12px; height:12px; border-radius:2px; cursor:pointer; transition:all 0.2s; }' +
-      '.heatmap-cell:hover { transform:scale(1.3); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; color:var(--text-secondary); }' +
       '.chart-container { position:relative; border-radius:12px; background:var(--bg-primary); border:1px solid var(--border-subtle); overflow:hidden; }' +
       '.chart-canvas-wrap { position:relative; width:100%; height:420px; cursor:crosshair; }' +
@@ -139,6 +213,16 @@ const StatsModule = {
       '.tooltip-label { opacity:0.7; flex:1; }' +
       '.tooltip-value { font-weight:600; color:var(--accent-gold); }' +
       '.tooltip-date { font-weight:600; color:var(--accent-gold); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-subtle); }' +
+      '.calendar-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:2000; display:flex; justify-content:center; align-items:center; padding:20px; }' +
+      '.calendar-content { background:var(--bg-secondary); padding:28px; border-radius:20px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
+      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; }' +
+      '.calendar-day:hover { transform:scale(1.1); }' +
+      '.calendar-day.full { background:rgba(74,222,128,0.2); border-color:var(--accent-success); }' +
+      '.calendar-day.partial { background:rgba(251,191,36,0.2); border-color:var(--accent-warning); }' +
+      '.calendar-day.skipped { background:rgba(248,113,113,0.2); border-color:var(--accent-error); }' +
+      '.calendar-day.empty { background:var(--bg-primary); opacity:0.5; }' +
+      '.calendar-day .day-num { font-weight:600; font-size:1.1em; }' +
+      '.calendar-day .day-icon { font-size:1.2em; margin-top:2px; }' +
       '@media (max-width: 600px) { .stat-metric-value { font-size:1.6em; } .stat-card { padding:14px; } .chart-canvas-wrap { height:320px; } }' +
     '</style>';
 
@@ -151,27 +235,26 @@ const StatsModule = {
     metricsHtml += '</div>';
 
     var chartHtml = '<div class="stat-card" style="padding:0;overflow:hidden">';
-    chartHtml += '<div style="padding:18px 18px 10px"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-chart-line-up"></i> Активность за 30 дней</h3>';
-    chartHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования. Кликни на метрику ниже.</div></div>';
+    chartHtml += '<div style="padding:18px 18px 10px"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-chart-line-up"></i> Активность за весь период</h3>';
+    chartHtml += hintHtml;
+    chartHtml += '</div>';
     chartHtml += '<div class="chart-container" style="margin:0 18px 18px">';
     chartHtml += '<div class="chart-canvas-wrap" id="chartWrap">';
     chartHtml += '<canvas id="activityChart"></canvas>';
     chartHtml += '<button class="chart-reset-btn" onclick="StatsModule.resetZoom()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить</button>';
     chartHtml += '<div class="chart-zoom-info" id="zoomInfo">100%</div>';
-    chartHtml += '<button class="chart-nav-btn prev" onclick="StatsModule.panChart(-3)"><i class="ph ph-caret-left"></i></button>';
-    chartHtml += '<button class="chart-nav-btn next" onclick="StatsModule.panChart(3)"><i class="ph ph-caret-right"></i></button>';
+    chartHtml += '<button class="chart-nav-btn prev" onclick="StatsModule.panChart(-5)"><i class="ph ph-caret-left"></i></button>';
+    chartHtml += '<button class="chart-nav-btn next" onclick="StatsModule.panChart(5)"><i class="ph ph-caret-right"></i></button>';
     chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
     chartHtml += '</div></div>';
 
-    var heatmapHtml = '<div class="stat-card"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-calendar-blank"></i> Тепловая карта (90 дней)</h3>';
-    heatmapHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-bottom:12px"><i class="ph ph-info"></i> Цвет показывает интенсивность</div>';
-    heatmapHtml += '<div id="heatmap" style="display:grid;grid-template-columns:repeat(13,1fr);gap:3px;max-width:400px;margin:0 auto"></div>';
-    heatmapHtml += '<div style="display:flex;justify-content:space-between;margin-top:12px;font-size:0.75em;opacity:0.7;align-items:center"><span>Меньше</span><div style="display:flex;gap:3px"><div style="width:12px;height:12px;background:var(--bg-primary);border-radius:2px;border:1px solid var(--border-subtle)"></div><div style="width:12px;height:12px;background:rgba(212,175,55,0.2);border-radius:2px"></div><div style="width:12px;height:12px;background:rgba(212,175,55,0.4);border-radius:2px"></div><div style="width:12px;height:12px;background:rgba(212,175,55,0.7);border-radius:2px"></div><div style="width:12px;height:12px;background:var(--accent-gold);border-radius:2px"></div></div><span>Больше</span></div></div>';
-
-    var streakHtml = '<div class="stat-card"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-flame"></i> Последние 14 дней</h3>';
-    streakHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-bottom:12px"><i class="ph ph-info"></i> Зелёный = тренировка, красный = пропуск</div>';
+    var streakHtml = '<div class="stat-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    streakHtml += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0;display:flex;align-items:center;gap:10px"><i class="ph ph-flame"></i> Последние 14 дней</h3>';
+    streakHtml += '<button class="btn btn-secondary" style="padding:8px 12px;font-size:0.85em" onclick="StatsModule.openCalendar()"><i class="ph ph-calendar"></i> Календарь</button>';
+    streakHtml += '</div>';
+    if (hintsEnabled) streakHtml += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-bottom:12px"><i class="ph ph-info"></i> Зелёный = тренировка, красный = пропуск</div>';
     streakHtml += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">';
     for (var i = 13; i >= 0; i--) {
       var date = new Date(); date.setDate(date.getDate() - i);
@@ -188,12 +271,11 @@ const StatsModule = {
     }
     streakHtml += '</div></div>';
 
-    screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + heatmapHtml + streakHtml + '</div>';
+    screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + streakHtml + '</div>';
 
     this.renderMetricChips();
     var self = this;
     setTimeout(function() { self.setupChartInteractions(); self.drawChart(); }, 100);
-    setTimeout(function() { self.drawHeatmap(); }, 200);
   },
 
   renderMetricChips: function() {
@@ -231,7 +313,7 @@ const StatsModule = {
       var mouseX = e.clientX - rect.left;
       var mouseY = e.clientY - rect.top;
       var zoomFactor = e.deltaY > 0 ? 1.15 : 0.87;
-      self.zoomAtPoint(mouseX, mouseY, rect.width, rect.height, zoomFactor, zoomFactor);
+      self.zoomAtPoint(mouseX, mouseY, rect.width, rect.height, zoomFactor);
     }, { passive: false });
 
     wrap.addEventListener('mousedown', function(e) {
@@ -321,10 +403,13 @@ const StatsModule = {
     var chartWidth = width - padding.left - padding.right;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var dayIdx = Math.round(this.zoom.xMin + (x - padding.left) / chartWidth * xRange);
-    if (dayIdx < 0 || dayIdx >= 30) { tooltip.style.display = 'none'; return; }
-    var date = new Date(); date.setDate(date.getDate() - (29 - dayIdx));
-    var dateStr = date.toISOString().slice(0, 10);
+    if (dayIdx < 0 || dayIdx >= this.totalDays) { tooltip.style.display = 'none'; return; }
     var history = this.getHistory();
+    var chartData = this.buildChartData();
+    var firstDate = new Date(history.length > 0 ? history[0].date + 'T00:00:00' : new Date());
+    var date = new Date(firstDate);
+    date.setDate(date.getDate() + dayIdx);
+    var dateStr = date.toISOString().slice(0, 10);
     var dayRecord = null;
     for (var i = 0; i < history.length; i++) if (history[i].date === dateStr) { dayRecord = history[i]; break; }
     if (!dayRecord) { tooltip.style.display = 'none'; return; }
@@ -368,7 +453,7 @@ const StatsModule = {
     if (metric.questionType === 'emoji' && metric.emojiSet && metric.emojiSet[val]) {
       return metric.emojiSet[val];
     }
-    return val + (metric.unit || '');
+    return val + (metric.unit ? ' ' + metric.unit : '');
   },
 
   handlePointClick: function(e) {
@@ -380,10 +465,13 @@ const StatsModule = {
     var chartWidth = width - padding.left - padding.right;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var dayIdx = Math.round(this.zoom.xMin + (x - padding.left) / chartWidth * xRange);
-    if (dayIdx < 0 || dayIdx >= 30) return;
-    var date = new Date(); date.setDate(date.getDate() - (29 - dayIdx));
-    var dateStr = date.toISOString().slice(0, 10);
+    if (dayIdx < 0 || dayIdx >= this.totalDays) return;
     var history = this.getHistory();
+    var chartData = this.buildChartData();
+    var firstDate = new Date(history.length > 0 ? history[0].date + 'T00:00:00' : new Date());
+    var date = new Date(firstDate);
+    date.setDate(date.getDate() + dayIdx);
+    var dateStr = date.toISOString().slice(0, 10);
     var dayRecord = null;
     for (var i = 0; i < history.length; i++) if (history[i].date === dateStr) { dayRecord = history[i]; break; }
     if (dayRecord) {
@@ -410,20 +498,19 @@ const StatsModule = {
   },
 
   getPadding: function(width, height) {
-    // Минимальный padding слева — чтобы первая точка была у края
     return { left: 10, right: 20, top: 20, bottom: 30 };
   },
 
-  zoomAtPoint: function(mouseX, mouseY, canvasWidth, canvasHeight, zoomX, zoomY) {
+  zoomAtPoint: function(mouseX, mouseY, canvasWidth, canvasHeight, zoomFactor) {
     var padding = this.getPadding(canvasWidth, canvasHeight);
     var chartWidth = canvasWidth - padding.left - padding.right;
     var chartHeight = canvasHeight - padding.top - padding.bottom;
-    var xRatio = (mouseX - padding.left) / chartWidth;
-    var yRatio = (mouseY - padding.top) / chartHeight;
+    var xRatio = Math.max(0, Math.min(1, (mouseX - padding.left) / chartWidth));
+    var yRatio = Math.max(0, Math.min(1, (mouseY - padding.top) / chartHeight));
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var yRange = this.zoom.yMax - this.zoom.yMin;
-    var newXRange = xRange * zoomX;
-    var newYRange = yRange * zoomY;
+    var newXRange = xRange * zoomFactor;
+    var newYRange = yRange * zoomFactor;
     var xCenter = this.zoom.xMin + xRatio * xRange;
     var yCenter = this.zoom.yMin + (1 - yRatio) * yRange;
     this.zoom.xMin = xCenter - xRatio * newXRange;
@@ -437,17 +524,15 @@ const StatsModule = {
   clampZoom: function() {
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var yRange = this.zoom.yMax - this.zoom.yMin;
-    if (xRange < 3) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 1.5; this.zoom.xMax = cx + 1.5; }
-    if (xRange > 30) { this.zoom.xMin = 0; this.zoom.xMax = 29; }
-    if (yRange < 1) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 0.5; this.zoom.yMax = cy + 0.5; }
-    if (yRange > 100) { this.zoom.yMin = 0; this.zoom.yMax = 100; }
-    if (this.zoom.xMin < this.zoom.xMinLimit) { this.zoom.xMax += this.zoom.xMinLimit - this.zoom.xMin; this.zoom.xMin = this.zoom.xMinLimit; }
-    if (this.zoom.xMax > this.zoom.xMaxLimit) { this.zoom.xMin -= this.zoom.xMax - this.zoom.xMaxLimit; this.zoom.xMax = this.zoom.xMaxLimit; }
-    if (this.zoom.yMin < this.zoom.yMinLimit) { this.zoom.yMin = this.zoom.yMinLimit; }
-    if (this.zoom.yMax > this.zoom.yMaxLimit) { this.zoom.yMax = this.zoom.yMaxLimit; }
+    if (xRange < 5) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 2.5; this.zoom.xMax = cx + 2.5; }
+    if (xRange > this.totalDays) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; }
+    if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; }
+    if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
+    if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
+    if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
     var info = document.getElementById('zoomInfo');
     if (info) {
-      var xZoom = Math.round(30 / (this.zoom.xMax - this.zoom.xMin) * 100);
+      var xZoom = Math.round(this.totalDays / (this.zoom.xMax - this.zoom.xMin) * 100);
       info.textContent = xZoom + '%';
     }
   },
@@ -461,45 +546,12 @@ const StatsModule = {
 
   resetZoom: function() {
     this.zoom.xMin = 0;
-    this.zoom.xMax = 29;
+    this.zoom.xMax = this.totalDays - 1;
     this.zoom.yMin = 0;
-    this.zoom.yMax = 10;
+    var chartData = this.buildChartData();
+    this.zoom.yMax = this.findMaxY(chartData.data);
     this.clampZoom();
     this.drawChart();
-  },
-
-  buildChartData: function(history) {
-    var data = { exercises: [], weight: [], mood: [] };
-    var labels = [];
-    var config = this.getSurveyConfig();
-    var surveyKeys = [];
-    if (config && config.questions) {
-      for (var i = 0; i < config.questions.length; i++) {
-        var q = config.questions[i];
-        if (q.type === 'rating' || q.type === 'emoji' || q.type === 'range' || q.type === 'number') {
-          var key = 'survey_' + q.id;
-          data[key] = [];
-          surveyKeys.push(key);
-        }
-      }
-    }
-    for (var i = 29; i >= 0; i--) {
-      var date = new Date(); date.setDate(date.getDate() - i);
-      var dateStr = date.toISOString().slice(0, 10);
-      var dayRecord = null;
-      for (var j = 0; j < history.length; j++) if (history[j].date === dateStr) { dayRecord = history[j]; break; }
-      var exCount = 0;
-      if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
-      data.exercises.push(exCount);
-      data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
-      data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
-      for (var k = 0; k < surveyKeys.length; k++) {
-        var qId = surveyKeys[k].replace('survey_', '');
-        data[surveyKeys[k]].push(dayRecord && dayRecord.survey && dayRecord.survey[qId] !== undefined ? dayRecord.survey[qId] : null);
-      }
-      labels.push(date.getDate() + '.' + (date.getMonth() + 1));
-    }
-    return { data: data, labels: labels };
   },
 
   drawChart: function() {
@@ -514,30 +566,22 @@ const StatsModule = {
     var width = canvas.width, height = canvas.height;
     ctx.clearRect(0, 0, width, height);
 
-    var history = this.getHistory();
-    var chartData = this.buildChartData(history);
+    var chartData = this.buildChartData();
     var data = chartData.data;
     var labels = chartData.labels;
+    this.totalDays = chartData.totalDays;
 
-    var firstTraining = 29, lastTraining = 0;
-    for (var i = 0; i < 30; i++) {
-      var date = new Date(); date.setDate(date.getDate() - (29 - i));
-      var dateStr = date.toISOString().slice(0, 10);
-      var dayRecord = null;
-      for (var j = 0; j < history.length; j++) if (history[j].date === dateStr) { dayRecord = history[j]; break; }
-      if (dayRecord && !dayRecord.skipped) {
-        if (firstTraining === 29) firstTraining = i;
-        lastTraining = i;
-      }
-    }
-    this.zoom.xMinLimit = Math.max(0, firstTraining - 2);
-    this.zoom.xMaxLimit = Math.min(29, lastTraining + 2);
+    // Автоопределение Y по пику
+    this.zoom.yMax = this.findMaxY(data);
+    if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
+    this.zoom.yMin = 0;
 
     var padding = this.getPadding(width, height);
     var chartWidth = width - padding.left - padding.right;
     var chartHeight = height - padding.top - padding.bottom;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var yRange = this.zoom.yMax - this.zoom.yMin;
+    if (yRange <= 0) yRange = 10;
 
     // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
@@ -556,10 +600,6 @@ const StatsModule = {
       if (!this.activeMetrics[key]) continue;
       var series = data[key];
       if (!series) continue;
-      var maxVal = m.max || 10;
-      var minVal = m.min || 0;
-      var valRange = maxVal - minVal;
-      if (valRange === 0) valRange = 10;
 
       ctx.strokeStyle = m.color;
       ctx.lineWidth = 2.5;
@@ -621,25 +661,116 @@ const StatsModule = {
     }
   },
 
-  drawHeatmap: function(history) {
-    var container = document.getElementById('heatmap');
-    if (!container) return;
-    container.innerHTML = '';
-    for (var i = 89; i >= 0; i--) {
-      var date = new Date(); date.setDate(date.getDate() - i);
-      var dateStr = date.toISOString().slice(0, 10);
-      var count = 0;
-      for (var j = 0; j < history.length; j++) if (history[j].date === dateStr && !history[j].skipped) { count = history[j].exercises ? history[j].exercises.length : 0; break; }
-      var cell = document.createElement('div');
-      cell.className = 'heatmap-cell';
-      cell.title = dateStr + ': ' + count + ' упражнений';
-      if (count === 0) cell.style.background = 'var(--bg-primary)';
-      else if (count <= 3) cell.style.background = 'rgba(212,175,55,0.2)';
-      else if (count <= 6) cell.style.background = 'rgba(212,175,55,0.4)';
-      else if (count <= 9) cell.style.background = 'rgba(212,175,55,0.7)';
-      else cell.style.background = 'var(--accent-gold)';
-      container.appendChild(cell);
+  // === КАЛЕНДАРЬ ===
+  openCalendar: function() {
+    var modal = document.createElement('div');
+    modal.className = 'calendar-modal';
+    modal.id = 'calendarModal';
+
+    var content = document.createElement('div');
+    content.className = 'calendar-content';
+
+    content.innerHTML =
+      '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'calendarModal\').remove()"><i class="ph ph-x"></i></button>' +
+      '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-calendar"></i> Календарь тренировок</h2>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0">' +
+        '<button class="btn btn-secondary" style="padding:8px 12px" onclick="StatsModule.changeMonth(-1)"><i class="ph ph-caret-left"></i></button>' +
+        '<div id="calendarTitle" style="font-weight:600;font-size:1.1em;color:var(--accent-gold)"></div>' +
+        '<button class="btn btn-secondary" style="padding:8px 12px" onclick="StatsModule.changeMonth(1)"><i class="ph ph-caret-right"></i></button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Пн</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Вт</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Ср</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Чт</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Пт</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Сб</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Вс</div>' +
+      '</div>' +
+      '<div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>' +
+      '<div style="margin-top:16px;display:flex;gap:12px;font-size:0.8em;flex-wrap:wrap;justify-content:center">' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:rgba(74,222,128,0.3);border-radius:3px"></div> Полная</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:rgba(251,191,36,0.3);border-radius:3px"></div> Частичная</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:rgba(248,113,113,0.3);border-radius:3px"></div> Пропуск</div>' +
+      '</div>';
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    this.renderCalendar();
+  },
+
+  changeMonth: function(delta) {
+    this.calendarMonth += delta;
+    if (this.calendarMonth > 11) { this.calendarMonth = 0; this.calendarYear++; }
+    if (this.calendarMonth < 0) { this.calendarMonth = 11; this.calendarYear--; }
+    var now = new Date();
+    if (this.calendarYear > now.getFullYear() || (this.calendarYear === now.getFullYear() && this.calendarMonth > now.getMonth())) {
+      this.calendarMonth = now.getMonth();
+      this.calendarYear = now.getFullYear();
     }
+    this.renderCalendar();
+  },
+
+  renderCalendar: function() {
+    var title = document.getElementById('calendarTitle');
+    var grid = document.getElementById('calendarGrid');
+    if (!title || !grid) return;
+
+    var monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    title.textContent = monthNames[this.calendarMonth] + ' ' + this.calendarYear;
+
+    var history = this.getHistory();
+    var firstDay = new Date(this.calendarYear, this.calendarMonth, 1);
+    var lastDay = new Date(this.calendarYear, this.calendarMonth + 1, 0);
+    var daysInMonth = lastDay.getDate();
+    var startDay = (firstDay.getDay() + 6) % 7;
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    var html = '';
+    for (var i = 0; i < startDay; i++) html += '<div></div>';
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      var date = new Date(this.calendarYear, this.calendarMonth, d);
+      var dateStr = date.toISOString().slice(0, 10);
+      var dayRecord = null;
+      for (var j = 0; j < history.length; j++) if (history[j].date === dateStr) { dayRecord = history[j]; break; }
+
+      var cls = 'empty';
+      var icon = '';
+      if (date > today) {
+        cls = 'empty';
+      } else if (dayRecord) {
+        if (dayRecord.skipped) { cls = 'skipped'; icon = '<i class="ph ph-x" style="color:var(--accent-error)"></i>'; }
+        else if (dayRecord.exercises && dayRecord.exercises.length > 0) {
+          var allDone = true;
+          var anyDone = false;
+          if (dayRecord.details) {
+            for (var k = 0; k < dayRecord.details.length; k++) {
+              var det = dayRecord.details[k];
+              if (det.sets) {
+                for (var s = 0; s < det.sets.length; s++) {
+                  if (det.sets[s] === 'done') anyDone = true;
+                  else if (det.sets[s] === 'partial') { allDone = false; anyDone = true; }
+                  else if (det.sets[s] === 'missed') { allDone = false; }
+                }
+              }
+            }
+          }
+          if (allDone && anyDone) { cls = 'full'; icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>'; }
+          else if (anyDone) { cls = 'partial'; icon = '<i class="ph ph-warning" style="color:var(--accent-warning)"></i>'; }
+          else { cls = 'full'; icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>'; }
+        }
+      }
+
+      var isToday = date.getTime() === today.getTime();
+      html += '<div class="calendar-day ' + cls + '" style="' + (isToday ? 'border:2px solid var(--accent-gold);' : '') + '" title="' + dateStr + '">';
+      html += '<div class="day-num">' + d + '</div>';
+      html += '<div class="day-icon">' + icon + '</div>';
+      html += '</div>';
+    }
+    grid.innerHTML = html;
   }
 };
 

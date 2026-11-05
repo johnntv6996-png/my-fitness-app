@@ -48,33 +48,23 @@ const SettingsModule = {
 
     html += '<div class="settings-section">';
     html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-user"></i> Профиль</h3>';
-    
-    // Превью аватарки
     html += '<div class="avatar-preview">';
-    if (userAvatar && userAvatar.startsWith('data:image')) {
-      html += '<img src="' + userAvatar + '" alt="avatar">';
-    } else if (userAvatar) {
-      html += '<i class="ph ' + userAvatar + '"></i>';
-    } else {
-      html += '<i class="ph ph-user-circle"></i>';
-    }
+    if (userAvatar && userAvatar.startsWith('data:image')) html += '<img src="' + userAvatar + '" alt="avatar">';
+    else if (userAvatar) html += '<i class="ph ' + userAvatar + '"></i>';
+    else html += '<i class="ph ph-user-circle"></i>';
     html += '</div>';
-
-    // Кнопки управления аватаркой
     html += '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">';
     html += '<button class="btn btn-primary" onclick="SettingsModule.uploadAvatar()" style="padding:10px 18px;font-size:0.9em"><i class="ph ph-upload-simple"></i> Загрузить фото</button>';
     if (userAvatar) {
-      html += '<button class="btn btn-secondary" onclick="SettingsModule.chooseIconAvatar()" style="padding:10px 18px;font-size:0.9em"><i class="ph ph-smiley"></i> Выбрать иконку</button>';
+      html += '<button class="btn btn-secondary" onclick="SettingsModule.chooseIconAvatar()" style="padding:10px 18px;font-size:0.9em"><i class="ph ph-smiley"></i> Иконка</button>';
       html += '<button class="btn btn-danger" onclick="SettingsModule.removeAvatar()" style="padding:10px 18px;font-size:0.9em"><i class="ph ph-trash"></i> Удалить</button>';
     }
     html += '</div>';
-
     html += '<div style="margin-bottom:16px">';
     html += '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Имя:</label>';
     html += '<input type="text" id="settingUserName" value="' + userName + '" placeholder="Введи своё имя" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">';
     html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Будет отображаться на главном экране</div>';
     html += '</div>';
-
     html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveProfile()"><i class="ph ph-floppy-disk"></i> Сохранить профиль</button>';
     html += '</div>';
 
@@ -88,6 +78,18 @@ const SettingsModule = {
     html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Подходы будут отмечаться сразу без вопросов</div>';
     html += '</div>';
     html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveSurveySettings()"><i class="ph ph-floppy-disk"></i> Сохранить</button>';
+    html += '</div>';
+
+    html += '<div class="settings-section">';
+    html += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 16px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-eye-slash"></i> Интерфейс</h3>';
+    html += '<div style="margin-bottom:14px">';
+    html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">';
+    html += '<input type="checkbox" id="settingDisableHints" ' + (settings.disableHints ? 'checked' : '') + ' style="width:20px;height:20px;accent-color:var(--accent-gold)">';
+    html += '<span style="font-size:0.95em">Отключить все подсказки (хинты)</span>';
+    html += '</label>';
+    html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Уберёт все информационные подсказки во всех разделах</div>';
+    html += '</div>';
+    html += '<button class="btn btn-primary" style="width:100%;padding:12px" onclick="SettingsModule.saveInterfaceSettings()"><i class="ph ph-floppy-disk"></i> Сохранить</button>';
     html += '</div>';
 
     html += '<div class="settings-section">';
@@ -108,21 +110,15 @@ const SettingsModule = {
     input.onchange = function(e) {
       var file = e.target.files[0];
       if (!file) return;
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Файл слишком большой. Максимум 2 МБ.');
-        return;
-      }
+      if (file.size > 2 * 1024 * 1024) { alert('Файл слишком большой. Максимум 2 МБ.'); return; }
       var reader = new FileReader();
       reader.onload = function(ev) {
-        // Сжимаем изображение через canvas
         var img = new Image();
         img.onload = function() {
           var canvas = document.createElement('canvas');
           var size = 200;
-          canvas.width = size;
-          canvas.height = size;
+          canvas.width = size; canvas.height = size;
           var ctx = canvas.getContext('2d');
-          // Центрируем и обрезаем в квадрат
           var minDim = Math.min(img.width, img.height);
           var sx = (img.width - minDim) / 2;
           var sy = (img.height - minDim) / 2;
@@ -167,6 +163,13 @@ const SettingsModule = {
     settings.disableMiniSurvey = document.getElementById('settingDisableMini').checked;
     this.saveSettings(settings);
     alert('Настройки опросов сохранены!');
+  },
+
+  saveInterfaceSettings: function() {
+    var settings = this.getSettings();
+    settings.disableHints = document.getElementById('settingDisableHints').checked;
+    this.saveSettings(settings);
+    alert('Настройки интерфейса сохранены!');
   },
 
   exportData: function() {
