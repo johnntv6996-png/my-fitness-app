@@ -104,12 +104,13 @@ const ExercisesModule = {
       '.fav-btn:hover { transform:scale(1.2); }' +
       '.fav-btn.active { color:var(--accent-gold); }' +
       '.fav-btn:not(.active) { color:var(--text-muted); opacity:0.5; }' +
+      '.ex-view-section { background:var(--bg-primary); padding:14px; border-radius:10px; margin-bottom:12px; }' +
+      '.ex-view-section h3 { color:var(--accent-gold); margin:0 0 10px 0; display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-size:1.1em; }' +
+      '.ex-view-actions { display:flex; gap:10px; margin-top:20px; }' +
     '</style>';
 
     // Тулбар категорий
     var toolbarHtml = '<div style="background:var(--bg-card);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
-    
-    // Верхняя строка: заголовок + кнопки действий
     toolbarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">';
     toolbarHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
     toolbarHtml += '<div style="display:flex;gap:6px;align-items:center">';
@@ -119,7 +120,6 @@ const ExercisesModule = {
     toolbarHtml += '<button class="cat-action-btn" onclick="ExercisesModule.openCategoryForm()" title="Добавить категорию" style="background:var(--accent-gold);color:#000;border-color:var(--accent-gold)"><i class="ph ph-plus"></i></button>';
     toolbarHtml += '</div></div>';
     
-    // Полоса прокрутки категорий
     toolbarHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
     toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
     if (favCount > 0) {
@@ -358,66 +358,169 @@ const ExercisesModule = {
     this.createExercisesScreen();
   },
 
+  // === ИСПРАВЛЕННАЯ ФУНКЦИЯ ПРОСМОТРА (через createElement) ===
   viewExercise: function(id) {
     var db = this.getDB();
     var ex = null;
     for (var i = 0; i < db.length; i++) if (db[i].id === id) { ex = db[i]; break; }
     if (!ex) return;
 
-    var imageHtml = '';
-    if (ex.imageUrl) {
-      imageHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
-        '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-image"></i> Изображение</h3>' +
-        '<div style="position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:100px">' +
-          '<img src="' + ex.imageUrl + '" alt="' + ex.name + '" style="width:100%;max-height:300px;object-fit:contain;display:block" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:30px;text-align:center;opacity:0.6\\\'><i class=\\\'ph ph-image-broken\\\' style=\\\'font-size:2em;color:var(--accent-warning)\\\'></i><div style=\\\'margin-top:8px;font-size:0.9em\\\'">Не удалось загрузить</div></div>\'">' +
-        '</div></div>';
-    }
+    var self = this;
 
-    var videoHtml = '';
-    if (ex.videoUrl) {
-      var videoInfo = this.parseVideoUrl(ex.videoUrl);
-      if (videoInfo) {
-        if (videoInfo.type === 'iframe') {
-          videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
-            '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
-            '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;background:#000">' +
-              '<iframe src="' + videoInfo.embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>' +
-            '</div></div>';
-        } else if (videoInfo.type === 'video') {
-          videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
-            '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
-            '<video controls style="width:100%;border-radius:8px;background:#000"><source src="' + videoInfo.directUrl + '"></video></div>';
-        }
-      } else {
-        videoHtml = '<div style="background:var(--bg-primary);padding:14px;border-radius:12px;margin:12px 0">' +
-          '<h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-video-camera"></i> Видео</h3>' +
-          '<a href="' + ex.videoUrl + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--bg-card);border-radius:8px;color:var(--accent-neon);text-decoration:none;border:1px solid var(--border-subtle)"><i class="ph ph-external-link"></i> Открыть внешнее видео</a></div>';
-      }
-    }
-
+    // Создаём модалку
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'exViewModal';
-    modal.innerHTML =
-      '<div class="ex-modal-content">' +
-        '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exViewModal\').remove()"><i class="ph ph-x"></i></button>' +
-        '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px">' + ex.name +
-          '<button class="fav-btn ' + (ex.favorite ? 'active' : '') + '" onclick="ExercisesModule.toggleFavorite(\'' + ex.id + '\');document.getElementById(\'exViewModal\').remove();" style="margin-left:auto" title="В избранное"><i class="' + (ex.favorite ? 'ph-fill' : 'ph') + ' ph-star"></i></button>' +
-        '</h2>' +
-        '<div style="font-size:0.9em;opacity:0.7;margin-bottom:12px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + '</div>' +
-        '<div style="display:flex;gap:20px;margin-bottom:16px;font-size:0.9em;flex-wrap:wrap">' +
-          '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> Сложность: ' + this.renderStars(ex.difficulty || 3) + '</div>' +
-          '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-success)"></i> Эффективность: ' + this.renderStars(ex.effectiveness || 3) + '</div>' +
-        '</div>' +
-        (ex.inventory ? '<div style="background:var(--bg-primary);padding:12px;border-radius:10px;margin:12px 0;display:flex;align-items:start;gap:8px"><i class="ph ph-backpack" style="color:var(--accent-gold);font-size:1.1em;margin-top:2px"></i><div><strong>Инвентарь:</strong> ' + ex.inventory + '</div></div>' : '') +
-        (ex.description ? '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;margin:12px 0"><h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-text-t"></i> Описание</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + ex.description + '</p></div>' : '') +
-        imageHtml + videoHtml +
-        (ex.notes ? '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;margin:12px 0;border-left:3px solid var(--accent-gold)"><h3 style="color:var(--accent-gold);margin:0 0 10px 0;display:flex;align-items:center;gap:8px"><i class="ph ph-push-pin"></i> Заметки</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + ex.notes + '</p></div>' : '') +
-        '<div style="display:flex;gap:10px;margin-top:20px">' +
-          '<button class="btn btn-secondary" onclick="document.getElementById(\'exViewModal\').remove()">Закрыть</button>' +
-          '<button class="btn btn-primary" onclick="document.getElementById(\'exViewModal\').remove();ExercisesModule.editExercise(\'' + ex.id + '\')"><i class="ph ph-pencil-simple"></i> Редактировать</button>' +
-        '</div>' +
-      '</div>';
+
+    var content = document.createElement('div');
+    content.className = 'ex-modal-content';
+
+    // Кнопка закрытия
+    var closeBtn = document.createElement('button');
+    closeBtn.style.cssText = 'float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer';
+    closeBtn.innerHTML = '<i class="ph ph-x"></i>';
+    closeBtn.onclick = function() { modal.remove(); };
+    content.appendChild(closeBtn);
+
+    // Заголовок + избранное
+    var titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:12px';
+    var title = document.createElement('h2');
+    title.style.cssText = 'font-family:var(--font-display);color:var(--accent-gold);margin:0;flex:1';
+    title.textContent = ex.name;
+    titleRow.appendChild(title);
+    var favBtn = document.createElement('button');
+    favBtn.className = 'fav-btn ' + (ex.favorite ? 'active' : '');
+    favBtn.title = 'В избранное';
+    favBtn.innerHTML = '<i class="' + (ex.favorite ? 'ph-fill' : 'ph') + ' ph-star"></i>';
+    favBtn.onclick = function() {
+      self.toggleFavorite(ex.id);
+      modal.remove();
+    };
+    titleRow.appendChild(favBtn);
+    content.appendChild(titleRow);
+
+    // Категория
+    var catDiv = document.createElement('div');
+    catDiv.style.cssText = 'font-size:0.9em;opacity:0.7;margin-bottom:12px;display:flex;align-items:center;gap:6px';
+    catDiv.innerHTML = '<i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории');
+    content.appendChild(catDiv);
+
+    // Звёзды
+    var starsDiv = document.createElement('div');
+    starsDiv.style.cssText = 'display:flex;gap:20px;margin-bottom:16px;font-size:0.9em;flex-wrap:wrap';
+    starsDiv.innerHTML = 
+      '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> Сложность: ' + this.renderStars(ex.difficulty || 3) + '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-success)"></i> Эффективность: ' + this.renderStars(ex.effectiveness || 3) + '</div>';
+    content.appendChild(starsDiv);
+
+    // Инвентарь
+    if (ex.inventory) {
+      var invDiv = document.createElement('div');
+      invDiv.className = 'ex-view-section';
+      invDiv.style.cssText = 'display:flex;align-items:start;gap:8px';
+      invDiv.innerHTML = '<i class="ph ph-backpack" style="color:var(--accent-gold);font-size:1.1em;margin-top:2px"></i><div><strong style="color:var(--accent-gold)">Инвентарь:</strong> ' + ex.inventory + '</div>';
+      content.appendChild(invDiv);
+    }
+
+    // Описание
+    if (ex.description) {
+      var descDiv = document.createElement('div');
+      descDiv.className = 'ex-view-section';
+      descDiv.innerHTML = '<h3><i class="ph ph-text-t"></i> Описание</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + ex.description + '</p>';
+      content.appendChild(descDiv);
+    }
+
+    // Изображение
+    if (ex.imageUrl) {
+      var imgDiv = document.createElement('div');
+      imgDiv.className = 'ex-view-section';
+      var imgTitle = document.createElement('h3');
+      imgTitle.innerHTML = '<i class="ph ph-image"></i> Изображение';
+      imgDiv.appendChild(imgTitle);
+      
+      var imgWrap = document.createElement('div');
+      imgWrap.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:100px';
+      
+      var img = document.createElement('img');
+      img.src = ex.imageUrl;
+      img.alt = ex.name;
+      img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block';
+      img.onerror = function() {
+        imgWrap.innerHTML = '<div style="padding:30px;text-align:center;opacity:0.6"><i class="ph ph-image-broken" style="font-size:2em;color:var(--accent-warning);display:block;margin-bottom:8px"></i><div style="font-size:0.9em">Не удалось загрузить изображение</div></div>';
+      };
+      imgWrap.appendChild(img);
+      imgDiv.appendChild(imgWrap);
+      content.appendChild(imgDiv);
+    }
+
+    // Видео
+    if (ex.videoUrl) {
+      var videoDiv = document.createElement('div');
+      videoDiv.className = 'ex-view-section';
+      var videoTitle = document.createElement('h3');
+      videoTitle.innerHTML = '<i class="ph ph-video-camera"></i> Видео';
+      videoDiv.appendChild(videoTitle);
+      
+      var videoInfo = this.parseVideoUrl(ex.videoUrl);
+      if (videoInfo) {
+        if (videoInfo.type === 'iframe') {
+          var iframeWrap = document.createElement('div');
+          iframeWrap.style.cssText = 'position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;background:#000';
+          var iframe = document.createElement('iframe');
+          iframe.src = videoInfo.embedUrl;
+          iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none';
+          iframe.allowFullscreen = true;
+          iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+          iframeWrap.appendChild(iframe);
+          videoDiv.appendChild(iframeWrap);
+        } else if (videoInfo.type === 'video') {
+          var video = document.createElement('video');
+          video.controls = true;
+          video.style.cssText = 'width:100%;border-radius:8px;background:#000';
+          var source = document.createElement('source');
+          source.src = videoInfo.directUrl;
+          video.appendChild(source);
+          videoDiv.appendChild(video);
+        }
+      } else {
+        var link = document.createElement('a');
+        link.href = ex.videoUrl;
+        link.target = '_blank';
+        link.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--bg-card);border-radius:8px;color:var(--accent-neon);text-decoration:none;border:1px solid var(--border-subtle)';
+        link.innerHTML = '<i class="ph ph-external-link"></i> Открыть внешнее видео';
+        videoDiv.appendChild(link);
+      }
+      content.appendChild(videoDiv);
+    }
+
+    // Заметки
+    if (ex.notes) {
+      var notesDiv = document.createElement('div');
+      notesDiv.className = 'ex-view-section';
+      notesDiv.style.cssText = 'border-left:3px solid var(--accent-gold)';
+      notesDiv.innerHTML = '<h3><i class="ph ph-push-pin"></i> Заметки</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + ex.notes + '</p>';
+      content.appendChild(notesDiv);
+    }
+
+    // Кнопки действий
+    var actionsDiv = document.createElement('div');
+    actionsDiv.className = 'ex-view-actions';
+    
+    var closeBtn2 = document.createElement('button');
+    closeBtn2.className = 'btn btn-secondary';
+    closeBtn2.innerHTML = '<i class="ph ph-x"></i> Закрыть';
+    closeBtn2.onclick = function() { modal.remove(); };
+    actionsDiv.appendChild(closeBtn2);
+
+    var editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-primary';
+    editBtn.innerHTML = '<i class="ph ph-pencil-simple"></i> Редактировать';
+    editBtn.onclick = function() { modal.remove(); self.editExercise(ex.id); };
+    actionsDiv.appendChild(editBtn);
+
+    content.appendChild(actionsDiv);
+    modal.appendChild(content);
     document.body.appendChild(modal);
   }
 };
