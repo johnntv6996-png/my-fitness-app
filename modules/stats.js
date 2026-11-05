@@ -215,14 +215,21 @@ const StatsModule = {
       '.tooltip-date { font-weight:600; color:var(--accent-gold); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-subtle); }' +
       '.calendar-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:2000; display:flex; justify-content:center; align-items:center; padding:20px; }' +
       '.calendar-content { background:var(--bg-secondary); padding:28px; border-radius:20px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
-      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; }' +
-      '.calendar-day:hover { transform:scale(1.1); }' +
+      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; position:relative; }' +
+      '.calendar-day:hover { transform:scale(1.1); z-index:5; }' +
       '.calendar-day.full { background:rgba(74,222,128,0.2); border-color:var(--accent-success); }' +
       '.calendar-day.partial { background:rgba(251,191,36,0.2); border-color:var(--accent-warning); }' +
       '.calendar-day.skipped { background:rgba(248,113,113,0.2); border-color:var(--accent-error); }' +
       '.calendar-day.empty { background:var(--bg-primary); opacity:0.5; }' +
       '.calendar-day .day-num { font-weight:600; font-size:1.1em; }' +
       '.calendar-day .day-icon { font-size:1.2em; margin-top:2px; }' +
+      '.calendar-tooltip { position:fixed; background:var(--bg-secondary); border:1px solid var(--border-gold); border-radius:8px; padding:10px 14px; font-size:0.8em; pointer-events:none; z-index:3000; box-shadow:0 4px 12px rgba(0,0,0,0.5); max-width:280px; display:none; }' +
+      '.calendar-tooltip .ct-date { font-weight:600; color:var(--accent-gold); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-subtle); }' +
+      '.calendar-tooltip .ct-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }' +
+      '.calendar-tooltip .ct-row:last-child { margin-bottom:0; }' +
+      '.calendar-tooltip .ct-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }' +
+      '.calendar-tooltip .ct-label { opacity:0.7; flex:1; }' +
+      '.calendar-tooltip .ct-value { font-weight:600; color:var(--accent-gold); }' +
       '@media (max-width: 600px) { .stat-metric-value { font-size:1.6em; } .stat-card { padding:14px; } .chart-canvas-wrap { height:320px; } }' +
     '</style>';
 
@@ -571,10 +578,10 @@ const StatsModule = {
     var labels = chartData.labels;
     this.totalDays = chartData.totalDays;
 
-    // Автоопределение Y по пику
+    // ВАЖНО: Y всегда начинается с 0
+    this.zoom.yMin = 0;
     this.zoom.yMax = this.findMaxY(data);
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
-    this.zoom.yMin = 0;
 
     var padding = this.getPadding(width, height);
     var chartWidth = width - padding.left - padding.right;
@@ -661,8 +668,12 @@ const StatsModule = {
     }
   },
 
-  // === КАЛЕНДАРЬ ===
+  // === КАЛЕНДАРЬ С TOOLTIP ===
   openCalendar: function() {
+    // Удаляем старый tooltip если есть
+    var oldTooltip = document.getElementById('calendarTooltip');
+    if (oldTooltip) oldTooltip.remove();
+
     var modal = document.createElement('div');
     modal.className = 'calendar-modal';
     modal.id = 'calendarModal';
@@ -739,11 +750,16 @@ const StatsModule = {
 
       var cls = 'empty';
       var icon = '';
+      var statusText = '';
       if (date > today) {
         cls = 'empty';
+        statusText = 'Будущий день';
       } else if (dayRecord) {
-        if (dayRecord.skipped) { cls = 'skipped'; icon = '<i class="ph ph-x" style="color:var(--accent-error)"></i>'; }
-        else if (dayRecord.exercises && dayRecord.exercises.length > 0) {
+        if (dayRecord.skipped) {
+          cls = 'skipped';
+          icon = '<i class="ph ph-x" style="color:var(--accent-error)"></i>';
+          statusText = 'Пропуск';
+        } else if (dayRecord.exercises && dayRecord.exercises.length > 0) {
           var allDone = true;
           var anyDone = false;
           if (dayRecord.details) {
@@ -758,19 +774,115 @@ const StatsModule = {
               }
             }
           }
-          if (allDone && anyDone) { cls = 'full'; icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>'; }
-          else if (anyDone) { cls = 'partial'; icon = '<i class="ph ph-warning" style="color:var(--accent-warning)"></i>'; }
-          else { cls = 'full'; icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>'; }
+          if (allDone && anyDone) {
+            cls = 'full';
+            icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>';
+            statusText = 'Полная тренировка';
+          } else if (anyDone) {
+            cls = 'partial';
+            icon = '<i class="ph ph-warning" style="color:var(--accent-warning)"></i>';
+            statusText = 'Частичная тренировка';
+          } else {
+            cls = 'full';
+            icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>';
+            statusText = 'Тренировка';
+          }
+        } else {
+          statusText = 'Нет данных';
         }
+      } else {
+        statusText = 'Нет данных';
       }
 
       var isToday = date.getTime() === today.getTime();
-      html += '<div class="calendar-day ' + cls + '" style="' + (isToday ? 'border:2px solid var(--accent-gold);' : '') + '" title="' + dateStr + '">';
+      // Сохраняем данные дня в data-атрибуты для tooltip
+      var dataAttrs = 'data-date="' + dateStr + '" data-status="' + statusText + '"';
+      if (dayRecord) {
+        if (dayRecord.exercises) dataAttrs += ' data-exercises="' + dayRecord.exercises.length + '"';
+        if (dayRecord.weight) dataAttrs += ' data-weight="' + dayRecord.weight + '"';
+        if (dayRecord.mood) dataAttrs += ' data-mood="' + dayRecord.mood + '"';
+        if (dayRecord.duration) dataAttrs += ' data-duration="' + dayRecord.duration + '"';
+      }
+      html += '<div class="calendar-day ' + cls + '" style="' + (isToday ? 'border:2px solid var(--accent-gold);' : '') + '" title="' + dateStr + '" ' + dataAttrs + '>';
       html += '<div class="day-num">' + d + '</div>';
       html += '<div class="day-icon">' + icon + '</div>';
       html += '</div>';
     }
     grid.innerHTML = html;
+
+    // Навешиваем обработчики tooltip
+    this.setupCalendarTooltips();
+  },
+
+  setupCalendarTooltips: function() {
+    var self = this;
+    var tooltip = document.getElementById('calendarTooltip');
+    if (!tooltip) {
+      tooltip = document.createElement('div');
+      tooltip.className = 'calendar-tooltip';
+      tooltip.id = 'calendarTooltip';
+      document.body.appendChild(tooltip);
+    }
+
+    var days = document.querySelectorAll('.calendar-day');
+    days.forEach(function(dayEl) {
+      dayEl.addEventListener('mouseenter', function(e) {
+        var dateStr = dayEl.getAttribute('data-date');
+        var status = dayEl.getAttribute('data-status');
+        if (!dateStr) return;
+
+        var html = '<div class="ct-date">📅 ' + dateStr + '</div>';
+        html += '<div class="ct-row"><div class="ct-dot" style="background:var(--accent-gold)"></div><div class="ct-label">Статус:</div><div class="ct-value">' + status + '</div></div>';
+
+        var exercises = dayEl.getAttribute('data-exercises');
+        if (exercises) html += '<div class="ct-row"><div class="ct-dot" style="background:#d4af37"></div><div class="ct-label">Упражнений:</div><div class="ct-value">' + exercises + '</div></div>';
+
+        var weight = dayEl.getAttribute('data-weight');
+        if (weight) html += '<div class="ct-row"><div class="ct-dot" style="background:#4ade80"></div><div class="ct-label">Вес:</div><div class="ct-value">' + weight + ' кг</div></div>';
+
+        var mood = dayEl.getAttribute('data-mood');
+        if (mood) html += '<div class="ct-row"><div class="ct-dot" style="background:#60a5fa"></div><div class="ct-label">Самочувствие:</div><div class="ct-value">' + mood + '/10</div></div>';
+
+        var duration = dayEl.getAttribute('data-duration');
+        if (duration) html += '<div class="ct-row"><div class="ct-dot" style="background:#a78bfa"></div><div class="ct-label">Длительность:</div><div class="ct-value">' + duration + ' мин</div></div>';
+
+        // Показываем ответы опросов
+        var history = self.getHistory();
+        var dayRecord = null;
+        for (var i = 0; i < history.length; i++) if (history[i].date === dateStr) { dayRecord = history[i]; break; }
+        if (dayRecord && dayRecord.survey) {
+          var config = self.getSurveyConfig();
+          if (config && config.questions) {
+            for (var i = 0; i < config.questions.length; i++) {
+              var q = config.questions[i];
+              var val = dayRecord.survey[q.id];
+              if (val !== undefined && val !== null) {
+                var displayVal = val;
+                if (q.type === 'emoji' && q.emojiSet && q.emojiSet[val]) displayVal = q.emojiSet[val];
+                var shortQ = q.text.length > 25 ? q.text.substring(0, 25) + '…' : q.text;
+                html += '<div class="ct-row"><div class="ct-dot" style="background:#f472b6"></div><div class="ct-label">' + shortQ + ':</div><div class="ct-value">' + displayVal + '</div></div>';
+              }
+            }
+          }
+        }
+
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+      });
+
+      dayEl.addEventListener('mousemove', function(e) {
+        var x = e.clientX + 15;
+        var y = e.clientY + 15;
+        if (x + 280 > window.innerWidth) x = e.clientX - 290;
+        if (y + 200 > window.innerHeight) y = e.clientY - 210;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+      });
+
+      dayEl.addEventListener('mouseleave', function() {
+        tooltip.style.display = 'none';
+      });
+    });
   }
 };
 
