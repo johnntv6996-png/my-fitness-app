@@ -1,11 +1,9 @@
 // modules/survey.js
-
 const SurveyModule = {
   _currentQ: 0,
   _answers: {},
   _surveyCallback: null,
   _isTestMode: false,
-
   EMOJI_SETS: {
     mood: { label: 'Настроение', emojis: { 1: '😢', 2: '😟', 3: '😐', 4: '🙂', 5: '😊', 6: '😄', 7: '🤩' } },
     energy: { label: 'Энергия', emojis: { 1: '🪫', 2: '😴', 3: '😌', 4: '🙂', 5: '⚡', 6: '🔥', 7: '🚀' } },
@@ -14,14 +12,12 @@ const SurveyModule = {
     motivation: { label: 'Мотивация', emojis: { 1: '🫠', 2: '😩', 3: '😐', 4: '🙂', 5: '💪', 6: '🔥', 7: '🏆' } },
     custom: { label: 'Свой набор', emojis: {} }
   },
-
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль опросов инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { SurveyModule.setup(); });
     } else { this.setup(); }
   },
-
   setup: function() {
     this.createSurveyScreen();
     if (typeof Core !== 'undefined') {
@@ -29,10 +25,8 @@ const SurveyModule = {
       Core.registerScreen('survey', function() { SurveyModule.createSurveyScreen(); });
     }
   },
-
   getSurveyConfig: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('survey_config') : null) || null; },
   saveSurveyConfig: function(c) { if (typeof FTStorage !== 'undefined') FTStorage.set('survey_config', c); },
-
   getDefaultSurvey: function() {
     return {
       questions: [
@@ -44,7 +38,6 @@ const SurveyModule = {
       ]
     };
   },
-
   createSurveyScreen: function() {
     var esc = Core.utils.escapeHtml;
     var screen = document.getElementById('screen-survey');
@@ -56,7 +49,6 @@ const SurveyModule = {
     }
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
     var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
-
     var css = '<style>' +
       '.survey-q { background:var(--bg-card); border-radius:12px; padding:16px; margin-bottom:12px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
       '.survey-q:hover { border-color:var(--border-gold); }' +
@@ -73,25 +65,20 @@ const SurveyModule = {
       '.metric-chip.active { border-color:var(--accent-gold); background:var(--accent-gold-dim); }' +
       '@media (prefers-reduced-motion: reduce) { .survey-q, .metric-chip { transition: none !important; } }' +
     '</style>';
-
     var html = css + '<div style="padding:16px;max-width:700px;margin:0 auto">';
     html += '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-clipboard-text"></i> Конструктор опросов</h2>';
     if (hintsEnabled) html += '<div class="hint" style="margin-bottom:18px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Числовые вопросы автоматически появятся на графике в статистике.</div>';
-
     html += '<div style="background:var(--accent-gold-dim);border:1px solid var(--border-gold);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:0.9em;display:flex;align-items:start;gap:10px">';
     html += '<i class="ph ph-chart-line-up" style="color:var(--accent-gold);font-size:1.2em;margin-top:2px"></i>';
     html += '<div><strong style="color:var(--accent-gold)">Связь со статистикой:</strong><div style="margin-top:4px;opacity:0.8">Числовые вопросы автоматически становятся метриками на графике.</div></div>';
     html += '</div>';
-
     html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:18px" onclick="SurveyModule.openAddQuestionModal()"><i class="ph ph-plus-circle"></i> Добавить вопрос</button>';
     html += '<button class="btn btn-secondary" style="width:100%;padding:12px;font-size:0.95em;margin-bottom:18px" onclick="SurveyModule.resetToDefault()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить к стандартным</button>';
-
     for (var i = 0; i < config.questions.length; i++) {
       var q = config.questions[i];
       var typeClass = q.type || 'text';
       var typeLabel = { rating: 'Оценка', emoji: 'Эмодзи', range: 'Диапазон', number: 'Число', text: 'Текст', yesno: 'Да/Нет' }[q.type] || q.type;
       var isNumeric = ['rating', 'emoji', 'range', 'number'].indexOf(q.type) !== -1;
-
       html += '<div class="survey-q">';
       html += '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">';
       html += '<div style="flex:1">';
@@ -110,19 +97,15 @@ const SurveyModule = {
       html += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="SurveyModule.deleteQuestion(' + i + ')" aria-label="Удалить"><i class="ph ph-trash"></i></button>';
       html += '</div></div></div>';
     }
-
     html += '<button class="btn btn-success" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-top:16px" onclick="SurveyModule.testSurvey()"><i class="ph ph-play-circle"></i> Тестовый запуск</button>';
     html += '</div>';
-
     screen.innerHTML = html;
   },
-
   resetToDefault: function() {
     if (!confirm('Сбросить опрос к стандартным вопросам?')) return;
     this.saveSurveyConfig(this.getDefaultSurvey());
     this.createSurveyScreen();
   },
-
   openAddQuestionModal: function(editIdx) {
     var esc = Core.utils.escapeHtml;
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
@@ -130,7 +113,6 @@ const SurveyModule = {
     var isEdit = q !== null;
     var oldModal = document.getElementById('questionModal');
     if (oldModal) oldModal.remove();
-
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'questionModal';
@@ -138,7 +120,6 @@ const SurveyModule = {
     var content = document.createElement('div');
     content.className = 'ex-modal-content';
     content.style.maxWidth = '500px';
-
     content.innerHTML =
       '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'questionModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
       '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-plus-circle"></i> ' + (isEdit ? 'Редактировать вопрос' : 'Новый вопрос') + '</h2>' +
@@ -155,10 +136,8 @@ const SurveyModule = {
         '<button class="btn btn-secondary" onclick="document.getElementById(\'questionModal\').remove()">Отмена</button>' +
         '<button class="btn btn-primary" onclick="SurveyModule.saveQuestion(' + (isEdit ? editIdx : 'null') + ')"><i class="ph ph-floppy-disk"></i> Сохранить</button>' +
       '</div>';
-
     modal.appendChild(content);
     document.body.appendChild(modal);
-
     var types = [
       { id: 'rating', label: 'Оценка', icon: 'ph-star', desc: '1–10' },
       { id: 'emoji', label: 'Эмодзи', icon: 'ph-smiley', desc: 'Выбор эмодзи' },
@@ -167,7 +146,6 @@ const SurveyModule = {
       { id: 'yesno', label: 'Да / Нет', icon: 'ph-check-circle', desc: 'Два варианта' },
       { id: 'text', label: 'Текст', icon: 'ph-text-t', desc: 'Свободный ответ' }
     ];
-
     var currentType = q ? q.type : 'rating';
     var typeSelector = document.getElementById('typeSelector');
     types.forEach(function(t) {
@@ -183,16 +161,13 @@ const SurveyModule = {
       };
       typeSelector.appendChild(btn);
     });
-
     this.renderTypeSettings(currentType, q);
   },
-
   renderTypeSettings: function(type, q) {
     var esc = Core.utils.escapeHtml;
     var container = document.getElementById('typeSettings');
     if (!container) return;
     q = q || {};
-
     var html = '';
     if (type === 'rating') {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
@@ -240,7 +215,6 @@ const SurveyModule = {
     }
     container.innerHTML = html;
   },
-
   renderEmojiSets: function(q) {
     var container = document.getElementById('emojiSetSelector');
     if (!container) return;
@@ -269,14 +243,12 @@ const SurveyModule = {
     var customEditor = document.getElementById('customEmojiEditor');
     if (customEditor) customEditor.style.display = currentSet === 'custom' ? 'block' : 'none';
   },
-
   saveQuestion: function(editIdx) {
     var text = document.getElementById('qText').value.trim();
     if (!text) {
       if (typeof Notify !== 'undefined') Notify.warn('Введи текст вопроса'); else alert('Введи текст вопроса');
       return;
     }
-
     var typeSelector = document.getElementById('typeSelector');
     var activeType = typeSelector.querySelector('.metric-chip.active');
     var type = 'rating';
@@ -291,14 +263,12 @@ const SurveyModule = {
         else type = 'rating';
       }
     }
-
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
     var isEdit = editIdx !== null && editIdx !== undefined && config.questions[editIdx];
     var q = {
       id: isEdit ? config.questions[editIdx].id : Core.utils.generateId('q'),
       type: type, text: text
     };
-
     if (type === 'rating' || type === 'range') {
       var minEl = document.getElementById('qMin');
       var maxEl = document.getElementById('qMax');
@@ -340,7 +310,6 @@ const SurveyModule = {
         }
       }
     }
-
     if (isEdit) {
       config.questions[editIdx] = q;
     } else {
@@ -351,9 +320,7 @@ const SurveyModule = {
     if (modal) modal.remove();
     this.createSurveyScreen();
   },
-
   editQuestion: function(idx) { this.openAddQuestionModal(idx); },
-
   deleteQuestion: function(idx) {
     if (!confirm('Удалить вопрос? Он также исчезнет с графика в статистике.')) return;
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
@@ -361,7 +328,6 @@ const SurveyModule = {
     this.saveSurveyConfig(config);
     this.createSurveyScreen();
   },
-
   testSurvey: function() {
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
     if (config.questions.length === 0) {
@@ -400,7 +366,6 @@ const SurveyModule = {
       }
     });
   },
-
   runSurvey: function(config, callback) {
     this._currentQ = 0;
     this._answers = {};
@@ -414,7 +379,6 @@ const SurveyModule = {
     document.body.appendChild(modal);
     this._renderQuestion();
   },
-
   _renderQuestion: function() {
     var config = SurveyModule.getSurveyConfig() || SurveyModule.getDefaultSurvey();
     var modal = document.getElementById('finalSurveyModal');
@@ -431,20 +395,16 @@ const SurveyModule = {
     var content = document.createElement('div');
     content.className = 'workout-modal-content';
     content.style.maxWidth = '450px';
-
     var progress = document.createElement('div');
     progress.style.cssText = 'font-size:0.8em;opacity:0.7;margin-bottom:12px;display:flex;align-items:center;gap:6px';
     progress.innerHTML = '<i class="ph ph-clipboard-text"></i> Вопрос ' + (currentQ + 1) + ' из ' + config.questions.length;
     content.appendChild(progress);
-
     var title = document.createElement('h2');
     title.style.cssText = 'font-family:var(--font-display);color:var(--accent-gold);margin-top:0;text-align:center;font-size:1.3em';
     title.textContent = q.text;
     content.appendChild(title);
-
     var answerArea = document.createElement('div');
     answerArea.style.cssText = 'margin:20px 0';
-
     if (q.type === 'rating') {
       var buttonsDiv = document.createElement('div');
       buttonsDiv.style.cssText = 'display:flex;gap:6px;justify-content:center;flex-wrap:wrap';
@@ -545,20 +505,16 @@ const SurveyModule = {
       submitBtn.onclick = function() { SurveyModule._surveyTextAnswer(); };
       answerArea.appendChild(submitBtn);
     }
-
     content.appendChild(answerArea);
-
     var skipBtn = document.createElement('button');
     skipBtn.className = 'btn btn-secondary';
     skipBtn.innerHTML = '<i class="ph ph-skip-forward"></i> Пропустить';
     skipBtn.style.cssText = 'width:100%;padding:12px';
     skipBtn.onclick = function() { SurveyModule._surveySkip(); };
     content.appendChild(skipBtn);
-
     modal.innerHTML = '';
     modal.appendChild(content);
   },
-
   _surveyAnswer: function(value) {
     var config = SurveyModule.getSurveyConfig() || SurveyModule.getDefaultSurvey();
     var q = config.questions[SurveyModule._currentQ || 0];
@@ -568,7 +524,6 @@ const SurveyModule = {
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
     SurveyModule._renderQuestion();
   },
-
   _surveyTextAnswer: function() {
     var textarea = document.getElementById('surveyTextAnswer');
     if (!textarea) return;
@@ -581,7 +536,6 @@ const SurveyModule = {
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
     SurveyModule._renderQuestion();
   },
-
   _surveySkip: function() {
     var config = SurveyModule.getSurveyConfig() || SurveyModule.getDefaultSurvey();
     var q = config.questions[SurveyModule._currentQ || 0];
@@ -591,7 +545,6 @@ const SurveyModule = {
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
     SurveyModule._renderQuestion();
   },
-
   _saveSurveyAnswers: function() {
     var todayStr = Core.utils.formatLocalDate(new Date());
     var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
@@ -609,17 +562,12 @@ const SurveyModule = {
       history.push(dayRecord);
     }
     if (!dayRecord.survey) dayRecord.survey = {};
-
-    // Проверка: если опрос уже был сегодня — не начисляем XP повторно
     var alreadyHadSurvey = Object.keys(dayRecord.survey).length > 0;
-
     for (var key in SurveyModule._answers) {
       dayRecord.survey[key] = SurveyModule._answers[key];
     }
-
     if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
     Core._historyMapCache = null;
-
     if (!alreadyHadSurvey) {
       var stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
       stats.xp = (stats.xp || 0) + 10;
@@ -640,6 +588,5 @@ const SurveyModule = {
     }
   }
 };
-
 window.SurveyModule = SurveyModule;
 module.exports = SurveyModule;

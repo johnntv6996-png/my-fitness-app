@@ -1,5 +1,4 @@
 // modules/stats.js
-
 const StatsModule = {
   zoom: { xMin: 0, xMax: 29, yMin: 0, yMax: 10 },
   isPanning: false,
@@ -14,14 +13,12 @@ const StatsModule = {
   lastMouseY: -1,
   _chartDataCache: null,
   _chartDataCacheKey: null,
-
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль статистики инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { StatsModule.setup(); });
     } else { this.setup(); }
   },
-
   setup: function() {
     this.createStatsScreen();
     if (typeof Core !== 'undefined') {
@@ -29,7 +26,6 @@ const StatsModule = {
       Core.registerScreen('stats', function() { StatsModule.createStatsScreen(); });
     }
   },
-
   getStats: function() {
     var defaults = {yes:0, later:0, no:0, xp:0, level:1, streak:0};
     if (typeof FTStorage !== 'undefined') {
@@ -39,16 +35,13 @@ const StatsModule = {
     }
     return defaults;
   },
-
   getHistory: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || []; },
   getSurveyConfig: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('survey_config') : null) || null; },
-
   buildMetrics: function() {
     var metrics = {};
     metrics['exercises'] = { id: 'exercises', label: 'Упражнения', color: '#d4af37', key: 'exCount', enabled: true, source: 'system', unit: '' };
     metrics['weight'] = { id: 'weight', label: 'Вес', color: '#4ade80', key: 'weight', enabled: false, source: 'system', unit: 'кг' };
     metrics['mood'] = { id: 'mood', label: 'Самочувствие', color: '#60a5fa', key: 'mood', enabled: false, source: 'system', unit: '/10' };
-
     var config = this.getSurveyConfig();
     if (config && config.questions) {
       for (var i = 0; i < config.questions.length; i++) {
@@ -73,37 +66,30 @@ const StatsModule = {
       for (var key in metrics) this.activeMetrics[key] = metrics[key].enabled;
     }
   },
-
   getMetricColor: function(index) {
     var colors = ['#d4af37', '#4ade80', '#60a5fa', '#f472b6', '#a78bfa', '#fb923c', '#2dd4bf', '#f87171', '#e879f9', '#38bdf8'];
     return colors[index % colors.length];
   },
-
-  _buildChartDataCacheKey: function(history) {
+  buildChartDataCacheKey: function(history) {
     if (!history || history.length === 0) return 'empty';
     return history.length + '_' + history[0].date + '_' + history[history.length - 1].date + '_' + (history[history.length - 1].timestamp || 0);
   },
-
   buildChartData: function() {
     var history = this.getHistory();
-    var key = this._buildChartDataCacheKey(history);
+    var key = this.buildChartDataCacheKey(history);
     if (this._chartDataCache && this._chartDataCacheKey === key) return this._chartDataCache;
-
     if (history.length === 0) {
       this._chartDataCache = { data: { exercises: [], weight: [], mood: [] }, labels: [], totalDays: 30 };
       this._chartDataCacheKey = key;
       return this._chartDataCache;
     }
-
     var dates = history.map(function(h) { return h.date; }).sort();
     var firstDate = new Date(dates[0] + 'T00:00:00');
     var today = new Date();
     today.setHours(0, 0, 0, 0);
-
     var msPerDay = 1000 * 60 * 60 * 24;
     var totalDays = Math.floor((today - firstDate) / msPerDay) + 1;
     if (totalDays < 1) totalDays = 1;
-
     var data = { exercises: [], weight: [], mood: [] };
     var labels = [];
     var historyMap = Core.getHistoryMap(history);
@@ -119,39 +105,32 @@ const StatsModule = {
         }
       }
     }
-
     for (var i = 0; i < totalDays; i++) {
       var date = new Date(firstDate);
       date.setDate(date.getDate() + i);
       var dateStr = Core.utils.formatLocalDate(date);
       var dayRecord = historyMap[dateStr] || null;
-
       var exCount = 0;
       if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
       data.exercises.push(exCount);
       data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
       data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
-
       for (var k = 0; k < surveyKeys.length; k++) {
         var qId = surveyKeys[k].replace('survey_', '');
         data[surveyKeys[k]].push(dayRecord && dayRecord.survey && dayRecord.survey[qId] !== undefined ? dayRecord.survey[qId] : null);
       }
-
       labels.push(date.getDate() + '.' + (date.getMonth() + 1));
     }
-
     this.totalDays = totalDays;
     this.zoom.xMax = totalDays - 1;
     this.zoom.xMaxLimit = totalDays - 1;
     this.zoom.xMinLimit = 0;
     if (this.zoom.xMax > totalDays - 1) this.zoom.xMax = totalDays - 1;
     if (this.zoom.xMin > this.zoom.xMax - 3) this.zoom.xMin = Math.max(0, this.zoom.xMax - 10);
-
     this._chartDataCache = { data: data, labels: labels, totalDays: totalDays };
     this._chartDataCacheKey = key;
     return this._chartDataCache;
   },
-
   findMaxY: function(data) {
     var maxVal = 10;
     var metrics = this.allMetrics;
@@ -170,7 +149,6 @@ const StatsModule = {
     else maxVal = Math.ceil(maxVal / 50) * 50;
     return maxVal;
   },
-
   createStatsScreen: function() {
     var esc = Core.utils.escapeHtml;
     var screen = document.getElementById('screen-stats');
@@ -181,7 +159,6 @@ const StatsModule = {
       document.getElementById('userInterface').appendChild(screen);
     }
     this.buildMetrics();
-
     var stats = this.getStats();
     var history = this.getHistory();
     var sortedHistory = history.slice().sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
@@ -197,10 +174,8 @@ const StatsModule = {
       if (!sortedHistory[i].skipped && sortedHistory[i].exercises && sortedHistory[i].exercises.length > 0) currentStreak++;
       else break;
     }
-
     var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
-    var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования. Кликни на метрику ниже.</div>' : '';
-
+    var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования.</div>' : '';
     var css = '<style>' +
       '.stat-card { background:var(--bg-card); border-radius:14px; padding:18px; margin-bottom:16px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
       '.stat-card:hover { border-color:var(--border-gold); transform:translateY(-2px); }' +
@@ -224,7 +199,7 @@ const StatsModule = {
       '.chart-zoom-info { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-secondary); z-index:5; pointer-events:none; }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
-      '.chart-legend { position:absolute; bottom:60px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; }' +
+      '.chart-legend { position:absolute; bottom:60px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; transition:all 0.3s; }' +
       'body.light-theme .chart-legend { background:rgba(245,242,235,0.9); }' +
       '.chart-legend::-webkit-scrollbar { width:4px; }' +
       '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
@@ -260,7 +235,6 @@ const StatsModule = {
       '@media (max-width: 600px) { .stat-metric-value { font-size:1.6em; } .stat-card { padding:14px; } .chart-canvas-wrap { height:320px; } }' +
       '@media (prefers-reduced-motion: reduce) { .stat-card, .metric-chip, .calendar-day { transition: none !important; } }' +
     '</style>';
-
     var metricsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:10px;margin-bottom:20px">';
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-star" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.level + '</div><div class="stat-metric-label">Уровень</div></div>';
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-flame" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + currentStreak + '</div><div class="stat-metric-label">Текущий стрик</div></div>';
@@ -268,7 +242,6 @@ const StatsModule = {
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-check-circle" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.yes + '</div><div class="stat-metric-label">Тренировок</div></div>';
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-lightning" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.xp + '</div><div class="stat-metric-label">XP</div></div>';
     metricsHtml += '</div>';
-
     var chartHtml = '<div class="stat-card" style="padding:0;overflow:hidden">';
     chartHtml += '<div style="padding:18px 18px 10px"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-chart-line-up"></i> Активность за весь период</h3>';
     chartHtml += hintHtml;
@@ -282,7 +255,6 @@ const StatsModule = {
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
     chartHtml += '</div></div>';
-
     var streakHtml = '<div class="stat-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
     streakHtml += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0;display:flex;align-items:center;gap:10px"><i class="ph ph-flame"></i> Последние 14 дней</h3>';
     streakHtml += '<button class="btn btn-secondary" style="padding:8px 12px;font-size:0.85em" onclick="StatsModule.openCalendar()"><i class="ph ph-calendar"></i> Календарь</button>';
@@ -303,14 +275,11 @@ const StatsModule = {
       streakHtml += '<div style="background:' + bgColor + ';border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;border:1px solid ' + (bgColor === 'var(--bg-primary)' ? 'var(--border-subtle)' : 'transparent') + '" title="' + dateStr + '"><div style="font-size:0.7em;opacity:0.8;margin-bottom:2px;color:var(--text-secondary)">' + dayName + '</div><i class="ph ' + iconClass + '" style="font-size:1.2em;color:' + iconColor + '"></i></div>';
     }
     streakHtml += '</div></div>';
-
     screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + streakHtml + '</div>';
-
     this.renderMetricChips();
     var self = this;
     setTimeout(function() { self.setupChartInteractions(); self.drawChart(); }, 50);
   },
-
   renderMetricChips: function() {
     var esc = Core.utils.escapeHtml;
     var strip = document.getElementById('metricsStrip');
@@ -328,23 +297,19 @@ const StatsModule = {
     }
     strip.innerHTML = html;
   },
-
   toggleMetricChip: function(key) {
     this.activeMetrics[key] = !this.activeMetrics[key];
     this.renderMetricChips();
     this.drawChart();
   },
-
   setupChartInteractions: function() {
     var wrap = document.getElementById('chartWrap');
     if (!wrap) return;
     if (wrap.dataset.inited === '1') return;
     wrap.dataset.inited = '1';
-
     var canvas = document.getElementById('activityChart');
     var self = this;
     var drawRaf = Core.utils.throttleRaf(function() { self.drawChart(); });
-
     wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
       var rect = canvas.getBoundingClientRect();
@@ -353,7 +318,6 @@ const StatsModule = {
       var zoomFactor = e.deltaY > 0 ? 1.15 : 0.87;
       self.zoomAtPoint(mouseX, mouseY, rect.width, rect.height, zoomFactor);
     }, { passive: false });
-
     wrap.addEventListener('pointerdown', function(e) {
       if (e.button !== 0 && e.pointerType === 'mouse') return;
       self.isPanning = true;
@@ -362,7 +326,6 @@ const StatsModule = {
       wrap.style.cursor = 'grabbing';
       wrap.setPointerCapture && wrap.setPointerCapture(e.pointerId);
     });
-
     wrap.addEventListener('pointermove', function(e) {
       if (!self.isPanning) { self.handleTooltip(e); return; }
       var rect = canvas.getBoundingClientRect();
@@ -372,11 +335,9 @@ const StatsModule = {
       var yRange = self.panStartZoom.yMax - self.panStartZoom.yMin;
       self.zoom.xMin = self.panStartZoom.xMin - (dx / rect.width) * xRange;
       self.zoom.xMax = self.panStartZoom.xMax - (dx / rect.width) * xRange;
-      // НЕ трогаем yMin/yMax — вертикальный авто-масштаб
       self.clampZoom();
       drawRaf();
     });
-
     wrap.addEventListener('pointerup', function(e) {
       if (self.isPanning) {
         self.isPanning = false;
@@ -384,17 +345,13 @@ const StatsModule = {
         wrap.releasePointerCapture && e.pointerId && wrap.releasePointerCapture(e.pointerId);
       }
     });
-
     canvas.addEventListener('pointerleave', function() {
       self.lastMouseX = -1;
       self.lastMouseY = -1;
       var tooltip = document.getElementById('chartTooltip');
       if (tooltip) tooltip.style.display = 'none';
     });
-
     canvas.addEventListener('click', function(e) { self.handlePointClick(e); });
-
-    // Touch pinch zoom
     var touchStartDist = 0;
     var touchStartZoom = null;
     wrap.addEventListener('touchstart', function(e) {
@@ -417,12 +374,10 @@ const StatsModule = {
     }, { passive: true });
     wrap.addEventListener('touchend', function() { touchStartZoom = null; });
   },
-
   handleTooltip: function(e) {
     var canvas = document.getElementById('activityChart');
     var tooltip = document.getElementById('chartTooltip');
     if (!canvas || !tooltip) return;
-
     var rect = canvas.getBoundingClientRect();
     if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
       tooltip.style.display = 'none';
@@ -430,7 +385,6 @@ const StatsModule = {
       this.lastMouseY = -1;
       return;
     }
-
     var x = e.clientX - rect.left;
     var y = e.clientY - rect.top;
     var width = canvas.width, height = canvas.height;
@@ -439,7 +393,6 @@ const StatsModule = {
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var dayIdx = Math.round(this.zoom.xMin + (x - padding.left) / chartWidth * xRange);
     if (dayIdx < 0 || dayIdx >= this.totalDays) { tooltip.style.display = 'none'; return; }
-
     var history = this.getHistory();
     if (history.length === 0) { tooltip.style.display = 'none'; return; }
     var dates = history.map(function(h) { return h.date; }).sort();
@@ -450,7 +403,6 @@ const StatsModule = {
     var historyMap = Core.getHistoryMap(history);
     var dayRecord = historyMap[dateStr] || null;
     if (!dayRecord) { tooltip.style.display = 'none'; return; }
-
     var html = '<div class="tooltip-date">📅 ' + dateStr + '</div>';
     var metrics = this.allMetrics;
     for (var key in metrics) {
@@ -464,9 +416,7 @@ const StatsModule = {
       html += '<div class="tooltip-value">' + this.formatMetricValue(val, m) + '</div>';
       html += '</div>';
     }
-
     if (html === tooltip.innerHTML && this.lastMouseX === x && this.lastMouseY === y) return;
-
     tooltip.innerHTML = html;
     tooltip.style.display = 'block';
     var tooltipX = x + 15;
@@ -475,11 +425,9 @@ const StatsModule = {
     if (tooltipY < 0) tooltipY = 10;
     tooltip.style.left = tooltipX + 'px';
     tooltip.style.top = tooltipY + 'px';
-
     this.lastMouseX = x;
     this.lastMouseY = y;
   },
-
   getMetricValue: function(dayRecord, key, metric) {
     if (key === 'exercises') return dayRecord.exercises ? dayRecord.exercises.length : 0;
     if (key === 'weight') return dayRecord.weight || null;
@@ -490,7 +438,6 @@ const StatsModule = {
     }
     return null;
   },
-
   formatMetricValue: function(val, metric) {
     if (val === null || val === undefined) return '—';
     if (metric.questionType === 'emoji' && metric.emojiSet && metric.emojiSet[val]) {
@@ -498,7 +445,6 @@ const StatsModule = {
     }
     return val + (metric.unit ? ' ' + metric.unit : '');
   },
-
   handlePointClick: function(e) {
     var canvas = document.getElementById('activityChart');
     var rect = canvas.getBoundingClientRect();
@@ -526,11 +472,9 @@ const StatsModule = {
       alert(info);
     }
   },
-
   getPadding: function(width, height) {
     return { left: width < 400 ? 28 : 36, right: width < 400 ? 12 : 20, top: 20, bottom: 30 };
   },
-
   zoomAtPoint: function(mouseX, mouseY, canvasWidth, canvasHeight, zoomFactor) {
     var padding = this.getPadding(canvasWidth, canvasHeight);
     var chartWidth = canvasWidth - padding.left - padding.right;
@@ -538,14 +482,18 @@ const StatsModule = {
     var xRatio = Math.max(0, Math.min(1, (mouseX - padding.left) / chartWidth));
     var yRatio = Math.max(0, Math.min(1, (mouseY - padding.top) / chartHeight));
     var xRange = this.zoom.xMax - this.zoom.xMin;
+    var yRange = this.zoom.yMax - this.zoom.yMin;
     var newXRange = xRange * zoomFactor;
+    var newYRange = yRange * zoomFactor;
     var xCenter = this.zoom.xMin + xRatio * xRange;
+    var yCenter = this.zoom.yMin + (1 - yRatio) * yRange;
     this.zoom.xMin = xCenter - xRatio * newXRange;
     this.zoom.xMax = xCenter + (1 - xRatio) * newXRange;
+    this.zoom.yMin = yCenter - (1 - yRatio) * newYRange;
+    this.zoom.yMax = yCenter + yRatio * newYRange;
     this.clampZoom();
     this.drawChart();
   },
-
   clampZoom: function() {
     var xRange = this.zoom.xMax - this.zoom.xMin;
     if (xRange < 5) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 2.5; this.zoom.xMax = cx + 2.5; }
@@ -558,7 +506,6 @@ const StatsModule = {
       info.textContent = xZoom + '%';
     }
   },
-
   resetZoom: function() {
     this.zoom.xMin = 0;
     this.zoom.xMax = this.totalDays - 1;
@@ -568,7 +515,6 @@ const StatsModule = {
     this.clampZoom();
     this.drawChart();
   },
-
   drawChart: function() {
     var canvas = document.getElementById('activityChart');
     if (!canvas) return;
@@ -580,23 +526,22 @@ const StatsModule = {
     var ctx = canvas.getContext('2d');
     var width = canvas.width, height = canvas.height;
     ctx.clearRect(0, 0, width, height);
-
     var chartData = this.buildChartData();
     var data = chartData.data;
     var labels = chartData.labels;
     this.totalDays = chartData.totalDays;
-
-    this.zoom.yMin = 0;
-    this.zoom.yMax = this.findMaxY(data);
+    // НЕ сбрасываем yMin/yMax здесь — только в resetZoom
+    if (this.zoom.yMax === 0 || this.zoom.yMax < this.findMaxY(data)) {
+      this.zoom.yMin = 0;
+      this.zoom.yMax = this.findMaxY(data);
+    }
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
-
     var padding = this.getPadding(width, height);
     var chartWidth = width - padding.left - padding.right;
     var chartHeight = height - padding.top - padding.bottom;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var yRange = this.zoom.yMax - this.zoom.yMin;
     if (yRange <= 0) yRange = 10;
-
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for (var i = 0; i <= 4; i++) {
@@ -605,14 +550,12 @@ const StatsModule = {
     }
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
-
     var metrics = this.allMetrics;
     for (var key in metrics) {
       var m = metrics[key];
       if (!this.activeMetrics[key]) continue;
       var series = data[key];
       if (!series) continue;
-
       ctx.strokeStyle = m.color;
       ctx.lineWidth = 2.5;
       ctx.beginPath();
@@ -626,7 +569,6 @@ const StatsModule = {
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
-
       for (var i = 0; i < series.length; i++) {
         if (series[i] === null) continue;
         var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
@@ -637,7 +579,6 @@ const StatsModule = {
         ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
       }
     }
-
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -648,39 +589,50 @@ const StatsModule = {
         ctx.fillText(labels[i], x, height - padding.bottom + 18);
       }
     }
-
     ctx.textAlign = 'right';
     var yStep = Math.max(1, Math.ceil(yRange / 5));
     for (var v = Math.ceil(this.zoom.yMin); v <= Math.floor(this.zoom.yMax); v += yStep) {
       var y = height - padding.bottom - ((v - this.zoom.yMin) / yRange) * chartHeight;
       ctx.fillText(v, padding.left - 4, y + 4);
     }
-
     var oldLegend = document.getElementById('chartLegend');
     if (oldLegend) oldLegend.remove();
     var legendDiv = document.createElement('div');
     legendDiv.id = 'chartLegend';
     legendDiv.className = 'chart-legend';
-    var hasAny = false;
-    for (var key in metrics) {
-      var m = metrics[key];
-      if (!this.activeMetrics[key]) continue;
-      hasAny = true;
-      var item = document.createElement('div');
-      item.className = 'legend-item';
-      item.innerHTML = '<div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + Core.utils.escapeHtml(m.label) + '</div>';
-      legendDiv.appendChild(item);
+    var activeCount = 0;
+    for (var key in metrics) if (this.activeMetrics[key]) activeCount++;
+    var isExpanded = legendDiv.dataset.expanded === 'true';
+    legendDiv.dataset.expanded = isExpanded ? 'true' : 'false';
+    legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
+      '<i class="ph ' + (isExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
+    '</div>' +
+    (isExpanded ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto" id="legendItems"></div>' : '');
+    if (isExpanded) {
+      var itemsDiv = legendDiv.querySelector('#legendItems');
+      for (var key in metrics) {
+        var m = metrics[key];
+        if (!this.activeMetrics[key]) continue;
+        var item = document.createElement('div');
+        item.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8em';
+        item.innerHTML = '<div style="width:10px;height:10px;border-radius:3px;background:' + m.color + ';flex-shrink:0"></div><div style="color:var(--text-secondary);flex:1">' + Core.utils.escapeHtml(m.label) + '</div>';
+        itemsDiv.appendChild(item);
+      }
     }
-    if (hasAny) wrap.appendChild(legendDiv);
+    legendDiv.onclick = function() {
+      var expanded = this.dataset.expanded === 'true';
+      this.dataset.expanded = expanded ? 'false' : 'true';
+      StatsModule.drawChart();
+    };
+    wrap.appendChild(legendDiv);
   },
-
   openCalendar: function() {
     var esc = Core.utils.escapeHtml;
     var oldTooltip = document.getElementById('calendarTooltip');
     if (oldTooltip) oldTooltip.remove();
     var oldModal = document.getElementById('calendarModal');
     if (oldModal) oldModal.remove();
-
     var modal = document.createElement('div');
     modal.className = 'calendar-modal';
     modal.id = 'calendarModal';
@@ -713,7 +665,6 @@ const StatsModule = {
     document.body.appendChild(modal);
     this.renderCalendar();
   },
-
   changeMonth: function(delta) {
     this.calendarMonth += delta;
     if (this.calendarMonth > 11) { this.calendarMonth = 0; this.calendarYear++; }
@@ -725,15 +676,12 @@ const StatsModule = {
     }
     this.renderCalendar();
   },
-
   renderCalendar: function() {
     var title = document.getElementById('calendarTitle');
     var grid = document.getElementById('calendarGrid');
     if (!title || !grid) return;
-
     var monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     title.textContent = monthNames[this.calendarMonth] + ' ' + this.calendarYear;
-
     var history = this.getHistory();
     var historyMap = Core.getHistoryMap(history);
     var firstDay = new Date(this.calendarYear, this.calendarMonth, 1);
@@ -742,15 +690,12 @@ const StatsModule = {
     var startDay = (firstDay.getDay() + 6) % 7;
     var today = new Date();
     today.setHours(0, 0, 0, 0);
-
     var html = '';
     for (var i = 0; i < startDay; i++) html += '<div></div>';
-
     for (var d = 1; d <= daysInMonth; d++) {
       var date = new Date(this.calendarYear, this.calendarMonth, d);
       var dateStr = Core.utils.formatLocalDate(date);
       var dayRecord = historyMap[dateStr] || null;
-
       var cls = 'empty';
       var icon = '';
       var statusText = '';
@@ -781,7 +726,6 @@ const StatsModule = {
           else { cls = 'full'; icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>'; statusText = 'Тренировка'; }
         } else { statusText = 'Нет данных'; }
       } else { statusText = 'Нет данных'; }
-
       var isToday = date.getTime() === today.getTime();
       var dataAttrs = 'data-date="' + dateStr + '" data-status="' + Core.utils.escapeHtml(statusText) + '"';
       if (dayRecord) {
@@ -798,7 +742,6 @@ const StatsModule = {
     grid.innerHTML = html;
     this.setupCalendarTooltips();
   },
-
   setupCalendarTooltips: function() {
     var self = this;
     var tooltip = document.getElementById('calendarTooltip');
@@ -808,21 +751,17 @@ const StatsModule = {
       tooltip.id = 'calendarTooltip';
       document.body.appendChild(tooltip);
     }
-
     var history = this.getHistory();
     var historyMap = Core.getHistoryMap(history);
     var config = this.getSurveyConfig();
-
     var days = document.querySelectorAll('.calendar-day');
     days.forEach(function(dayEl) {
       dayEl.addEventListener('mouseenter', function(e) {
         var dateStr = dayEl.getAttribute('data-date');
         var status = dayEl.getAttribute('data-status');
         if (!dateStr) return;
-
         var html = '<div class="ct-date">📅 ' + dateStr + '</div>';
         html += '<div class="ct-row"><div class="ct-dot" style="background:var(--accent-gold)"></div><div class="ct-label">Статус:</div><div class="ct-value">' + Core.utils.escapeHtml(status) + '</div></div>';
-
         var exercises = dayEl.getAttribute('data-exercises');
         if (exercises) html += '<div class="ct-row"><div class="ct-dot" style="background:#d4af37"></div><div class="ct-label">Упражнений:</div><div class="ct-value">' + exercises + '</div></div>';
         var weight = dayEl.getAttribute('data-weight');
@@ -831,7 +770,6 @@ const StatsModule = {
         if (mood) html += '<div class="ct-row"><div class="ct-dot" style="background:#60a5fa"></div><div class="ct-label">Самочувствие:</div><div class="ct-value">' + mood + '/10</div></div>';
         var duration = dayEl.getAttribute('data-duration');
         if (duration) html += '<div class="ct-row"><div class="ct-dot" style="background:#a78bfa"></div><div class="ct-label">Длительность:</div><div class="ct-value">' + duration + ' мин</div></div>';
-
         var dayRecord = historyMap[dateStr] || null;
         if (dayRecord && dayRecord.survey && config && config.questions) {
           for (var i = 0; i < config.questions.length; i++) {
@@ -845,11 +783,9 @@ const StatsModule = {
             }
           }
         }
-
         tooltip.innerHTML = html;
         tooltip.style.display = 'block';
       });
-
       dayEl.addEventListener('mousemove', function(e) {
         var x = e.clientX + 15;
         var y = e.clientY + 15;
@@ -858,13 +794,11 @@ const StatsModule = {
         tooltip.style.left = x + 'px';
         tooltip.style.top = y + 'px';
       });
-
       dayEl.addEventListener('mouseleave', function() {
         tooltip.style.display = 'none';
       });
     });
   }
 };
-
 window.StatsModule = StatsModule;
 module.exports = StatsModule;

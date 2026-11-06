@@ -1,26 +1,24 @@
 // modules/core.js
-
 const CoreModule = {
   storage: {
-    get: function(key) { 
-      try { 
+    get: function(key) {
+      try {
         var raw = localStorage.getItem('ft_' + key);
         return raw === null ? null : JSON.parse(raw);
-      } catch (e) { 
+      } catch (e) {
         if (typeof Logger !== 'undefined') Logger.log('Storage parse error: ' + key, 'warn');
-        return null; 
-      } 
+        return null;
+      }
     },
-    set: function(key, value) { 
-      try { localStorage.setItem('ft_' + key, JSON.stringify(value)); return true; } 
-      catch (e) { 
+    set: function(key, value) {
+      try { localStorage.setItem('ft_' + key, JSON.stringify(value)); return true; }
+      catch (e) {
         if (typeof Logger !== 'undefined') Logger.log('Storage write error: ' + key, 'error');
-        return false; 
+        return false;
       }
     },
     remove: function(key) { localStorage.removeItem('ft_' + key); }
   },
-
   utils: {
     escapeHtml: function(text) {
       if (text == null) return '';
@@ -29,9 +27,8 @@ const CoreModule = {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/'/g, '&#039;');
     },
-
     formatLocalDate: function(date) {
       date = date || new Date();
       var y = date.getFullYear();
@@ -39,13 +36,10 @@ const CoreModule = {
       var d = String(date.getDate()).padStart(2, '0');
       return y + '-' + m + '-' + d;
     },
-
     getTodayIndex: function() { return (new Date().getDay() + 6) % 7; },
-
     getDayName: function(idx) {
       return ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][idx];
     },
-
     renderStars: function(count) {
       var s = '';
       for (var i = 1; i <= 5; i++) {
@@ -55,7 +49,6 @@ const CoreModule = {
       }
       return s;
     },
-
     getLevelIcon: function(level) {
       if (level >= 50) return 'ph-diamond';
       if (level >= 20) return 'ph-crown';
@@ -63,14 +56,12 @@ const CoreModule = {
       if (level >= 5) return 'ph-star-four';
       return 'ph-star';
     },
-
     totalXp: function(stats) {
       stats = stats || {};
       var level = stats.level || 1;
       var xp = stats.xp || 0;
       return xp + (level - 1) * 100;
     },
-
     generateId: function(prefix) {
       prefix = prefix || 'id';
       var rnd = (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -78,7 +69,6 @@ const CoreModule = {
         : Math.random().toString(36).slice(2, 10);
       return prefix + '_' + Date.now() + '_' + rnd;
     },
-
     debounce: function(fn, wait) {
       var t = null;
       return function() {
@@ -87,7 +77,6 @@ const CoreModule = {
         t = setTimeout(function() { fn.apply(self, args); }, wait || 300);
       };
     },
-
     throttleRaf: function(fn) {
       var scheduled = false, lastArgs = null, self = null;
       return function() {
@@ -101,11 +90,8 @@ const CoreModule = {
       };
     }
   },
-
-  // Кэш дат истории для быстрого поиска
   _historyMapCache: null,
   _historyMapSource: null,
-
   getHistoryMap: function(history) {
     history = history || [];
     if (this._historyMapSource === history && this._historyMapCache) {
@@ -119,7 +105,6 @@ const CoreModule = {
     this._historyMapCache = map;
     return map;
   },
-
   navigate: function(screenId) {
     if (screenId === 'dev') {
       if (typeof switchMode === 'function') switchMode('dev');
@@ -138,8 +123,6 @@ const CoreModule = {
     if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
     if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
     if (typeof updateHeaderLevel === 'function') updateHeaderLevel();
-
-    // Рендерим сразу для известных экранов (без магической задержки)
     var renderer = this.screenRenderers[screenId];
     if (renderer) {
       try { renderer(); } catch (e) {
@@ -147,13 +130,10 @@ const CoreModule = {
       }
     }
   },
-
   screenRenderers: {},
-
   registerScreen: function(screenId, renderFn) {
     this.screenRenderers[screenId] = renderFn;
   },
-
   addNavButton: function(label, screenId, icon) {
     icon = icon || '<i class="ph ph-circle"></i>';
     var menu = document.getElementById('sidebarMenu');
@@ -167,7 +147,6 @@ const CoreModule = {
     item.onclick = function() { CoreModule.navigate(screenId); };
     menu.appendChild(item);
   },
-
   init: function() {
     console.log('Core module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Ядро системы загружено', 'info');
@@ -183,7 +162,6 @@ const CoreModule = {
     };
   }
 };
-
 window.CoreModule = CoreModule;
 window.Core = CoreModule;
 module.exports = CoreModule;

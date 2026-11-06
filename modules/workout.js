@@ -1,16 +1,12 @@
 // modules/workout.js
-
 const WorkoutModule = {
   currentExerciseId: null,
   modalElement: null,
   _miniSurveyContext: null,
-
   XP: { PER_SET: 5, PER_PARTIAL: 3, PER_MISS: 0, PER_EXERCISE: 15, PER_DAY: 20, PER_SURVEY: 10, LEVEL_BASE: 100 },
-
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль тренировки инициализирован', 'info');
   },
-
   getPlan: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || []; },
   getDB: function() { return (typeof ExercisesModule !== 'undefined' ? ExercisesModule.getDB() : null) || (typeof FTStorage !== 'undefined' ? FTStorage.get('db') : null) || []; },
   getHistory: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || []; },
@@ -25,15 +21,10 @@ const WorkoutModule = {
     }
     return defaults;
   },
-
   _parseSetsReps: function(setsStr) {
     var m = (setsStr || '3×10').match(/(\d+)\s*[×xх*]\s*(\d+)/i);
-    return {
-      sets: m ? parseInt(m[1]) : 3,
-      reps: m ? parseInt(m[2]) : 10
-    };
+    return { sets: m ? parseInt(m[1]) : 3, reps: m ? parseInt(m[2]) : 10 };
   },
-
   openWorkoutModal: function() {
     if (typeof Core === 'undefined' || !Core.utils) {
       if (typeof Notify !== 'undefined') Notify.error('Ядро не загружено');
@@ -44,27 +35,23 @@ const WorkoutModule = {
     var db = this.getDB();
     var todayIdx = Core.utils.getTodayIndex();
     var todayPlan = plan[todayIdx] || { dayName: 'Сегодня', muscleGroup: '', exercises: [] };
-
     this.closeWorkoutModal();
     var modal = document.createElement('div');
     modal.className = 'workout-modal';
     modal.id = 'workoutModal';
     var content = document.createElement('div');
     content.className = 'workout-modal-content';
-
     var header = document.createElement('div');
     header.style.cssText = 'text-align:center; padding:10px 20px;';
     header.innerHTML = '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0"><i class="ph ph-barbell"></i> ' + Core.utils.escapeHtml(todayPlan.dayName) + '</h2>' +
       '<div style="font-size:0.9em;opacity:0.7"><i class="ph ph-tag"></i> ' + Core.utils.escapeHtml(todayPlan.muscleGroup || 'Тренировка') + ' · <i class="ph ph-list-dashes"></i> ' + todayPlan.exercises.length + ' упр.</div>';
     content.appendChild(header);
-
     var closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="ph ph-x"></i>';
     closeBtn.setAttribute('aria-label', 'Закрыть');
     closeBtn.style.cssText = 'position:sticky; top:10px; float:right; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-secondary); width:36px; height:36px; border-radius:50%; font-size:1.2em; cursor:pointer; z-index:10; margin:12px; display:flex; align-items:center; justify-content:center;';
     closeBtn.onclick = function() { self.closeWorkoutModal(); };
     content.appendChild(closeBtn);
-
     if (todayPlan.exercises.length === 0) {
       var empty = document.createElement('div');
       empty.style.cssText = 'text-align:center; padding:40px; opacity:0.6;';
@@ -77,44 +64,31 @@ const WorkoutModule = {
           var ex = null;
           for (var j = 0; j < db.length; j++) if (db[j].id === exRef.id) { ex = db[j]; break; }
           if (!ex) return;
-
           var card = document.createElement('div');
           card.style.cssText = 'background:var(--bg-card); border-radius:12px; margin:12px 20px; border:1px solid var(--border-subtle); overflow:hidden;';
-
           var parsed = self._parseSetsReps(exRef.sets);
-
           var headerDiv = document.createElement('div');
           headerDiv.style.cssText = 'padding:14px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;';
           headerDiv.innerHTML = '<div style="flex:1"><div style="font-weight:700;font-size:1.05em;color:var(--accent-gold)">' + (idx + 1) + '. ' + Core.utils.escapeHtml(ex.name) + '</div><div style="font-size:0.8em;opacity:0.7;margin-top:4px"><i class="ph ph-tag"></i> ' + Core.utils.escapeHtml(ex.muscleGroup || 'Без категории') + ' · <i class="ph ph-list-numbers"></i> ' + parsed.sets + '×' + parsed.reps + '</div></div><i class="ph ph-caret-down" style="font-size:1.2em;opacity:0.7"></i>';
-
           var bodyDiv = document.createElement('div');
           bodyDiv.style.cssText = 'display:none; padding:0 16px 16px; border-top:1px solid var(--border-subtle);';
-
-          // Изображение
           if (ex.imageUrl) {
             bodyDiv.innerHTML += '<div style="margin:12px 0;border-radius:10px;overflow:hidden;max-height:200px"><img src="' + Core.utils.escapeHtml(ex.imageUrl) + '" style="width:100%;object-fit:cover" onerror="this.parentElement.style.display=\'none\'"></div>';
           }
-          // Видео
           if (ex.videoUrl) {
             bodyDiv.innerHTML += '<div style="margin:12px 0"><a href="' + Core.utils.escapeHtml(ex.videoUrl) + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-primary);border-radius:8px;color:var(--accent-neon);text-decoration:none;font-size:0.9em;border:1px solid var(--border-subtle)"><i class="ph ph-video-camera"></i> Смотреть видео</a></div>';
           }
-          // Техника
           if (ex.description) {
             bodyDiv.innerHTML += '<div style="background:var(--bg-primary);padding:12px;border-radius:10px;margin:12px 0;font-size:0.9em"><strong style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><i class="ph ph-text-t" style="color:var(--accent-gold)"></i> Техника:</strong><div style="white-space:pre-wrap;line-height:1.6">' + Core.utils.escapeHtml(ex.description) + '</div></div>';
           }
-          // Инвентарь
           if (ex.inventory) {
             bodyDiv.innerHTML += '<div style="background:var(--bg-primary);padding:10px 12px;border-radius:10px;margin:12px 0;font-size:0.9em;display:flex;align-items:start;gap:8px"><i class="ph ph-backpack" style="color:var(--accent-gold);margin-top:2px"></i><div><strong>Инвентарь:</strong> ' + Core.utils.escapeHtml(ex.inventory) + '</div></div>';
           }
-          // Заметки
           if (ex.notes) {
             bodyDiv.innerHTML += '<div style="background:rgba(212,175,55,0.1);padding:10px 12px;border-radius:10px;margin:12px 0;font-size:0.9em;border-left:3px solid var(--accent-gold);display:flex;align-items:start;gap:8px"><i class="ph ph-push-pin" style="color:var(--accent-gold);margin-top:2px"></i><div><strong>Заметки:</strong> ' + Core.utils.escapeHtml(ex.notes) + '</div></div>';
           }
-          // Сложность/эффективность
           bodyDiv.innerHTML += '<div style="display:flex;gap:20px;margin:12px 0;font-size:0.85em;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:6px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> Сложность: ' + Core.utils.renderStars(ex.difficulty || 3) + '</div><div style="display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-success)"></i> Эффективность: ' + Core.utils.renderStars(ex.effectiveness || 3) + '</div></div>';
-
           bodyDiv.innerHTML += '<div style="margin-top:14px"><div style="font-weight:600;margin-bottom:10px;font-size:0.95em"><i class="ph ph-barbell" style="color:var(--accent-gold)"></i> Подходы (' + parsed.sets + ' × ' + parsed.reps + ')</div></div>';
-
           var goBtn = document.createElement('button');
           goBtn.innerHTML = '<i class="ph ph-play-circle" style="font-size:1.5em"></i><br>Начать';
           goBtn.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; margin:18px auto; width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%); color:#000; border:none; font-size:0.8em; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(212,175,55,0.4); transition:all 0.2s;';
@@ -122,7 +96,6 @@ const WorkoutModule = {
           goBtn.onmouseout = function() { this.style.transform = 'scale(1)'; };
           goBtn.onclick = function() { self.startExercise(ex.id); };
           bodyDiv.appendChild(goBtn);
-
           headerDiv.onclick = function() {
             var isOpen = bodyDiv.style.display !== 'none';
             bodyDiv.style.display = isOpen ? 'none' : 'block';
@@ -139,7 +112,6 @@ const WorkoutModule = {
     document.body.appendChild(modal);
     this.modalElement = modal;
   },
-
   closeWorkoutModal: function() {
     if (this.modalElement) { this.modalElement.remove(); this.modalElement = null; }
     var old = document.getElementById('workoutModal');
@@ -151,7 +123,6 @@ const WorkoutModule = {
     this.currentExerciseId = null;
     this._miniSurveyContext = null;
   },
-
   startExercise: function(exId) {
     this.currentExerciseId = exId;
     var plan = this.getPlan();
@@ -163,17 +134,13 @@ const WorkoutModule = {
       if (todayPlan.exercises[i].id === exId) { exRef = todayPlan.exercises[i]; break; }
     }
     if (!exRef) return;
-
-    // Название из БД (в exRef его нет)
     var db = this.getDB();
     var ex = null;
     for (var i = 0; i < db.length; i++) if (db[i].id === exId) { ex = db[i]; break; }
     var exName = ex ? ex.name : 'Упражнение';
-
     var parsed = this._parseSetsReps(exRef.sets);
     var numSets = parsed.sets;
     var numReps = parsed.reps;
-
     var self = this;
     var subModal = document.createElement('div');
     subModal.className = 'workout-modal';
@@ -182,19 +149,16 @@ const WorkoutModule = {
     var subContent = document.createElement('div');
     subContent.className = 'workout-modal-content';
     subContent.style.maxWidth = '400px';
-
     var closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="ph ph-x"></i>';
     closeBtn.setAttribute('aria-label', 'Закрыть');
     closeBtn.style.cssText = 'float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer';
     closeBtn.onclick = function() { subModal.remove(); };
     subContent.appendChild(closeBtn);
-
     var title = document.createElement('h2');
     title.style.cssText = 'font-family:var(--font-display);color:var(--accent-gold);margin-top:0;text-align:center';
     title.textContent = Core.utils.escapeHtml(exName);
     subContent.appendChild(title);
-
     var setsContainer = document.createElement('div');
     for (var s = 0; s < numSets; s++) {
       (function(setIdx) {
@@ -224,7 +188,6 @@ const WorkoutModule = {
     subModal.appendChild(subContent);
     document.body.appendChild(subModal);
   },
-
   completeSet: function(setIdx, numReps) {
     var exId = this.currentExerciseId;
     if (!exId) return;
@@ -232,7 +195,6 @@ const WorkoutModule = {
     var todayStr = Core.utils.formatLocalDate(new Date());
     var dayRecord = null;
     for (var i = 0; i < history.length; i++) if (history[i].date === todayStr) { dayRecord = history[i]; break; }
-
     if (!dayRecord) {
       dayRecord = {
         date: todayStr,
@@ -245,60 +207,47 @@ const WorkoutModule = {
       for (var i = 0; i < dayRecord.exercises.length; i++) if (dayRecord.exercises[i].id === exId) { hasEx = true; break; }
       if (!hasEx) dayRecord.exercises.push({ id: exId });
     }
-
     if (!dayRecord.details) dayRecord.details = [];
     var exDetail = null;
     for (var i = 0; i < dayRecord.details.length; i++) if (dayRecord.details[i].exId === exId) { exDetail = dayRecord.details[i]; break; }
     if (!exDetail) { exDetail = { exId: exId, sets: [], partialReps: [] }; dayRecord.details.push(exDetail); }
     if (!exDetail.sets) exDetail.sets = [];
     if (!exDetail.partialReps) exDetail.partialReps = [];
-
-    // Защита от повторного нажатия
     if (exDetail.sets[setIdx]) return;
-
     this.showMiniSurvey(exId, setIdx, numReps, dayRecord, exDetail, history);
   },
-
   showMiniSurvey: function(exId, setIdx, numReps, dayRecord, exDetail, history) {
     var settings = (typeof FTStorage !== 'undefined' ? FTStorage.get('settings') : null) || {};
     if (settings.disableMiniSurvey) {
       this.markSetDone(exId, setIdx, 'done', null, dayRecord, exDetail, history);
       return;
     }
-
     var self = this;
     var exModal = document.getElementById('exerciseModal');
     if (exModal) exModal.remove();
-
     var modal = document.createElement('div');
     modal.className = 'workout-modal';
     modal.id = 'miniSurveyModal';
     modal.style.zIndex = '2200';
-
     var content = document.createElement('div');
     content.className = 'workout-modal-content';
     content.style.maxWidth = '400px';
-
     var title = document.createElement('h2');
     title.style.cssText = 'font-family:var(--font-display);color:var(--accent-gold);margin-top:0;text-align:center';
     title.innerHTML = '<i class="ph ph-clipboard-text"></i> Подход ' + (setIdx + 1);
     content.appendChild(title);
-
     var q = document.createElement('p');
     q.style.cssText = 'text-align:center;margin-bottom:18px;font-size:1.05em';
     q.textContent = 'Удалось выполнить все ' + numReps + ' повторений?';
     content.appendChild(q);
-
     var buttonsDiv = document.createElement('div');
     buttonsDiv.style.cssText = 'display:flex;flex-direction:column;gap:10px';
-
     var variants = [
       { key: 'yes', icon: 'ph-check-circle', text: 'Да, все повторения', bg: 'linear-gradient(135deg, #00ff88, #00cc6a)', color: '#000' },
       { key: 'partial', icon: 'ph-warning-circle', text: 'Частично', bg: 'linear-gradient(135deg, #FFB347, #FFC870)', color: '#000' },
       { key: 'no', icon: 'ph-x-circle', text: 'Нет', bg: 'linear-gradient(135deg, #ff3366, #ff5577)', color: '#fff' },
       { key: 'skip', icon: 'ph-skip-forward', text: 'Пропустить', bg: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }
     ];
-
     variants.forEach(function(v) {
       var btn = document.createElement('button');
       btn.className = 'btn';
@@ -308,27 +257,21 @@ const WorkoutModule = {
       buttonsDiv.appendChild(btn);
     });
     content.appendChild(buttonsDiv);
-
     var checkboxDiv = document.createElement('div');
     checkboxDiv.style.cssText = 'margin-top:14px;text-align:center';
     checkboxDiv.innerHTML = '<label style="font-size:0.85em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.8"><input type="checkbox" id="dontAskAgain" style="width:16px;height:16px;accent-color:var(--accent-gold)"><span>Больше не спрашивать</span></label>';
     content.appendChild(checkboxDiv);
-
     modal.appendChild(content);
     document.body.appendChild(modal);
-
-    // Сохраняем контекст для callback
     this._miniSurveyContext = {
       exId: exId, setIdx: setIdx, numReps: numReps,
       dayRecord: dayRecord, exDetail: exDetail, history: history
     };
   },
-
   _answerMiniSurvey: function(answer, setIdx, numReps) {
     var ctx = this._miniSurveyContext;
     if (!ctx) return;
     this._miniSurveyContext = null;
-
     try {
       var dontAskCheckbox = document.getElementById('dontAskAgain');
       if (dontAskCheckbox && dontAskCheckbox.checked) {
@@ -338,10 +281,8 @@ const WorkoutModule = {
           FTStorage.set('settings', settings);
         }
       }
-
       var miniModal = document.getElementById('miniSurveyModal');
       if (miniModal) miniModal.remove();
-
       if (answer === 'partial') {
         this._promptPartialReps(numReps, function(partialReps) {
           var status = partialReps > 0 ? 'partial' : 'missed';
@@ -349,14 +290,12 @@ const WorkoutModule = {
         });
         return;
       }
-
       var setStatus = answer === 'no' ? 'missed' : (answer === 'skip' ? 'skipped' : 'done');
       this.markSetDone(ctx.exId, setIdx, setStatus, null, ctx.dayRecord, ctx.exDetail, ctx.history);
     } catch (e) {
       if (typeof Logger !== 'undefined') Logger.log('MiniSurvey error: ' + e.message, 'error');
     }
   },
-
   _promptPartialReps: function(numReps, callback) {
     var modal = document.createElement('div');
     modal.className = 'workout-modal';
@@ -374,7 +313,6 @@ const WorkoutModule = {
       '</div>';
     modal.appendChild(content);
     document.body.appendChild(modal);
-
     var slider = content.querySelector('#partialRepsSlider');
     var display = content.querySelector('#partialRepsValue');
     slider.oninput = function() { display.textContent = this.value; };
@@ -385,29 +323,24 @@ const WorkoutModule = {
       callback(val);
     };
   },
-
   markSetDone: function(exId, setIdx, setStatus, partialReps, dayRecord, exDetail, history) {
     while (exDetail.sets.length <= setIdx) exDetail.sets.push(null);
     while (exDetail.partialReps.length <= setIdx) exDetail.partialReps.push(null);
     exDetail.sets[setIdx] = setStatus;
     if (partialReps !== null) exDetail.partialReps[setIdx] = partialReps;
-
     var stats = this.getStats();
     var xpChange = 0;
     if (setStatus === 'done') xpChange = this.XP.PER_SET;
     else if (setStatus === 'partial') xpChange = this.XP.PER_PARTIAL;
     else if (setStatus === 'missed') xpChange = 0;
     else if (setStatus === 'skipped') xpChange = 0;
-
     stats.xp = Math.max(0, (stats.xp || 0) + xpChange);
-
     var todayStr = Core.utils.formatLocalDate(new Date());
     if (setStatus !== 'missed' && setStatus !== 'skipped' && stats.lastWorkoutDate !== todayStr) {
       stats.yes = (stats.yes || 0) + 1;
       stats.streak = (stats.streak || 0) + 1;
       stats.lastWorkoutDate = todayStr;
     }
-
     var leveledUp = false;
     var xpNeeded = stats.level * this.XP.LEVEL_BASE;
     while (stats.xp >= xpNeeded) {
@@ -416,22 +349,18 @@ const WorkoutModule = {
       leveledUp = true;
       xpNeeded = stats.level * this.XP.LEVEL_BASE;
     }
-
     this.saveStats(stats);
     this.saveHistory(history);
     if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
-
     if (leveledUp) {
       var lvl = stats.level;
       setTimeout(function() {
         if (typeof showAchievementToast === 'function') showAchievementToast('Новый уровень ' + lvl + '!', 'Ты достиг уровня ' + lvl, 'ph-star');
       }, 100);
     }
-
     if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
       AchievementsModule.checkAchievements();
     }
-
     var setEl = document.getElementById('modal-set-' + setIdx);
     if (setEl) {
       var iconMap = { 'done': 'ph-check-circle', 'partial': 'ph-warning-circle', 'missed': 'ph-x-circle', 'skipped': 'ph-skip-forward' };
@@ -447,7 +376,6 @@ const WorkoutModule = {
         btn.style.opacity = '0.6';
       }
     }
-
     var plan = this.getPlan();
     var todayIdx = Core.utils.getTodayIndex();
     var todayPlan = plan[todayIdx];
@@ -473,6 +401,5 @@ const WorkoutModule = {
     }
   }
 };
-
 window.WorkoutModule = WorkoutModule;
 module.exports = WorkoutModule;
