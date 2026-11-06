@@ -323,83 +323,127 @@ const WorkoutModule = {
       callback(val);
     };
   },
-  markSetDone: function(exId, setIdx, setStatus, partialReps, dayRecord, exDetail, history) {
-    while (exDetail.sets.length <= setIdx) exDetail.sets.push(null);
-    while (exDetail.partialReps.length <= setIdx) exDetail.partialReps.push(null);
-    exDetail.sets[setIdx] = setStatus;
-    if (partialReps !== null) exDetail.partialReps[setIdx] = partialReps;
-    var stats = this.getStats();
-    var xpChange = 0;
-    if (setStatus === 'done') xpChange = this.XP.PER_SET;
-    else if (setStatus === 'partial') xpChange = this.XP.PER_PARTIAL;
-    else if (setStatus === 'missed') xpChange = 0;
-    else if (setStatus === 'skipped') xpChange = 0;
-    stats.xp = Math.max(0, (stats.xp || 0) + xpChange);
-    var todayStr = Core.utils.formatLocalDate(new Date());
-    if (setStatus !== 'missed' && setStatus !== 'skipped' && stats.lastWorkoutDate !== todayStr) {
-      stats.yes = (stats.yes || 0) + 1;
-      stats.streak = (stats.streak || 0) + 1;
-      stats.lastWorkoutDate = todayStr;
-    }
-    var leveledUp = false;
-    var xpNeeded = stats.level * this.XP.LEVEL_BASE;
-    while (stats.xp >= xpNeeded) {
-      stats.xp -= xpNeeded;
-      stats.level++;
-      leveledUp = true;
-      xpNeeded = stats.level * this.XP.LEVEL_BASE;
-    }
-    this.saveStats(stats);
-    this.saveHistory(history);
-    if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
-    if (leveledUp) {
-      var lvl = stats.level;
-      setTimeout(function() {
-        if (typeof showAchievementToast === 'function') showAchievementToast('Новый уровень ' + lvl + '!', 'Ты достиг уровня ' + lvl, 'ph-star');
-      }, 100);
-    }
-    if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
-      AchievementsModule.checkAchievements();
-    }
-    var setEl = document.getElementById('modal-set-' + setIdx);
-    if (setEl) {
-      var iconMap = { 'done': 'ph-check-circle', 'partial': 'ph-warning-circle', 'missed': 'ph-x-circle', 'skipped': 'ph-skip-forward' };
-      var colorMap = { 'done': '#00ff88', 'partial': '#FFB347', 'missed': '#ff3366', 'skipped': '#a0a0b0' };
-      var bgMap = { 'done': 'rgba(0,255,136,0.1)', 'partial': 'rgba(255,179,71,0.1)', 'missed': 'rgba(255,51,102,0.1)', 'skipped': 'rgba(160,160,176,0.1)' };
-      setEl.style.background = bgMap[setStatus];
-      setEl.style.borderLeft = '3px solid ' + colorMap[setStatus];
-      var btn = setEl.querySelector('button');
-      if (btn) {
-        var labelMap = { 'done': 'Выполнено', 'partial': partialReps + ' повт.', 'missed': 'Пропущено', 'skipped': 'Пропущено' };
-        btn.innerHTML = '<i class="ph ' + iconMap[setStatus] + '"></i> ' + labelMap[setStatus];
-        btn.disabled = true;
-        btn.style.opacity = '0.6';
-      }
-    }
-    var plan = this.getPlan();
-    var todayIdx = Core.utils.getTodayIndex();
-    var todayPlan = plan[todayIdx];
-    if (!todayPlan || !todayPlan.exercises) return;
-    var exRef = null;
-    for (var i = 0; i < todayPlan.exercises.length; i++) if (todayPlan.exercises[i].id === exId) { exRef = todayPlan.exercises[i]; break; }
-    if (exRef) {
-      var parsed = this._parseSetsReps(exRef.sets);
-      var allDone = true;
-      for (var s = 0; s < parsed.sets; s++) if (!exDetail.sets[s]) { allDone = false; break; }
-      if (allDone) {
-        var self = this;
-        setTimeout(function() {
-          if (typeof showAchievementToast === 'function') showAchievementToast('Упражнение завершено!', '+' + (WorkoutModule.XP.PER_SET * parsed.sets) + ' XP', 'ph-barbell');
-          var exModal = document.getElementById('exerciseModal');
-          if (exModal) exModal.remove();
-          var miniModal = document.getElementById('miniSurveyModal');
-          if (miniModal) miniModal.remove();
-          self.closeWorkoutModal();
-          self.openWorkoutModal();
-        }, 300);
-      }
-    }
-  }
+	markSetDone: function(exId, setIdx, setStatus, partialReps, dayRecord, exDetail, history) {
+		while (exDetail.sets.length <= setIdx) exDetail.sets.push(null);
+		while (exDetail.partialReps.length <= setIdx) exDetail.partialReps.push(null);
+		exDetail.sets[setIdx] = setStatus;
+		if (partialReps !== null) exDetail.partialReps[setIdx] = partialReps;
+
+		var stats = this.getStats();
+		var xpChange = 0;
+		if (setStatus === 'done') xpChange = this.XP.PER_SET;
+		else if (setStatus === 'partial') xpChange = this.XP.PER_PARTIAL;
+		else if (setStatus === 'missed') xpChange = 0;
+		else if (setStatus === 'skipped') xpChange = 0;
+		stats.xp = Math.max(0, (stats.xp || 0) + xpChange);
+
+		// Начисление yes/streak только при первом успешном действии за день
+		var todayStr = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.formatLocalDate(new Date()) : new Date().toISOString().slice(0, 10);
+		if (setStatus !== 'missed' && setStatus !== 'skipped' && stats.lastWorkoutDate !== todayStr) {
+			stats.yes = (stats.yes || 0) + 1;
+			stats.streak = (stats.streak || 0) + 1;
+			stats.lastWorkoutDate = todayStr;
+		}
+
+		// Level up
+		var leveledUp = false;
+		var xpNeeded = stats.level * this.XP.LEVEL_BASE;
+		while (stats.xp >= xpNeeded) {
+			stats.xp -= xpNeeded;
+			stats.level++;
+			leveledUp = true;
+			xpNeeded = stats.level * this.XP.LEVEL_BASE;
+		}
+
+		this.saveStats(stats);
+		this.saveHistory(history);
+		if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
+
+		if (leveledUp) {
+			var lvl = stats.level;
+			setTimeout(function() {
+				if (typeof showAchievementToast === 'function') showAchievementToast('Новый уровень ' + lvl + '!', 'Ты достиг уровня ' + lvl, 'ph-star');
+			}, 100);
+		}
+
+		if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
+			AchievementsModule.checkAchievements();
+		}
+
+		// Обновление UI подхода
+		var setEl = document.getElementById('modal-set-' + setIdx);
+		if (setEl) {
+			var iconMap = { 'done': 'ph-check-circle', 'partial': 'ph-warning-circle', 'missed': 'ph-x-circle', 'skipped': 'ph-skip-forward' };
+			var colorMap = { 'done': '#00ff88', 'partial': '#FFB347', 'missed': '#ff3366', 'skipped': '#a0a0b0' };
+			var bgMap = { 'done': 'rgba(0,255,136,0.1)', 'partial': 'rgba(255,179,71,0.1)', 'missed': 'rgba(255,51,102,0.1)', 'skipped': 'rgba(160,160,176,0.1)' };
+			setEl.style.background = bgMap[setStatus];
+			setEl.style.borderLeft = '3px solid ' + colorMap[setStatus];
+			var btn = setEl.querySelector('button');
+			if (btn) {
+				var labelMap = { 'done': 'Выполнено', 'partial': partialReps + ' повт.', 'missed': 'Пропущено', 'skipped': 'Пропущено' };
+				btn.innerHTML = '<i class="ph ' + iconMap[setStatus] + '"></i> ' + labelMap[setStatus];
+				btn.disabled = true;
+				btn.style.opacity = '0.6';
+			}
+		}
+
+		// Проверка завершения упражнения и дня
+		var plan = this.getPlan();
+		var todayIdx = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.getTodayIndex() : (new Date().getDay() + 6) % 7;
+		var todayPlan = plan[todayIdx];
+		if (!todayPlan || !todayPlan.exercises) return;
+		var exRef = null;
+		for (var i = 0; i < todayPlan.exercises.length; i++) if (todayPlan.exercises[i].id === exId) { exRef = todayPlan.exercises[i]; break; }
+		if (!exRef) return;
+
+		var parsed = this._parseSetsReps(exRef.sets);
+		var allDone = true;
+		for (var s = 0; s < parsed.sets; s++) if (!exDetail.sets[s]) { allDone = false; break; }
+
+		if (allDone) {
+			// Бонус за упражнение
+			stats.xp += this.XP.PER_EXERCISE;
+
+			// Проверка завершения всех упражнений дня
+			var allDayDone = true;
+			for (var i = 0; i < todayPlan.exercises.length; i++) {
+				var dayExRef = todayPlan.exercises[i];
+				var dayExDetail = null;
+				for (var j = 0; j < dayRecord.details.length; j++) if (dayRecord.details[j].exId === dayExRef.id) { dayExDetail = dayRecord.details[j]; break; }
+				if (!dayExDetail) { allDayDone = false; break; }
+				var dayParsed = this._parseSetsReps(dayExRef.sets);
+				for (var s = 0; s < dayParsed.sets; s++) if (!dayExDetail.sets[s]) { allDayDone = false; break; }
+			}
+
+			if (allDayDone) {
+				stats.xp += this.XP.PER_DAY;
+			}
+
+			// Пересчёт уровня после бонусов
+			xpNeeded = stats.level * this.XP.LEVEL_BASE;
+			while (stats.xp >= xpNeeded) {
+				stats.xp -= xpNeeded;
+				stats.level++;
+				leveledUp = true;
+				xpNeeded = stats.level * this.XP.LEVEL_BASE;
+			}
+			this.saveStats(stats);
+			if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
+
+			var self = this;
+			setTimeout(function() {
+				var bonusMsg = '+' + (self.XP.PER_SET * parsed.sets + self.XP.PER_EXERCISE) + ' XP';
+				if (allDayDone) bonusMsg += ' (+' + self.XP.PER_DAY + ' за день)';
+				if (typeof showAchievementToast === 'function') showAchievementToast('Упражнение завершено!', bonusMsg, 'ph-barbell');
+				var exModal = document.getElementById('exerciseModal');
+				if (exModal) exModal.remove();
+				var miniModal = document.getElementById('miniSurveyModal');
+				if (miniModal) miniModal.remove();
+				self.closeWorkoutModal();
+				self.openWorkoutModal();
+			}, 300);
+		}
+	}
 };
 window.WorkoutModule = WorkoutModule;
 module.exports = WorkoutModule;

@@ -2,12 +2,16 @@
 const PlanModule = {
   pickingForDay: null,
   expandedDay: null,
+  _debouncedSaveSets: null,
+  _debouncedSaveMuscle: null,
+
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль плана инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { PlanModule.setup(); });
     } else { this.setup(); }
   },
+
   setup: function() {
     this.createPlanScreen();
     if (typeof Core !== 'undefined') {
@@ -15,10 +19,10 @@ const PlanModule = {
       Core.registerScreen('plan', function() { PlanModule.createPlanScreen(); });
     }
   },
+
   getPlan: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || []; },
   savePlan: function(p) { if (typeof FTStorage !== 'undefined') FTStorage.set('plan', p); },
-  _debouncedSaveSets: null,
-  _debouncedSaveMuscle: null,
+
   createPlanScreen: function() {
     var esc = Core.utils.escapeHtml;
     var screen = document.getElementById('screen-plan');
@@ -28,16 +32,19 @@ const PlanModule = {
       screen.className = 'screen';
       document.getElementById('userInterface').appendChild(screen);
     }
+
     var plan = this.getPlan();
     var DAYS = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
     var DAYS_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
     var db = typeof ExercisesModule !== 'undefined' ? ExercisesModule.getDB() : [];
     var todayIdx = Core.utils.getTodayIndex();
+
     if (plan.length === 0) {
       plan = [];
       for (var i = 0; i < 7; i++) plan.push({ dayName: DAYS[i], muscleGroup: '', exercises: [] });
       this.savePlan(plan);
     }
+
     var css = '<style>' +
       '.plan-day-card { background:var(--bg-card); border-radius:14px; margin-bottom:12px; border:1px solid var(--border-subtle); overflow:hidden; transition:all 0.3s; }' +
       '.plan-day-card:hover { border-color:var(--border-gold); }' +
@@ -52,14 +59,17 @@ const PlanModule = {
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
       '@media (prefers-reduced-motion: reduce) { .plan-day-card { transition: none !important; } .plan-day-body.active { animation: none !important; } }' +
     '</style>';
+
     var html = css + '<div style="padding:8px;max-width:700px;margin:0 auto">';
     html += '<h2 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-calendar"></i> План тренировок</h2>';
     html += '<div class="hint" style="margin-bottom:18px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Нажми на день, чтобы раскрыть и настроить упражнения</div>';
+
     for (var dayIdx = 0; dayIdx < 7; dayIdx++) {
       var day = plan[dayIdx];
       var isToday = dayIdx === todayIdx;
       var isExpanded = this.expandedDay === dayIdx;
       var exCount = day.exercises.length;
+
       html += '<div class="plan-day-card ' + (isToday ? 'today' : '') + '">';
       html += '<div class="plan-day-header ' + (isExpanded ? 'active' : '') + '" onclick="PlanModule.toggleDay(' + dayIdx + ')">';
       html += '<div style="display:flex;align-items:center;gap:12px;flex:1">';
@@ -75,6 +85,7 @@ const PlanModule = {
       html += '</div></div></div>';
       html += '<i class="ph ' + (isExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="font-size:1.3em;color:var(--accent-gold)"></i>';
       html += '</div>';
+
       if (isExpanded) {
         html += '<div class="plan-day-body active">';
         html += '<div style="margin-bottom:16px">';
@@ -82,6 +93,7 @@ const PlanModule = {
         html += '<input type="text" id="muscleGroupInput' + dayIdx + '" value="' + esc(day.muscleGroup || '') + '" placeholder="Например: Грудь + Трицепс" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.95em" oninput="PlanModule.onMuscleInput(' + dayIdx + ', this.value)">';
         html += '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:4px"><i class="ph ph-info"></i> Какая группа мышц тренируется</div>';
         html += '</div>';
+
         html += '<div><label style="display:block;margin-bottom:10px;font-weight:600;font-size:0.9em;display:flex;align-items:center;gap:6px"><i class="ph ph-barbell" style="color:var(--accent-gold)"></i> Упражнения:</label>';
         if (day.exercises.length === 0) {
           html += '<div style="text-align:center;padding:24px;opacity:0.6;font-style:italic;display:flex;flex-direction:column;align-items:center;gap:8px"><i class="ph ph-dumbbell" style="font-size:2em;color:var(--accent-gold)"></i>Нет упражнений. Добавь первое!</div>';
@@ -92,6 +104,7 @@ const PlanModule = {
             for (var i = 0; i < db.length; i++) if (db[i].id === exRef.id) { ex = db[i]; break; }
             var name = ex ? ex.name : '(удалено из базы)';
             var category = ex && ex.muscleGroup ? ex.muscleGroup : 'Без категории';
+
             html += '<div class="plan-ex">';
             html += '<div style="flex:1;min-width:150px">';
             html += '<div style="font-weight:600;font-size:0.95em;margin-bottom:4px;display:flex;align-items:center;gap:6px"><span style="color:var(--accent-gold);font-weight:700">' + (exIdx + 1) + '.</span> ' + esc(name) + '</div>';
@@ -107,6 +120,7 @@ const PlanModule = {
           }
         }
         html += '</div>';
+
         html += '<div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">';
         html += '<button class="btn btn-primary" style="flex:1;padding:12px;font-size:0.95em" onclick="PlanModule.openPickEx(' + dayIdx + ')"><i class="ph ph-plus-circle"></i> Добавить из базы</button>';
         if (day.exercises.length > 0) {
@@ -116,34 +130,45 @@ const PlanModule = {
       }
       html += '</div>';
     }
+
     html += '<div class="hint" style="text-align:center;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ph ph-check-circle" style="color:var(--accent-success)"></i> Изменения сохраняются автоматически</div>';
     html += '</div>';
+
     screen.innerHTML = html;
   },
+
+  // Debounce: сохраняет актуальное состояние через getPlan(), а не замыкание
   onSetsInput: function(dayIdx, exIdx, value) {
     var p = this.getPlan();
     if (p[dayIdx] && p[dayIdx].exercises[exIdx]) {
       p[dayIdx].exercises[exIdx].sets = value;
       if (!this._debouncedSaveSets) {
-        this._debouncedSaveSets = Core.utils.debounce(function(plan) { PlanModule.savePlan(plan); }, 400);
+        this._debouncedSaveSets = Core.utils.debounce(function() {
+          PlanModule.savePlan(PlanModule.getPlan());
+        }, 400);
       }
-      this._debouncedSaveSets(p);
+      this._debouncedSaveSets();
     }
   },
+
   onMuscleInput: function(dayIdx, value) {
     var p = this.getPlan();
     if (p[dayIdx]) {
       p[dayIdx].muscleGroup = value;
       if (!this._debouncedSaveMuscle) {
-        this._debouncedSaveMuscle = Core.utils.debounce(function(plan) { PlanModule.savePlan(plan); }, 400);
+        this._debouncedSaveMuscle = Core.utils.debounce(function() {
+          PlanModule.savePlan(PlanModule.getPlan());
+        }, 400);
       }
-      this._debouncedSaveMuscle(p);
+      this._debouncedSaveMuscle();
     }
   },
+
   toggleDay: function(dayIdx) {
     this.expandedDay = this.expandedDay === dayIdx ? null : dayIdx;
     this.createPlanScreen();
   },
+
   movePlanEx: function(d, e, dir) {
     var p = this.getPlan();
     var a = p[d].exercises;
@@ -153,12 +178,14 @@ const PlanModule = {
     this.savePlan(p);
     this.createPlanScreen();
   },
+
   removePlanEx: function(d, e) {
     var p = this.getPlan();
     p[d].exercises.splice(e, 1);
     this.savePlan(p);
     this.createPlanScreen();
   },
+
   clearDay: function(d) {
     if (!confirm('Удалить все упражнения из этого дня?')) return;
     var p = this.getPlan();
@@ -167,6 +194,7 @@ const PlanModule = {
     this.savePlan(p);
     this.createPlanScreen();
   },
+
   openPickEx: function(dayIdx) {
     var esc = Core.utils.escapeHtml;
     this.pickingForDay = dayIdx;
@@ -186,6 +214,7 @@ const PlanModule = {
     document.body.appendChild(modal);
     this.renderPickList();
   },
+
   renderPickList: function() {
     var esc = Core.utils.escapeHtml;
     var searchEl = document.getElementById('pickSearch');
@@ -217,6 +246,7 @@ const PlanModule = {
       list.innerHTML = html;
     }
   },
+
   addExToPlan: function(exId) {
     if (this.pickingForDay === null) return;
     var p = this.getPlan();
@@ -227,5 +257,6 @@ const PlanModule = {
     this.createPlanScreen();
   }
 };
+
 window.PlanModule = PlanModule;
 module.exports = PlanModule;

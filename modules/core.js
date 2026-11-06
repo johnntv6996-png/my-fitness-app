@@ -22,12 +22,7 @@ const CoreModule = {
   utils: {
     escapeHtml: function(text) {
       if (text == null) return '';
-      return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     },
     formatLocalDate: function(date) {
       date = date || new Date();
@@ -60,7 +55,9 @@ const CoreModule = {
       stats = stats || {};
       var level = stats.level || 1;
       var xp = stats.xp || 0;
-      return xp + (level - 1) * 100;
+      // Исправлена математика: сумма арифметической прогрессии для уровней
+      var baseXp = (level - 1) * level / 2 * 100;
+      return baseXp + xp;
     },
     generateId: function(prefix) {
       prefix = prefix || 'id';
@@ -91,17 +88,21 @@ const CoreModule = {
     }
   },
   _historyMapCache: null,
-  _historyMapSource: null,
+  _historyMapSourceLength: 0,
+  _historyMapLastDate: '',
   getHistoryMap: function(history) {
     history = history || [];
-    if (this._historyMapSource === history && this._historyMapCache) {
+    // Исправлена проверка кэша: сравниваем длину и последнюю дату, а не ссылку на объект
+    var lastDate = history.length > 0 ? history[history.length - 1].date : '';
+    if (this._historyMapSourceLength === history.length && this._historyMapLastDate === lastDate && this._historyMapCache) {
       return this._historyMapCache;
     }
     var map = {};
     for (var i = 0; i < history.length; i++) {
       map[history[i].date] = history[i];
     }
-    this._historyMapSource = history;
+    this._historyMapSourceLength = history.length;
+    this._historyMapLastDate = lastDate;
     this._historyMapCache = map;
     return map;
   },
@@ -122,7 +123,7 @@ const CoreModule = {
     if (activeBtn) activeBtn.classList.add('active');
     if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
     if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
-    if (typeof updateHeaderLevel === 'function') updateHeaderLevel();
+    
     var renderer = this.screenRenderers[screenId];
     if (renderer) {
       try { renderer(); } catch (e) {
@@ -162,6 +163,7 @@ const CoreModule = {
     };
   }
 };
+
 window.CoreModule = CoreModule;
 window.Core = CoreModule;
 module.exports = CoreModule;

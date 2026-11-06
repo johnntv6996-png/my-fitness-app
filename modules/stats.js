@@ -74,64 +74,73 @@ const StatsModule = {
     if (!history || history.length === 0) return 'empty';
     return history.length + '_' + history[0].date + '_' + history[history.length - 1].date + '_' + (history[history.length - 1].timestamp || 0);
   },
-  buildChartData: function() {
-    var history = this.getHistory();
-    var key = this.buildChartDataCacheKey(history);
-    if (this._chartDataCache && this._chartDataCacheKey === key) return this._chartDataCache;
-    if (history.length === 0) {
-      this._chartDataCache = { data: { exercises: [], weight: [], mood: [] }, labels: [], totalDays: 30 };
-      this._chartDataCacheKey = key;
-      return this._chartDataCache;
-    }
-    var dates = history.map(function(h) { return h.date; }).sort();
-    var firstDate = new Date(dates[0] + 'T00:00:00');
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    var msPerDay = 1000 * 60 * 60 * 24;
-    var totalDays = Math.floor((today - firstDate) / msPerDay) + 1;
-    if (totalDays < 1) totalDays = 1;
-    var data = { exercises: [], weight: [], mood: [] };
-    var labels = [];
-    var historyMap = Core.getHistoryMap(history);
-    var config = this.getSurveyConfig();
-    var surveyKeys = [];
-    if (config && config.questions) {
-      for (var i = 0; i < config.questions.length; i++) {
-        var q = config.questions[i];
-        if (['rating', 'emoji', 'range', 'number'].indexOf(q.type) !== -1) {
-          var key2 = 'survey_' + q.id;
-          data[key2] = [];
-          surveyKeys.push(key2);
-        }
-      }
-    }
-    for (var i = 0; i < totalDays; i++) {
-      var date = new Date(firstDate);
-      date.setDate(date.getDate() + i);
-      var dateStr = Core.utils.formatLocalDate(date);
-      var dayRecord = historyMap[dateStr] || null;
-      var exCount = 0;
-      if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
-      data.exercises.push(exCount);
-      data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
-      data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
-      for (var k = 0; k < surveyKeys.length; k++) {
-        var qId = surveyKeys[k].replace('survey_', '');
-        data[surveyKeys[k]].push(dayRecord && dayRecord.survey && dayRecord.survey[qId] !== undefined ? dayRecord.survey[qId] : null);
-      }
-      labels.push(date.getDate() + '.' + (date.getMonth() + 1));
-    }
-    this.totalDays = totalDays;
-    this.zoom.xMax = totalDays - 1;
-    this.zoom.xMaxLimit = totalDays - 1;
-    this.zoom.xMinLimit = 0;
-    if (this.zoom.xMax > totalDays - 1) this.zoom.xMax = totalDays - 1;
-    if (this.zoom.xMin > this.zoom.xMax - 3) this.zoom.xMin = Math.max(0, this.zoom.xMax - 10);
-    this._chartDataCache = { data: data, labels: labels, totalDays: totalDays };
-    this._chartDataCacheKey = key;
-    return this._chartDataCache;
-  },
-  findMaxY: function(data) {
+	buildChartData: function() {
+		var history = this.getHistory();
+		var key = this.buildChartDataCacheKey(history);
+		if (this._chartDataCache && this._chartDataCacheKey === key) return this._chartDataCache;
+
+		if (history.length === 0) {
+			this._chartDataCache = { data: { exercises: [], weight: [], mood: [] }, labels: [], totalDays: 30 };
+			this._chartDataCacheKey = key;
+			return this._chartDataCache;
+		}
+
+		var dates = history.map(function(h) { return h.date; }).sort();
+		var firstDate = new Date(dates[0] + 'T00:00:00');
+		var today = new Date();
+		today.setHours(0, 0, 0, 0);
+		var msPerDay = 1000 * 60 * 60 * 24;
+		var totalDays = Math.floor((today - firstDate) / msPerDay) + 1;
+		if (totalDays < 1) totalDays = 1;
+
+		var data = { exercises: [], weight: [], mood: [] };
+		var labels = [];
+		var historyMap = (typeof Core !== 'undefined' && Core.getHistoryMap) ? Core.getHistoryMap(history) : {};
+		var config = this.getSurveyConfig();
+		var surveyKeys = [];
+		if (config && config.questions) {
+			for (var i = 0; i < config.questions.length; i++) {
+				var q = config.questions[i];
+				if (['rating', 'emoji', 'range', 'number'].indexOf(q.type) !== -1) {
+					var key2 = 'survey_' + q.id;
+					data[key2] = [];
+					surveyKeys.push(key2);
+				}
+			}
+		}
+
+		for (var i = 0; i < totalDays; i++) {
+			var date = new Date(firstDate);
+			date.setDate(date.getDate() + i);
+			var dateStr = (typeof Core !== 'undefined' && Core.utils && Core.utils.formatLocalDate) ? Core.utils.formatLocalDate(date) : date.toISOString().slice(0, 10);
+			var dayRecord = historyMap[dateStr] || null;
+			var exCount = 0;
+			if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
+			data.exercises.push(exCount);
+			data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
+			data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
+			for (var k = 0; k < surveyKeys.length; k++) {
+				var qId = surveyKeys[k].replace('survey_', '');
+				data[surveyKeys[k]].push(dayRecord && dayRecord.survey && dayRecord.survey[qId] !== undefined ? dayRecord.survey[qId] : null);
+			}
+			labels.push(date.getDate() + '.' + (date.getMonth() + 1));
+		}
+
+		this.totalDays = totalDays;
+
+		// ИСПРАВЛЕНИЕ: не сбрасываем zoom.xMax, если он уже в допустимых пределах
+		if (this.zoom.xMaxLimit === undefined || this.zoom.xMax > totalDays - 1) {
+			this.zoom.xMin = 0;
+			this.zoom.xMax = totalDays - 1;
+			this.zoom.xMaxLimit = totalDays - 1;
+			this.zoom.xMinLimit = 0;
+		}
+
+		this._chartDataCache = { data: data, labels: labels, totalDays: totalDays };
+		this._chartDataCacheKey = key;
+		return this._chartDataCache;
+	},
+	findMaxY: function(data) {
     var maxVal = 10;
     var metrics = this.allMetrics;
     for (var key in metrics) {

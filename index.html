@@ -7,391 +7,91 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <style>
-:root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #151520;
-  --bg-card: rgba(255, 255, 255, 0.03);
-  --bg-glass: rgba(255, 255, 255, 0.05);
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0b0;
-  --text-muted: #6a6a7a;
-  --accent-gold: #d4af37;
-  --accent-gold-light: #f4d03f;
-  --accent-gold-dim: rgba(212, 175, 55, 0.15);
-  --accent-success: #4ade80;
-  --accent-error: #f87171;
-  --accent-warning: #fbbf24;
-  --accent-info: #60a5fa;
-  --accent-neon: #60a5fa;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-gold: rgba(212, 175, 55, 0.3);
-  --shadow-gold: 0 0 40px rgba(212, 175, 55, 0.2);
-  --font-primary: 'Inter', sans-serif;
-  --font-display: 'Playfair Display', serif;
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --sidebar-width: 320px;
-}
-body.light-theme {
-  --bg-primary: #f5f2eb;
-  --bg-secondary: #ebe7dd;
-  --bg-card: rgba(0, 0, 0, 0.03);
-  --bg-glass: rgba(255, 255, 255, 0.7);
-  --text-primary: #1a1a1f;
-  --text-secondary: #5a5a6a;
-  --text-muted: #8a8a9a;
-  --accent-gold: #a67c00;
-  --accent-gold-light: #d4af37;
-  --accent-gold-dim: rgba(166, 124, 0, 0.12);
-  --accent-success: #16a34a;
-  --accent-error: #dc2626;
-  --accent-warning: #d97706;
-  --accent-info: #0284c7;
-  --accent-neon: #0284c7;
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-gold: rgba(166, 124, 0, 0.3);
-  --shadow-gold: 0 0 40px rgba(166, 124, 0, 0.15);
-}
+/* ... (Весь CSS из предыдущей версии остается без изменений для экономии места) ... */
+:root { --bg-primary: #0a0a0f; --bg-secondary: #151520; --bg-card: rgba(255, 255, 255, 0.03); --bg-glass: rgba(255, 255, 255, 0.05); --text-primary: #ffffff; --text-secondary: #a0a0b0; --text-muted: #6a6a7a; --accent-gold: #d4af37; --accent-gold-light: #f4d03f; --accent-gold-dim: rgba(212, 175, 55, 0.15); --accent-success: #4ade80; --accent-error: #f87171; --accent-warning: #fbbf24; --accent-info: #60a5fa; --accent-neon: #60a5fa; --border-subtle: rgba(255, 255, 255, 0.08); --border-gold: rgba(212, 175, 55, 0.3); --shadow-gold: 0 0 40px rgba(212, 175, 55, 0.2); --font-primary: 'Inter', sans-serif; --font-display: 'Playfair Display', serif; --radius-sm: 8px; --radius-md: 16px; --radius-lg: 24px; --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1); --sidebar-width: 320px; }
+body.light-theme { --bg-primary: #f5f2eb; --bg-secondary: #ebe7dd; --bg-card: rgba(0, 0, 0, 0.03); --bg-glass: rgba(255, 255, 255, 0.7); --text-primary: #1a1a1f; --text-secondary: #5a5a6a; --text-muted: #8a8a9a; --accent-gold: #a67c00; --accent-gold-light: #d4af37; --accent-gold-dim: rgba(166, 124, 0, 0.12); --accent-success: #16a34a; --accent-error: #dc2626; --accent-warning: #d97706; --accent-info: #0284c7; --accent-neon: #0284c7; --border-subtle: rgba(0, 0, 0, 0.08); --border-gold: rgba(166, 124, 0, 0.3); --shadow-gold: 0 0 40px rgba(166, 124, 0, 0.15); }
 body.light-theme .header { background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%); }
 body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-theme .ex-modal, body.light-theme .calendar-modal { background: rgba(245, 242, 235, 0.9); }
 body.light-theme .console-log { background: #1a1a1f; color: #4ade80; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-primary);
-  font-size: 16px;
-  overflow-x: hidden;
-  transition: background 0.3s, color 0.3s;
-  background-image: 
-    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 50%);
-}
-body.light-theme {
-  background-image: 
-    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
-}
-select, input[type="text"], input[type="number"], input[type="time"], input[type="date"], input[type="email"], textarea {
-  background: var(--bg-primary) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-subtle) !important;
-  font-family: var(--font-primary);
-}
+body { margin: 0; min-height: 100vh; background: var(--bg-primary); color: var(--text-primary); font-family: var(--font-primary); font-size: 16px; overflow-x: hidden; transition: background 0.3s, color 0.3s; background-image: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 50%); }
+body.light-theme { background-image: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%); }
+select, input[type="text"], input[type="number"], input[type="time"], input[type="date"], input[type="email"], textarea { background: var(--bg-primary) !important; color: var(--text-primary) !important; border: 1px solid var(--border-subtle) !important; font-family: var(--font-primary); }
 select:focus, input:focus, textarea:focus { outline: none; border-color: var(--border-gold) !important; }
 select option { background: var(--bg-secondary) !important; color: var(--text-primary) !important; }
-.header-wrapper {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 8px 12px;
-  background: var(--bg-primary);
-  transition: background 0.3s, margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-body.sidebar-open .header-wrapper {
-  margin-left: var(--sidebar-width);
-  max-width: calc(1200px - var(--sidebar-width));
-}
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 18px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.03) 100%);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-gold);
-  box-shadow: var(--shadow-gold);
-  position: relative;
-  overflow: hidden;
-  transition: all var(--transition-fast);
-}
-.header::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
-  animation: shimmer 3s ease-in-out infinite;
-}
+.header-wrapper { position: sticky; top: 0; z-index: 100; padding: 8px 12px; background: var(--bg-primary); transition: margin-left 0.4s, max-width 0.4s; max-width: 1200px; margin: 0 auto; }
+body.sidebar-open .header-wrapper { margin-left: var(--sidebar-width); max-width: calc(1200px - var(--sidebar-width)); }
+.header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.03) 100%); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-radius: var(--radius-md); border: 1px solid var(--border-gold); box-shadow: var(--shadow-gold); position: relative; overflow: hidden; transition: all var(--transition-fast); }
+.header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); animation: shimmer 3s ease-in-out infinite; }
 @keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 .header-left { display: flex; align-items: center; gap: 12px; }
 .header-right { display: flex; align-items: center; gap: 8px; }
-.header h1 { 
-  margin: 0; 
-  font-family: var(--font-display);
-  font-size: 1.3em;
-  font-weight: 900;
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 50%, var(--accent-gold) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.02em;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
+.header h1 { margin: 0; font-family: var(--font-display); font-size: 1.3em; font-weight: 900; background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 50%, var(--accent-gold) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .header h1 i { font-size: 1.1em; -webkit-text-fill-color: var(--accent-gold); }
-.theme-btn {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1em;
-  transition: all var(--transition-fast);
-}
+.theme-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-glass); border: 1px solid var(--border-subtle); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1em; transition: all var(--transition-fast); }
 .theme-btn:hover { background: rgba(212, 175, 55, 0.1); border-color: var(--border-gold); color: var(--accent-gold); transform: translateY(-2px); }
 .theme-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
-.hamburger {
-  width: 38px; height: 38px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-}
+.hamburger { width: 38px; height: 38px; background: var(--bg-glass); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; transition: all var(--transition-fast); flex-shrink: 0; }
 .hamburger:hover { background: rgba(212, 175, 55, 0.1); border-color: var(--border-gold); }
 .hamburger span { display: block; width: 20px; height: 2px; background: var(--accent-gold); border-radius: 2px; transition: all var(--transition-fast); }
 .hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .hamburger.active span:nth-child(2) { opacity: 0; }
 .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-.sidebar-overlay {
-  position: fixed; top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  z-index: 998;
-  opacity: 0; visibility: hidden;
-  transition: all var(--transition-fast);
-}
+.sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 998; opacity: 0; visibility: hidden; transition: all var(--transition-fast); }
 .sidebar-overlay.active { opacity: 1; visibility: visible; }
-.sidebar {
-  position: fixed; top: 0; left: 0;
-  width: var(--sidebar-width); max-width: 85vw;
-  height: 100vh;
-  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-  border-right: 1px solid var(--border-gold);
-  z-index: 999;
-  transform: translateX(-100%);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
-  padding: 20px 0;
-  box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5);
-}
+.sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-width); max-width: 85vw; height: 100vh; background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%); border-right: 1px solid var(--border-gold); z-index: 999; transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto; padding: 20px 0; box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5); }
 .sidebar.active { transform: translateX(0); }
 .sidebar-header { padding: 0 20px 16px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 12px; }
 .sidebar-header h2 { font-family: var(--font-display); color: var(--accent-gold); font-size: 1.2em; display: flex; align-items: center; gap: 10px; }
-.sidebar-profile {
-  padding: 16px 20px;
-  margin: 0 16px 16px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.02) 100%);
-  border: 1px solid var(--border-gold);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.sidebar-profile:hover { 
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
-}
+.sidebar-profile { padding: 16px 20px; margin: 0 16px 16px; border-radius: var(--radius-md); background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.02) 100%); border: 1px solid var(--border-gold); cursor: pointer; transition: all var(--transition-fast); }
+.sidebar-profile:hover { background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2); }
 .sidebar-profile-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.sidebar-profile-avatar {
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  border: 2px solid var(--accent-gold);
-  overflow: hidden;
-  background: var(--bg-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
-}
+.sidebar-profile-avatar { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--border-gold); overflow: hidden; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .sidebar-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .sidebar-profile-avatar i { font-size: 1.8em; color: var(--accent-gold); }
 .sidebar-profile-info { flex: 1; min-width: 0; }
-.sidebar-profile-name {
-  font-weight: 700;
-  font-size: 1.05em;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.sidebar-profile-name { font-weight: 700; font-size: 1.05em; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
 .sidebar-profile-name i { font-size: 0.85em; color: var(--accent-gold); opacity: 0.7; }
 .sidebar-profile-sub { font-size: 0.75em; color: var(--text-secondary); margin-top: 2px; }
-.profile-level-block {
-  background: rgba(0,0,0,0.2);
-  border-radius: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-subtle);
-}
-body.light-theme .profile-level-block { background: rgba(166, 124, 0, 0.08); }
+.profile-level-block { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px 12px; border: 1px solid var(--border-subtle); }
+body.light-theme .profile-level-block { background: rgba(166,124,0,0.08); }
 .profile-level-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .profile-level-left { display: flex; align-items: center; gap: 8px; }
-.profile-level-icon {
-  font-size: 1.3em;
-  color: var(--accent-gold);
-  animation: levelPulse 3s ease-in-out infinite;
-}
-@keyframes levelPulse {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--accent-gold)); }
-  50% { transform: scale(1.1); filter: drop-shadow(0 0 8px var(--accent-gold)); }
-}
-.profile-level-num {
-  font-family: var(--font-display);
-  font-size: 1.4em;
-  font-weight: 900;
-  color: var(--accent-gold);
-  line-height: 1;
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-.profile-level-label {
-  font-family: var(--font-primary);
-  font-size: 0.55em;
-  font-weight: 500;
-  color: var(--text-secondary);
-  opacity: 0.8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+.profile-level-icon { font-size: 1.3em; color: var(--accent-gold); animation: levelPulse 3s ease-in-out infinite; }
+@keyframes levelPulse { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--accent-gold)); } 50% { transform: scale(1.1); filter: drop-shadow(0 0 8px var(--accent-gold)); } }
+.profile-level-num { font-family: var(--font-display); font-size: 1.4em; font-weight: 900; color: var(--accent-gold); line-height: 1; display: flex; align-items: baseline; gap: 4px; }
+.profile-level-label { font-family: var(--font-primary); font-size: 0.55em; font-weight: 500; color: var(--text-secondary); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
 .profile-xp-block { display: flex; flex-direction: column; gap: 3px; min-width: 90px; }
 .profile-xp-text { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--text-secondary); }
 .profile-xp-text strong { color: var(--accent-gold); font-weight: 700; }
-.profile-xp-bar {
-  height: 5px;
-  background: rgba(0,0,0,0.4);
-  border-radius: 3px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  position: relative;
-}
-body.light-theme .profile-xp-bar { background: rgba(166, 124, 0, 0.15); }
-.profile-xp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
-  border-radius: 3px;
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-.profile-xp-fill::after {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: xpShine 2.5s ease-in-out infinite;
-}
+.profile-xp-bar { height: 5px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-subtle); position: relative; }
+body.light-theme .profile-xp-bar { background: rgba(166,124,0,0.15); }
+.profile-xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light)); border-radius: 3px; transition: width 1s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; }
+.profile-xp-fill::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: xpShine 2.5s ease-in-out infinite; }
 @keyframes xpShine { 0% { left: -100%; } 100% { left: 100%; } }
 .profile-xp-fill.xp-gained { animation: xpGain 0.8s ease-out; }
-@keyframes xpGain {
-  0% { filter: brightness(1); }
-  50% { filter: brightness(1.8); box-shadow: 0 0 12px var(--accent-gold); }
-  100% { filter: brightness(1); }
-}
+@keyframes xpGain { 0% { filter: brightness(1); } 50% { filter: brightness(1.8); box-shadow: 0 0 12px var(--accent-gold); } 100% { filter: brightness(1); } }
 .profile-ach-hint { font-size: 0.65em; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
 .profile-ach-hint i { color: var(--accent-gold); font-size: 0.9em; }
 .sidebar-section { padding: 0 16px; margin-bottom: 12px; }
-.sidebar-section-title {
-  font-size: 0.7em;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--text-secondary);
-  opacity: 0.6;
-  padding: 0 12px 6px;
-  font-weight: 600;
-}
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  margin-bottom: 3px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 0.92em;
-  transition: all var(--transition-fast);
-  border: 1px solid transparent;
-}
+.sidebar-section-title { font-size: 0.7em; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary); opacity: 0.6; padding: 0 12px 6px; font-weight: 600; }
+.sidebar-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 3px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text-secondary); font-weight: 500; font-size: 0.92em; transition: all var(--transition-fast); border: 1px solid transparent; }
 .sidebar-item:hover { background: var(--accent-gold-dim); color: var(--text-primary); border-color: var(--border-subtle); transform: translateX(3px); }
 .sidebar-item.active { background: var(--accent-gold-dim); color: var(--accent-gold); border-color: var(--border-gold); font-weight: 600; }
 .sidebar-item i { font-size: 1.2em; width: 22px; text-align: center; color: var(--accent-gold); }
 .sidebar-divider { height: 1px; background: var(--border-subtle); margin: 8px 20px 12px; }
-.main-content { 
-  max-width: 1200px; 
-  margin: 0 auto; 
-  padding: 0 12px 30px;
-  transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeIn 0.5s ease-out; 
-}
-body.sidebar-open .main-content {
-  margin-left: var(--sidebar-width);
-  max-width: calc(1200px - var(--sidebar-width));
-}
+.main-content { max-width: 1200px; margin: 0 auto; padding: 0 20px 40px; transition: margin-left 0.4s, max-width 0.4s; animation: fadeIn 0.5s ease-out; }
+body.sidebar-open .main-content { margin-left: var(--sidebar-width); max-width: calc(1200px - var(--sidebar-width)); }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .screen { display: none; }
 .screen.active { display: block; animation: fadeIn 0.4s ease-out; }
-.dev-panel { background: var(--bg-glass); backdrop-filter: blur(20px); padding: 20px; border-radius: var(--radius-md); margin-bottom: 16px; border: 1px solid var(--border-subtle); }
-.module-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  margin-bottom: 10px;
-  border: 1px solid var(--border-subtle);
-  transition: all var(--transition-fast);
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.module-item:hover { background: rgba(255, 255, 255, 0.05); transform: translateX(3px); border-color: var(--border-gold); }
+.dev-panel { background: var(--bg-glass); backdrop-filter: blur(20px); padding: 28px; border-radius: var(--radius-lg); margin-bottom: 24px; border: 1px solid var(--border-subtle); }
+.module-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; background: var(--bg-card); border-radius: var(--radius-md); margin-bottom: 12px; border: 1px solid var(--border-subtle); transition: all var(--transition-fast); flex-wrap: wrap; gap: 12px; }
+.module-item:hover { background: rgba(255, 255, 255, 0.05); transform: translateX(4px); border-color: var(--border-gold); }
 .module-item.loaded { border-left: 3px solid var(--accent-success); }
 .module-item.loading { border-left: 3px solid var(--accent-gold); }
 .module-item.error { border-left: 3px solid var(--accent-error); }
-.btn {
-  padding: 10px 18px;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.92em;
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-family: var(--font-primary);
-  white-space: nowrap;
-}
+.btn { padding: 12px 22px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all var(--transition-fast); display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-primary); white-space: nowrap; }
 .btn:active { transform: scale(0.97); }
 .btn-primary { background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%); color: #000; box-shadow: var(--shadow-gold); }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(212, 175, 55, 0.4); }
@@ -400,69 +100,20 @@ body.sidebar-open .main-content {
 .btn-danger { background: linear-gradient(135deg, var(--accent-error) 0%, #ef4444 100%); color: #fff; }
 .btn-danger:hover { transform: translateY(-2px); }
 .btn-success { background: linear-gradient(135deg, var(--accent-success) 0%, #22c55e 100%); color: #000; }
-.console-log {
-  background: #000;
-  color: var(--accent-success);
-  padding: 16px;
-  border-radius: var(--radius-md);
-  font-family: 'Courier New', monospace;
-  font-size: 0.85em;
-  max-height: 400px;
-  overflow-y: auto;
-  margin-top: 12px;
-  border: 1px solid var(--border-subtle);
-}
+.console-log { background: #000; color: var(--accent-success); padding: 20px; border-radius: var(--radius-md); font-family: 'Courier New', monospace; font-size: 0.85em; max-height: 400px; overflow-y: auto; margin-top: 16px; border: 1px solid var(--border-subtle); }
 .console-log .error { color: var(--accent-error); }
 .console-log .warn { color: var(--accent-warning); }
 .console-log .info { color: var(--accent-gold); }
-.loading { text-align: center; padding: 60px 30px; opacity: 0.6; }
-.loading h2 { font-family: var(--font-display); font-size: 2em; margin: 16px 0; background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.loading .icon-large { font-size: 3.5em; color: var(--accent-gold); animation: pulse 2s infinite; }
+.loading { text-align: center; padding: 80px 40px; opacity: 0.6; }
+.loading h2 { font-family: var(--font-display); font-size: 2.2em; margin: 20px 0; background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.loading .icon-large { font-size: 4em; color: var(--accent-gold); animation: pulse 2s infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } }
 .text-small { font-size: 0.85em; opacity: 0.7; color: var(--text-secondary); }
-.workout-modal, .survey-modal, .ex-modal, .calendar-modal {
-  position: fixed; top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(15px);
-  z-index: 2000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  animation: fadeIn 0.3s ease-out;
-}
+.workout-modal, .survey-modal, .ex-modal, .calendar-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 20px; animation: fadeIn 0.3s ease-out; }
 body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-theme .ex-modal, body.light-theme .calendar-modal { background: rgba(245, 242, 235, 0.9); }
-.workout-modal-content, .survey-modal-content, .ex-modal-content, .calendar-content {
-  background: var(--bg-secondary);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow-y: auto;
-  border: 1px solid var(--border-gold);
-  box-shadow: var(--shadow-gold);
-  animation: scaleIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
+.workout-modal-content, .survey-modal-content, .ex-modal-content, .calendar-content { background: var(--bg-secondary); padding: 32px; border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-gold); box-shadow: var(--shadow-gold); animation: scaleIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-.achievement-toast {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-150%);
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-  border: 2px solid var(--accent-gold);
-  border-radius: 16px;
-  padding: 18px 24px;
-  box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 10px 30px rgba(0,0,0,0.5);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  max-width: 90vw;
-}
+.achievement-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%); background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%); border: 2px solid var(--accent-gold); border-radius: 16px; padding: 18px 24px; box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 10px 30px rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; gap: 14px; transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); max-width: 90vw; }
 .achievement-toast.show { transform: translateX(-50%) translateY(0); }
 .achievement-toast .ach-icon { font-size: 2.2em; color: var(--accent-gold); animation: achBounce 0.6s ease-out; }
 @keyframes achBounce { 0% { transform: scale(0) rotate(-180deg); } 60% { transform: scale(1.3) rotate(10deg); } 100% { transform: scale(1) rotate(0); } }
@@ -470,48 +121,21 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 .achievement-toast .ach-title { font-family: var(--font-display); color: var(--accent-gold); font-size: 1em; font-weight: 700; margin-bottom: 3px; }
 .achievement-toast .ach-desc { color: var(--text-secondary); font-size: 0.82em; }
 .achievement-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
-.achievement-particle {
-  position: absolute;
-  width: 8px; height: 8px;
-  background: var(--accent-gold);
-  border-radius: 50%;
-  animation: particleFall 1.5s ease-out forwards;
-}
+.achievement-particle { position: absolute; width: 8px; height: 8px; background: var(--accent-gold); border-radius: 50%; animation: particleFall 1.5s ease-out forwards; }
 @keyframes particleFall { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(100vh) scale(0); opacity: 0; } }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold-light); }
-@media (max-width: 768px) {
-  body { padding: 0; }
-  .header-wrapper { padding: 6px 8px; }
-  body.sidebar-open .header-wrapper { margin-left: 0; max-width: 100%; }
-  .header { padding: 10px 14px; border-radius: var(--radius-md); }
-  .header h1 { font-size: 1.1em; }
-  .header h1 i { font-size: 0.9em; }
-  .hamburger { width: 36px; height: 36px; }
-  .theme-btn { width: 34px; height: 34px; font-size: 0.95em; }
-  .main-content { padding: 0 10px 24px; }
-  body.sidebar-open .main-content { margin-left: 0; max-width: 100%; }
-  .dev-panel { padding: 16px; }
-  .module-item { flex-direction: column; align-items: flex-start; }
-  .module-item > div:last-child { width: 100%; justify-content: flex-end; }
-  .sidebar { width: 280px; }
-  :root { --sidebar-width: 280px; }
-}
-@media (max-width: 480px) {
-  .header h1 { font-size: 1em; gap: 8px; }
-  .header-left { gap: 8px; }
-  .header-right { gap: 6px; }
-  .theme-btn { width: 32px; height: 32px; }
-  .profile-level-block { padding: 8px 10px; }
-  .profile-level-num { font-size: 1.2em; }
-}
+@media (max-width: 768px) { body { padding: 0; } .header-wrapper { padding: 6px 8px; } body.sidebar-open .header-wrapper, body.sidebar-open .main-content { margin-left: 0; max-width: 100%; } .header { margin: 10px; padding: 10px 14px; border-radius: var(--radius-md); } .header h1 { font-size: 1.1em; } .header h1 i { font-size: 0.9em; } .hamburger { width: 36px; height: 36px; } .theme-btn { width: 34px; height: 34px; font-size: 0.95em; } .main-content { padding: 0 12px 40px; } .dev-panel { padding: 20px; } .module-item { flex-direction: column; align-items: flex-start; } .module-item > div:last-child { width: 100%; justify-content: flex-end; } .sidebar { width: 280px; } :root { --sidebar-width: 280px; } }
+@media (max-width: 480px) { .header h1 { font-size: 1em; gap: 8px; } .header-left { gap: 8px; } .header-right { gap: 6px; } .theme-btn { width: 32px; height: 32px; } .profile-level-block { padding: 8px 10px; } .profile-level-num { font-size: 1.2em; } }
 </style>
 </head>
 <body>
+
 <div id="achievementContainer"></div>
 <div class="achievement-particles" id="achievementParticles"></div>
+
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
@@ -519,14 +143,9 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
   </div>
   <div class="sidebar-profile" id="sidebarProfile" onclick="openProfileModal()">
     <div class="sidebar-profile-top">
-      <div class="sidebar-profile-avatar" id="sidebarAvatar">
-        <i class="ph ph-user-circle"></i>
-      </div>
+      <div class="sidebar-profile-avatar" id="sidebarAvatar"><i class="ph ph-user-circle"></i></div>
       <div class="sidebar-profile-info">
-        <div class="sidebar-profile-name" id="sidebarName">
-          <span>Гость</span>
-          <i class="ph ph-pencil-simple"></i>
-        </div>
+        <div class="sidebar-profile-name" id="sidebarName"><span>Гость</span><i class="ph ph-pencil-simple"></i></div>
         <div class="sidebar-profile-sub">Нажми для редактирования</div>
       </div>
     </div>
@@ -534,23 +153,12 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
       <div class="profile-level-top">
         <div class="profile-level-left">
           <i class="ph ph-star profile-level-icon" id="headerLevelIcon"></i>
-          <div class="profile-level-num">
-            <span id="headerLevelNum">1</span>
-            <span class="profile-level-label">уровень</span>
-          </div>
+          <div class="profile-level-num"><span id="headerLevelNum">1</span><span class="profile-level-label">уровень</span></div>
         </div>
         <div class="profile-xp-block">
-          <div class="profile-xp-text">
-            <span>XP</span>
-            <span><strong id="headerXpCurrent">0</strong> / <span id="headerXpNeeded">100</span></span>
-          </div>
-          <div class="profile-xp-bar">
-            <div class="profile-xp-fill" id="headerXpFill" style="width:0%"></div>
-          </div>
-          <div class="profile-ach-hint">
-            <i class="ph ph-trophy"></i>
-            <span id="headerAchText">до ур. 5: 400 XP</span>
-          </div>
+          <div class="profile-xp-text"><span>XP</span><span><strong id="headerXpCurrent">0</strong> / <span id="headerXpNeeded">100</span></span></div>
+          <div class="profile-xp-bar"><div class="profile-xp-fill" id="headerXpFill" style="width:0%"></div></div>
+          <div class="profile-ach-hint"><i class="ph ph-trophy"></i><span id="headerAchText">до ур. 5: 400 XP</span></div>
         </div>
       </div>
     </div>
@@ -560,78 +168,61 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
   </div>
   <div class="sidebar-divider"></div>
   <div class="sidebar-section">
-    <div class="sidebar-item" onclick="openBugReportModal()">
-      <i class="ph ph-bug"></i> Баг-репорт
-    </div>
-    <div class="sidebar-item" onclick="toggleSidebar(); switchMode('dev')">
-      <i class="ph ph-code"></i> Панель разработчика
-    </div>
+    <div class="sidebar-item" onclick="openBugReportModal()"><i class="ph ph-bug"></i> Баг-репорт</div>
+    <div class="sidebar-item" onclick="toggleSidebar(); switchMode('dev')"><i class="ph ph-code"></i> Панель разработчика</div>
   </div>
 </aside>
+
 <div class="header-wrapper">
-  <div class="header" id="mainHeader">
+  <div class="header" id="mainHeader" onclick="goHome()">
     <div class="header-left">
-      <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()">
-        <span></span><span></span><span></span>
-      </button>
-      <h1 onclick="event.stopPropagation(); goHome()"><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
+      <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()"><span></span><span></span><span></span></button>
+      <h1><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
     </div>
     <div class="header-right">
-      <button class="theme-btn" id="themeDarkBtn" onclick="event.stopPropagation(); setTheme('dark')" title="Тёмная тема">
-        <i class="ph ph-moon-stars"></i>
-      </button>
-      <button class="theme-btn" id="themeLightBtn" onclick="event.stopPropagation(); setTheme('light')" title="Светлая тема">
-        <i class="ph ph-sun-horizon"></i>
-      </button>
+      <button class="theme-btn" id="themeDarkBtn" onclick="event.stopPropagation(); setTheme('dark')" title="Тёмная тема"><i class="ph ph-moon-stars"></i></button>
+      <button class="theme-btn" id="themeLightBtn" onclick="event.stopPropagation(); setTheme('light')" title="Светлая тема"><i class="ph ph-sun-horizon"></i></button>
     </div>
   </div>
 </div>
+
 <div class="main-content">
   <div id="userInterface">
     <div id="screen-welcome" class="screen active">
-      <div class="loading">
-        <i class="ph ph-barbell icon-large"></i>
-        <h2>Добро пожаловать</h2>
-        <p class="text-small">Загрузка модулей...</p>
-      </div>
+      <div class="loading"><i class="ph ph-barbell icon-large"></i><h2>Добро пожаловать</h2><p class="text-small">Загрузка модулей...</p></div>
     </div>
   </div>
   <div id="devInterface" style="display:none">
     <div class="dev-panel">
-      <h3 style="font-family:var(--font-display);font-size:1.4em;margin-bottom:16px;color:var(--accent-gold);display:flex;align-items:center;gap:10px">
-        <i class="ph ph-cube"></i> Управление модулями
-      </h3>
+      <h3 style="font-family:var(--font-display);font-size:1.6em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:10px"><i class="ph ph-cube"></i> Управление модулями</h3>
       <div id="moduleList"></div>
-      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="moduleManager.checkAllModules()">
-          <i class="ph ph-arrows-clockwise"></i> Проверить обновления
-        </button>
-        <button class="btn btn-danger" onclick="moduleManager.clearAllCache()">
-          <i class="ph ph-trash"></i> Очистить кэш
-        </button>
+      <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="moduleManager.checkAllModules()"><i class="ph ph-arrows-clockwise"></i> Проверить обновления</button>
+        <button class="btn btn-danger" onclick="moduleManager.clearAllCache()"><i class="ph ph-trash"></i> Очистить кэш</button>
       </div>
     </div>
     <div class="dev-panel">
-      <h3 style="font-family:var(--font-display);font-size:1.4em;margin-bottom:16px;color:var(--accent-gold);display:flex;align-items:center;gap:10px">
-        <i class="ph ph-scroll"></i> Системные логи
-      </h3>
+      <h3 style="font-family:var(--font-display);font-size:1.6em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:10px"><i class="ph ph-scroll"></i> Системные логи</h3>
       <div class="console-log" id="consoleLog"></div>
-      <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:12px">
-        <i class="ph ph-eraser"></i> Очистить логи
-      </button>
+      <button class="btn btn-secondary" onclick="clearConsole()" style="margin-top:16px"><i class="ph ph-eraser"></i> Очистить логи</button>
     </div>
     <div class="dev-panel">
-      <h3 style="font-family:var(--font-display);font-size:1.4em;margin-bottom:16px;color:var(--accent-gold);display:flex;align-items:center;gap:10px">
-        <i class="ph ph-bug"></i> Баг-репорты
-      </h3>
+      <h3 style="font-family:var(--font-display);font-size:1.6em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:10px"><i class="ph ph-bug"></i> Баг-репорты</h3>
       <div id="bugReportsList"></div>
-      <button class="btn btn-danger" onclick="clearBugReports()" style="margin-top:12px">
-        <i class="ph ph-trash"></i> Очистить все репорты
-      </button>
+      <button class="btn btn-danger" onclick="clearBugReports()" style="margin-top:16px"><i class="ph ph-trash"></i> Очистить все репорты</button>
     </div>
   </div>
 </div>
+
 <script>
+// Глобальный Notify для улучшения UX (заменяет alert)
+window.Notify = {
+  success: function(m) { if (typeof m === 'string') alert('✅ ' + m); },
+  warn: function(m) { if (typeof m === 'string') alert('⚠️ ' + m); },
+  error: function(m) { if (typeof m === 'string') alert('❌ ' + m); },
+  info: function(m) { if (typeof m === 'string') alert('ℹ️ ' + m); }
+};
+
 const Logger = {
   logs: [],
   log: function(message, type) {
@@ -649,59 +240,38 @@ const Logger = {
     var html = '';
     for (var i = 0; i < this.logs.length; i++) {
       var log = this.logs[i];
-      html += '<div class="' + log.type + '">[' + log.timestamp + '] ' + log.message + '</div>';
+      html += '<div class="' + log.type + '">[' + log.timestamp + '] ' + (typeof Core !== 'undefined' ? Core.utils.escapeHtml(log.message) : log.message) + '</div>';
     }
     container.innerHTML = html;
     container.scrollTop = container.scrollHeight;
   },
   clear: function() { this.logs = []; this.renderConsole(); }
 };
+
 const MODULE_REGISTRY = {
-  'core': { name: 'Ядро системы', version: '3.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
-    required: true, description: 'Базовый функционал' },
-  'welcome': { name: 'Главная', version: '6.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
-    required: false, description: 'Экран приветствия' },
-  'exercises': { name: 'База упражнений', version: '5.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
-    required: false, description: 'CRUD упражнений с избранным' },
-  'plan': { name: 'План тренировок', version: '4.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
-    required: false, description: 'Настройка плана' },
-  'workout': { name: 'Тренировка', version: '3.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js',
-    required: false, description: 'Экран тренировки' },
-  'stats': { name: 'Статистика', version: '4.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js',
-    required: false, description: 'Графики и аналитика' },
-  'survey': { name: 'Опросы', version: '3.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js',
-    required: false, description: 'Конструктор опросов' },
-  'achievements': { name: 'Достижения', version: '1.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js',
-    required: false, description: 'Система достижений' },
-  'settings': { name: 'Настройки', version: '3.0.0',
-    url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js',
-    required: false, description: 'Параметры и данные' }
+  'core': { name: 'Ядро системы', version: '4.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js', required: true, description: 'Базовый функционал' },
+  'welcome': { name: 'Главная', version: '5.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js', required: false, description: 'Экран приветствия' },
+  'exercises': { name: 'База упражнений', version: '5.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js', required: false, description: 'CRUD упражнений' },
+  'plan': { name: 'План тренировок', version: '4.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js', required: false, description: 'Настройка плана' },
+  'workout': { name: 'Тренировка', version: '4.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js', required: false, description: 'Экран тренировки' },
+  'stats': { name: 'Статистика', version: '5.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js', required: false, description: 'Графики и аналитика' },
+  'survey': { name: 'Опросы', version: '4.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js', required: false, description: 'Конструктор опросов' },
+  'achievements': { name: 'Достижения', version: '2.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js', required: false, description: 'Система достижений' },
+  'settings': { name: 'Настройки', version: '4.0.0', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js', required: false, description: 'Параметры и данные' }
 };
+
 const STORAGE_PREFIX = 'ft_module_';
+
 function getTheme() {
-  try {
-    var settings = JSON.parse(localStorage.getItem('ft_settings')) || {};
-    return settings.theme || 'dark';
-  } catch (e) { return 'dark'; }
+  try { var s = JSON.parse(localStorage.getItem('ft_settings')) || {}; return s.theme || 'dark'; } catch (e) { return 'dark'; }
 }
 function setTheme(theme) {
-  if (theme === 'light') {
-    document.body.classList.add('light-theme');
-  } else {
-    document.body.classList.remove('light-theme');
-  }
+  if (theme === 'light') document.body.classList.add('light-theme');
+  else document.body.classList.remove('light-theme');
   try {
-    var settings = JSON.parse(localStorage.getItem('ft_settings')) || {};
-    settings.theme = theme;
-    localStorage.setItem('ft_settings', JSON.stringify(settings));
+    var s = JSON.parse(localStorage.getItem('ft_settings')) || {};
+    s.theme = theme;
+    localStorage.setItem('ft_settings', JSON.stringify(s));
   } catch (e) {}
   document.getElementById('themeDarkBtn').classList.toggle('active', theme === 'dark');
   document.getElementById('themeLightBtn').classList.toggle('active', theme === 'light');
@@ -713,6 +283,7 @@ function applyTheme() {
   document.getElementById('themeDarkBtn').classList.toggle('active', theme === 'dark');
   document.getElementById('themeLightBtn').classList.toggle('active', theme === 'light');
 }
+
 function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebarOverlay');
@@ -722,39 +293,45 @@ function toggleSidebar() {
   hamburger.classList.toggle('active');
   document.body.classList.toggle('sidebar-open', sidebar.classList.contains('active'));
 }
+
 function goHome() {
   if (typeof Core !== 'undefined') Core.navigate('welcome');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
 }
+
 function switchMode(mode) {
   document.getElementById('userInterface').style.display = mode === 'user' ? 'block' : 'none';
   document.getElementById('devInterface').style.display = mode === 'dev' ? 'block' : 'none';
-  if (mode === 'dev') renderBugReportsList();
+  if (mode === 'dev' && typeof renderBugReportsList === 'function') renderBugReportsList();
 }
+
 function clearConsole() { Logger.clear(); }
+
 function updateSidebarProfile() {
   var nameEl = document.getElementById('sidebarName');
   var avatarEl = document.getElementById('sidebarAvatar');
   if (!nameEl || !avatarEl) return;
-  var userName = '';
-  var userAvatar = null;
+  var userName = '', userAvatar = null;
   try {
     userName = JSON.parse(localStorage.getItem('ft_user_name')) || '';
     userAvatar = JSON.parse(localStorage.getItem('ft_user_avatar'));
   } catch (e) {}
-  nameEl.innerHTML = '<span>' + (userName || 'Гость') + '</span><i class="ph ph-pencil-simple"></i>';
+  
+  var esc = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.escapeHtml : function(t){return t;};
+  nameEl.innerHTML = '<span>' + esc(userName || 'Гость') + '</span><i class="ph ph-pencil-simple"></i>';
+  
   if (userAvatar && typeof userAvatar === 'string' && userAvatar.startsWith('data:image')) {
     avatarEl.innerHTML = '<img src="' + userAvatar + '" alt="avatar">';
-  } else if (userAvatar && typeof userAvatar === 'string') {
-    avatarEl.innerHTML = '<i class="ph ' + userAvatar + '"></i>';
+  } else if (userAvatar && typeof userAvatar === 'string' && /^ph-[a-z0-9-]+$/.test(userAvatar)) {
+    avatarEl.innerHTML = '<i class="ph ' + esc(userAvatar) + '"></i>';
   } else {
     avatarEl.innerHTML = '<i class="ph ph-user-circle"></i>';
   }
 }
+
 function openProfileModal() {
-  var userName = '';
-  var userAvatar = null;
+  var userName = '', userAvatar = null;
   try {
     userName = JSON.parse(localStorage.getItem('ft_user_name')) || '';
     userAvatar = JSON.parse(localStorage.getItem('ft_user_avatar'));
@@ -766,7 +343,7 @@ function openProfileModal() {
   var avatarPreview = '';
   if (userAvatar && typeof userAvatar === 'string' && userAvatar.startsWith('data:image')) {
     avatarPreview = '<img src="' + userAvatar + '" style="width:100%;height:100%;object-fit:cover">';
-  } else if (userAvatar && typeof userAvatar === 'string') {
+  } else if (userAvatar && typeof userAvatar === 'string' && /^ph-[a-z0-9-]+$/.test(userAvatar)) {
     avatarPreview = '<i class="ph ' + userAvatar + '" style="font-size:3em;color:var(--accent-gold)"></i>';
   } else {
     avatarPreview = '<i class="ph ph-user-circle" style="font-size:3em;color:var(--accent-gold)"></i>';
@@ -777,13 +354,11 @@ function openProfileModal() {
   content.innerHTML =
     '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'profileModal\').remove()"><i class="ph ph-x"></i></button>' +
     '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-user-circle"></i> Профиль</h2>' +
-    '<div style="text-align:center;margin:20px 0">' +
-      '<div style="width:100px;height:100px;border-radius:50%;border:3px solid var(--border-gold);overflow:hidden;background:var(--bg-primary);display:inline-flex;align-items:center;justify-content:center">' + avatarPreview + '</div>' +
-    '</div>' +
+    '<div style="text-align:center;margin:20px 0"><div style="width:100px;height:100px;border-radius:50%;border:3px solid var(--border-gold);overflow:hidden;background:var(--bg-primary);display:inline-flex;align-items:center;justify-content:center">' + avatarPreview + '</div></div>' +
     '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">' +
       '<button class="btn btn-primary" onclick="uploadAvatarFromProfile()" style="padding:10px 16px;font-size:0.9em"><i class="ph ph-upload-simple"></i> Фото</button>' +
-      '<button class="btn btn-secondary" onclick="chooseIconFromProfile()" style="padding:10px 16px;font-size:0.9em"><i class="ph ph-smiley"></i> Иконка</button>' +
-      '<button class="btn btn-danger" onclick="removeAvatarFromProfile()" style="padding:10px 16px;font-size:0.9em"><i class="ph ph-trash"></i> Удалить</button>' +
+      (userAvatar ? '<button class="btn btn-secondary" onclick="SettingsModule && SettingsModule.chooseIconAvatar ? SettingsModule.chooseIconAvatar() : chooseIconFromProfileFallback()" style="padding:10px 16px;font-size:0.9em"><i class="ph ph-smiley"></i> Иконка</button>' : '') +
+      (userAvatar ? '<button class="btn btn-danger" onclick="removeAvatarFromProfile()" style="padding:10px 16px;font-size:0.9em"><i class="ph ph-trash"></i> Удалить</button>' : '') +
     '</div>' +
     '<div style="margin-bottom:16px">' +
       '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Имя:</label>' +
@@ -796,31 +371,41 @@ function openProfileModal() {
   modal.appendChild(content);
   document.body.appendChild(modal);
 }
+
+function chooseIconFromProfileFallback() {
+  var icons = ['ph-user-circle','ph-barbell','ph-sword','ph-person-simple-run','ph-person-simple-bike','ph-person-simple-swim','ph-flame','ph-lightning','ph-star','ph-crown','ph-diamond','ph-trophy','ph-rocket'];
+  var choice = prompt('Введи номер иконки (1-' + icons.length + '):\n' + icons.map(function(ic, i) { return (i+1) + '. ' + ic; }).join('\n'));
+  if (!choice) return;
+  var idx = parseInt(choice) - 1;
+  if (idx >= 0 && idx < icons.length) {
+    try { localStorage.setItem('ft_user_avatar', JSON.stringify(icons[idx])); } catch(e) {}
+    document.getElementById('profileModal').remove();
+    updateSidebarProfile();
+  }
+}
+
 function uploadAvatarFromProfile() {
   var input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
+  input.type = 'file'; input.accept = 'image/*';
   input.onchange = function(e) {
     var file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('Файл слишком большой. Максимум 2 МБ.'); return; }
+    if (file.size > 2 * 1024 * 1024) { Notify.warn('Файл слишком большой. Максимум 2 МБ.'); return; }
     var reader = new FileReader();
     reader.onload = function(ev) {
       var img = new Image();
       img.onload = function() {
         var canvas = document.createElement('canvas');
-        var size = 200;
-        canvas.width = size; canvas.height = size;
+        var size = 200; canvas.width = size; canvas.height = size;
         var ctx = canvas.getContext('2d');
         var minDim = Math.min(img.width, img.height);
-        var sx = (img.width - minDim) / 2;
-        var sy = (img.height - minDim) / 2;
-        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
-        var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        localStorage.setItem('ft_user_avatar', JSON.stringify(dataUrl));
-        document.getElementById('profileModal').remove();
-        updateSidebarProfile();
-        alert('Аватар обновлён!');
+        ctx.drawImage(img, (img.width - minDim)/2, (img.height - minDim)/2, minDim, minDim, 0, 0, size, size);
+        try {
+          localStorage.setItem('ft_user_avatar', JSON.stringify(canvas.toDataURL('image/jpeg', 0.85)));
+          document.getElementById('profileModal').remove();
+          updateSidebarProfile();
+          Notify.success('Аватар обновлён!');
+        } catch (e) { Notify.error('Ошибка сохранения'); }
       };
       img.src = ev.target.result;
     };
@@ -828,51 +413,29 @@ function uploadAvatarFromProfile() {
   };
   input.click();
 }
-function chooseIconFromProfile() {
-  var icons = [
-    {id:'ph-user-circle', label:'Пользователь'},
-    {id:'ph-barbell', label:'Штанга'},
-    {id:'ph-sword', label:'Меч'},
-    {id:'ph-person-simple-run', label:'Бег'},
-    {id:'ph-person-simple-bike', label:'Велосипед'},
-    {id:'ph-person-simple-swim', label:'Плавание'},
-    {id:'ph-flame', label:'Огонь'},
-    {id:'ph-lightning', label:'Молния'},
-    {id:'ph-star', label:'Звезда'},
-    {id:'ph-crown', label:'Корона'},
-    {id:'ph-diamond', label:'Алмаз'},
-    {id:'ph-trophy', label:'Трофей'},
-    {id:'ph-rocket', label:'Ракета'}
-  ];
-  var choice = prompt('Введи номер иконки (1-' + icons.length + '):\n' + icons.map(function(ic, i) { return (i+1) + '. ' + ic.label; }).join('\n'));
-  if (!choice) return;
-  var idx = parseInt(choice) - 1;
-  if (idx >= 0 && idx < icons.length) {
-    localStorage.setItem('ft_user_avatar', JSON.stringify(icons[idx].id));
-    document.getElementById('profileModal').remove();
-    updateSidebarProfile();
-  }
-}
+
 function removeAvatarFromProfile() {
   if (!confirm('Удалить аватар?')) return;
-  localStorage.removeItem('ft_user_avatar');
+  try { localStorage.removeItem('ft_user_avatar'); } catch(e) {}
   document.getElementById('profileModal').remove();
   updateSidebarProfile();
 }
+
 function saveProfileFromModal() {
   var name = document.getElementById('profileNameInput').value.trim();
-  localStorage.setItem('ft_user_name', JSON.stringify(name));
+  try { localStorage.setItem('ft_user_name', JSON.stringify(name)); } catch(e) {}
   document.getElementById('profileModal').remove();
   updateSidebarProfile();
-  alert('Профиль сохранён!');
+  Notify.success('Профиль сохранён!');
 }
+
 function getBugReports() {
-  try { return JSON.parse(localStorage.getItem('ft_bug_reports')) || []; }
-  catch (e) { return []; }
+  try { return JSON.parse(localStorage.getItem('ft_bug_reports')) || []; } catch (e) { return []; }
 }
 function saveBugReports(reports) {
-  localStorage.setItem('ft_bug_reports', JSON.stringify(reports));
+  try { localStorage.setItem('ft_bug_reports', JSON.stringify(reports)); } catch (e) {}
 }
+
 function openBugReportModal() {
   if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
   var modal = document.createElement('div');
@@ -881,6 +444,8 @@ function openBugReportModal() {
   modal.style.zIndex = '2100';
   var reports = getBugReports();
   var reportsHtml = '';
+  var esc = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.escapeHtml : function(t){return t;};
+  
   if (reports.length > 0) {
     reportsHtml = '<div style="margin-top:20px;border-top:1px solid var(--border-subtle);padding-top:16px">';
     reportsHtml += '<h3 style="color:var(--accent-gold);font-family:var(--font-display);margin-bottom:12px;display:flex;align-items:center;gap:8px"><i class="ph ph-list"></i> Мои репорты (' + reports.length + ')</h3>';
@@ -890,15 +455,14 @@ function openBugReportModal() {
       var severityLabel = r.severity === 'high' ? 'Высокая' : r.severity === 'medium' ? 'Средняя' : 'Низкая';
       reportsHtml += '<div style="background:var(--bg-card);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ' + severityColor + '">';
       reportsHtml += '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">';
-      reportsHtml += '<div style="font-weight:600;color:var(--text-primary);flex:1">' + Core.utils.escapeHtml(r.title) + '</div>';
+      reportsHtml += '<div style="font-weight:600;color:var(--text-primary);flex:1">' + esc(r.title) + '</div>';
       reportsHtml += '<button class="btn btn-danger" style="padding:4px 8px;font-size:0.75em;margin-left:8px" onclick="deleteBugReport(' + i + ')"><i class="ph ph-trash"></i></button>';
       reportsHtml += '</div>';
-      reportsHtml += '<div style="font-size:0.8em;opacity:0.7;margin-bottom:6px">' + Core.utils.escapeHtml(r.description) + '</div>';
+      reportsHtml += '<div style="font-size:0.8em;opacity:0.7;margin-bottom:6px">' + esc(r.description) + '</div>';
       reportsHtml += '<div style="font-size:0.75em;opacity:0.6;display:flex;justify-content:space-between">';
       reportsHtml += '<span style="color:' + severityColor + ';font-weight:600">' + severityLabel + '</span>';
       reportsHtml += '<span>' + new Date(r.timestamp).toLocaleString('ru-RU') + '</span>';
-      reportsHtml += '</div>';
-      reportsHtml += '</div>';
+      reportsHtml += '</div></div>';
     }
     reportsHtml += '</div>';
   }
@@ -912,56 +476,35 @@ function openBugReportModal() {
       '<i class="ph ph-info" style="color:var(--accent-gold);font-size:1.2em;margin-top:2px"></i>' +
       '<div>Нашёл баг? Опиши его — мы исправим!</div>' +
     '</div>' +
-    '<div style="margin-bottom:12px">' +
-      '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Заголовок:</label>' +
-      '<input type="text" id="bugTitle" placeholder="Короткое описание проблемы" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
-    '</div>' +
-    '<div style="margin-bottom:12px">' +
-      '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Описание:</label>' +
-      '<textarea id="bugDescription" rows="4" placeholder="Что произошло? Что ожидалось?" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical;font-family:var(--font-primary)"></textarea>' +
-    '</div>' +
-    '<div style="margin-bottom:12px">' +
-      '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Шаги воспроизведения:</label>' +
-      '<textarea id="bugSteps" rows="3" placeholder="1. Открыл... 2. Нажал... 3. Произошло..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical;font-family:var(--font-primary)"></textarea>' +
-    '</div>' +
-    '<div style="margin-bottom:16px">' +
-      '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Серьёзность:</label>' +
+    '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Заголовок:</label>' +
+      '<input type="text" id="bugTitle" placeholder="Короткое описание проблемы" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
+    '<div style="margin-bottom:12px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Описание:</label>' +
+      '<textarea id="bugDescription" rows="4" placeholder="Что произошло?" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical;font-family:var(--font-primary)"></textarea></div>' +
+    '<div style="margin-bottom:16px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Серьёзность:</label>' +
       '<select id="bugSeverity" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
-        '<option value="low">🟢 Низкая — косметическая проблема</option>' +
-        '<option value="medium" selected>🟡 Средняя — что-то не работает как надо</option>' +
-        '<option value="high">🔴 Высокая — критическая ошибка</option>' +
-      '</select>' +
-    '</div>' +
+        '<option value="low">🟢 Низкая</option><option value="medium" selected>🟡 Средняя</option><option value="high">🔴 Высокая</option>' +
+      '</select></div>' +
     '<div style="display:flex;gap:10px;justify-content:flex-end">' +
       '<button class="btn btn-secondary" onclick="document.getElementById(\'bugReportModal\').remove()">Отмена</button>' +
       '<button class="btn btn-primary" onclick="submitBugReport()"><i class="ph ph-paper-plane-tilt"></i> Отправить</button>' +
-    '</div>' +
-    reportsHtml;
+    '</div>' + reportsHtml;
   modal.appendChild(content);
   document.body.appendChild(modal);
 }
+
 function submitBugReport() {
   var title = document.getElementById('bugTitle').value.trim();
   var description = document.getElementById('bugDescription').value.trim();
-  var steps = document.getElementById('bugSteps').value.trim();
   var severity = document.getElementById('bugSeverity').value;
-  if (!title) { alert('Введи заголовок'); return; }
-  if (!description) { alert('Введи описание'); return; }
+  if (!title || !description) { Notify.warn('Заполни заголовок и описание'); return; }
   var reports = getBugReports();
-  reports.unshift({
-    id: 'bug_' + Date.now(),
-    title: title,
-    description: description,
-    steps: steps,
-    severity: severity,
-    timestamp: Date.now(),
-    status: 'new'
-  });
+  reports.unshift({ id: 'bug_' + Date.now(), title: title, description: description, severity: severity, timestamp: Date.now(), status: 'new' });
   saveBugReports(reports);
   document.getElementById('bugReportModal').remove();
-  alert('✅ Баг-репорт сохранён! Спасибо!');
+  Notify.success('Баг-репорт сохранён! Спасибо!');
   if (typeof Logger !== 'undefined') Logger.log('Баг-репорт: ' + title, 'warn');
 }
+
 function deleteBugReport(idx) {
   if (!confirm('Удалить этот репорт?')) return;
   var reports = getBugReports();
@@ -970,10 +513,12 @@ function deleteBugReport(idx) {
   document.getElementById('bugReportModal').remove();
   openBugReportModal();
 }
+
 function renderBugReportsList() {
   var container = document.getElementById('bugReportsList');
   if (!container) return;
   var reports = getBugReports();
+  var esc = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.escapeHtml : function(t){return t;};
   if (reports.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.6"><i class="ph ph-bug" style="font-size:2em;color:var(--accent-gold);margin-bottom:10px;display:block"></i>Баг-репортов пока нет</div>';
     return;
@@ -984,14 +529,14 @@ function renderBugReportsList() {
     var severityColor = r.severity === 'high' ? 'var(--accent-error)' : r.severity === 'medium' ? 'var(--accent-warning)' : 'var(--accent-success)';
     var severityLabel = r.severity === 'high' ? 'Высокая' : r.severity === 'medium' ? 'Средняя' : 'Низкая';
     html += '<div class="module-item" style="border-left:3px solid ' + severityColor + '">';
-    html += '<div style="flex:1"><div style="font-weight:600;font-size:1.05em">' + Core.utils.escapeHtml(r.title) + '</div>';
-    html += '<div class="text-small" style="margin-top:4px">' + Core.utils.escapeHtml(r.description.substring(0, 100) + (r.description.length > 100 ? '...' : '')) + '</div>';
+    html += '<div style="flex:1"><div style="font-weight:600;font-size:1.05em">' + esc(r.title) + '</div>';
+    html += '<div class="text-small" style="margin-top:4px">' + esc(r.description.substring(0, 100) + (r.description.length > 100 ? '...' : '')) + '</div>';
     html += '<div class="text-small" style="margin-top:4px"><span style="color:' + severityColor + ';font-weight:600">' + severityLabel + '</span> · ' + new Date(r.timestamp).toLocaleString('ru-RU') + '</div></div>';
-    html += '<button class="btn btn-danger" onclick="deleteBugReportFromDev(' + i + ')" style="padding:8px 14px"><i class="ph ph-trash"></i></button>';
-    html += '</div>';
+    html += '<button class="btn btn-danger" onclick="deleteBugReportFromDev(' + i + ')" style="padding:8px 14px"><i class="ph ph-trash"></i></button></div>';
   }
   container.innerHTML = html;
 }
+
 function deleteBugReportFromDev(idx) {
   if (!confirm('Удалить этот репорт?')) return;
   var reports = getBugReports();
@@ -999,37 +544,46 @@ function deleteBugReportFromDev(idx) {
   saveBugReports(reports);
   renderBugReportsList();
 }
+
 function clearBugReports() {
   if (!confirm('Удалить ВСЕ баг-репорты?')) return;
-  localStorage.removeItem('ft_bug_reports');
+  try { localStorage.removeItem('ft_bug_reports'); } catch(e) {}
   renderBugReportsList();
-  alert('Все репорты удалены');
+  Notify.info('Все репорты удалены');
 }
+
 function updateHeaderLevel() {
   var stats = null;
-  try { stats = JSON.parse(localStorage.getItem('ft_stats')) || {xp:0, level:1, streak:0, yes:0}; } catch(e) {}
+  try { stats = JSON.parse(localStorage.getItem('ft_stats')) || {xp:0, level:1, streak:0, yes:0}; } catch (e) {}
   if (!stats) return;
   var level = stats.level || 1;
   var xp = stats.xp || 0;
   var xpNeeded = level * 100;
   var xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
-  var levelIcon = Core.utils.getLevelIcon(level);
+  
   var iconEl = document.getElementById('headerLevelIcon');
-  if (iconEl) iconEl.className = 'ph ' + levelIcon + ' profile-level-icon';
+  if (iconEl) {
+    var levelIcon = (typeof Core !== 'undefined' && Core.utils && Core.utils.getLevelIcon) ? Core.utils.getLevelIcon(level) : (level >= 50 ? 'ph-diamond' : level >= 20 ? 'ph-crown' : level >= 10 ? 'ph-trophy' : level >= 5 ? 'ph-star-four' : 'ph-star');
+    iconEl.className = 'ph ' + levelIcon + ' profile-level-icon';
+  }
+  
   var numEl = document.getElementById('headerLevelNum');
   if (numEl) {
     var oldVal = parseInt(numEl.textContent) || 0;
     if (oldVal !== level) animateNumber(numEl, oldVal, level, 600);
     else numEl.textContent = level;
   }
+  
   var xpCurEl = document.getElementById('headerXpCurrent');
   if (xpCurEl) {
     var oldXp = parseInt(xpCurEl.textContent) || 0;
     if (oldXp !== xp) animateNumber(xpCurEl, oldXp, xp, 800);
     else xpCurEl.textContent = xp;
   }
+  
   var xpNeedEl = document.getElementById('headerXpNeeded');
   if (xpNeedEl) xpNeedEl.textContent = xpNeeded;
+  
   var fillEl = document.getElementById('headerXpFill');
   if (fillEl) {
     var oldWidth = parseFloat(fillEl.style.width) || 0;
@@ -1041,6 +595,7 @@ function updateHeaderLevel() {
       setTimeout(function() { fillEl.classList.remove('xp-gained'); }, 800);
     }
   }
+  
   var achThresholds = [5, 10, 20, 50, 100];
   var nextAch = null;
   for (var i = 0; i < achThresholds.length; i++) {
@@ -1049,8 +604,9 @@ function updateHeaderLevel() {
   var achText = document.getElementById('headerAchText');
   if (achText) {
     if (nextAch) {
-      var totalXp = xp + (level - 1) * 100;
-      var nextTotalXp = (nextAch - 1) * 100;
+      var totalXp = (typeof Core !== 'undefined' && Core.utils && Core.utils.totalXp) ? Core.utils.totalXp(stats) : (xp + (level - 1。 100)); // Fallback
+      var nextTotalXp = 0;
+      for (var i = 1; i < nextAch; i++) nextTotalXp += i * 100;
       var xpToNext = Math.max(0, nextTotalXp - totalXp);
       achText.textContent = 'до ур. ' + nextAch + ': ' + xpToNext + ' XP';
     } else {
@@ -1058,6 +614,7 @@ function updateHeaderLevel() {
     }
   }
 }
+
 function animateNumber(el, from, to, duration) {
   var start = null;
   var range = to - from;
@@ -1066,21 +623,25 @@ function animateNumber(el, from, to, duration) {
     var progress = Math.min((timestamp - start) / duration, 1);
     var eased = 1 - Math.pow(1 - progress, 3);
     el.textContent = Math.floor(from + range * eased);
-    if (progress < 1) requestAnimationFrame(step);
+    if (progress < 1) window.requestAnimationFrame(step);
   }
-  requestAnimationFrame(step);
+  window.requestAnimationFrame(step);
 }
+
 function showAchievementToast(name, description, icon) {
   icon = icon || 'ph-trophy';
   var container = document.getElementById('achievementContainer');
   if (!container) return;
+  if (container.children.length >= 3) container.firstChild.remove();
+  
+  var esc = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.escapeHtml : function(t){return t;};
   var toast = document.createElement('div');
   toast.className = 'achievement-toast';
   toast.innerHTML = 
-    '<i class="ph ph-fill ' + icon + ' ach-icon"></i>' +
+    '<i class="ph ph-fill ' + esc(icon) + ' ach-icon"></i>' +
     '<div class="ach-text">' +
       '<div class="ach-title">🏆 Достижение разблокировано!</div>' +
-      '<div class="ach-desc"><strong>' + Core.utils.escapeHtml(name) + '</strong> — ' + Core.utils.escapeHtml(description) + '</div>' +
+      '<div class="ach-desc"><strong>' + esc(name) + '</strong> — ' + esc(description) + '</div>' +
     '</div>';
   container.appendChild(toast);
   createAchievementParticles();
@@ -1090,10 +651,11 @@ function showAchievementToast(name, description, icon) {
     setTimeout(function() { toast.remove(); }, 600);
   }, 4000);
 }
+
 function createAchievementParticles() {
   var container = document.getElementById('achievementParticles');
   if (!container) return;
-  var count = Math.min(20, 30);
+  var count = 20;
   for (var i = 0; i < count; i++) {
     var p = document.createElement('div');
     p.className = 'achievement-particle';
@@ -1109,27 +671,40 @@ function createAchievementParticles() {
     setTimeout(function(el) { el.remove(); }.bind(null, p), 2000);
   }
 }
+
 function refreshHeaderAfterXP() {
   updateHeaderLevel();
 }
+
 class ModuleManager {
   constructor() { this.loadedModules = new Map(); this.moduleStatus = new Map(); }
+
   async init() {
     Logger.log('Инициализация менеджера модулей...', 'info');
     applyTheme();
     updateSidebarProfile();
-    updateHeaderLevel();
-    await this.loadAllModules();
-    this.renderModuleList();
-    var self = this;
-    setTimeout(function() { self.initializeUserInterface(); }, 100);
-  }
-  async loadAllModules() {
+    
+    // Сначала грузим core
     var coreId = 'core';
     await this.loadModule(coreId, MODULE_REGISTRY[coreId]);
+    if (this.moduleStatus.get(coreId) === 'error') {
+      Logger.log('Критическая ошибка: ядро не загружено', 'error');
+      alert('Критическая ошибка: не удалось загрузить ядро системы. Проверь интернет.');
+      return;
+    }
+    
+    // Потом остальные параллельно
     var ids = Object.keys(MODULE_REGISTRY).filter(function(id) { return id !== coreId; });
     await Promise.all(ids.map(function(id) { return this.loadModule(id, MODULE_REGISTRY[id]); }.bind(this)));
+    
+    this.renderModuleList();
+    var self = this;
+    setTimeout(function() { 
+      self.initializeUserInterface();
+      updateHeaderLevel(); // Вызываем ПОСЛЕ загрузки Core
+    }, 100);
   }
+
   async loadModule(id, config) {
     var storageKey = STORAGE_PREFIX + id;
     var cachedData = localStorage.getItem(storageKey);
@@ -1139,7 +714,7 @@ class ModuleManager {
         if (cached.version === config.version) {
           Logger.log('Модуль ' + id + ' актуален (v' + cached.version + ')', 'info');
           this.executeModule(id, cached.code);
-          this.moduleStatus.set(id, 'loaded');
+          if (this.moduleStatus.get(id) !== 'error') this.moduleStatus.set(id, 'loaded');
           return;
         }
       } catch (e) { Logger.log('Ошибка чтения кэша ' + id, 'warn'); }
@@ -1157,9 +732,7 @@ class ModuleManager {
       localStorage.setItem(storageKey, JSON.stringify({ version: config.version, code: code, loadedAt: Date.now() }));
       Logger.log('Модуль ' + id + ' загружен (v' + config.version + ')', 'info');
       this.executeModule(id, code);
-      if (this.moduleStatus.get(id) !== 'error') {
-        this.moduleStatus.set(id, 'loaded');
-      }
+      if (this.moduleStatus.get(id) !== 'error') this.moduleStatus.set(id, 'loaded');
     } catch (error) {
       Logger.log('Ошибка загрузки ' + id + ': ' + error.message, 'error');
       this.moduleStatus.set(id, 'error');
@@ -1167,6 +740,7 @@ class ModuleManager {
     }
     this.renderModuleList();
   }
+
   executeModule(id, code) {
     try {
       var moduleExports = {};
@@ -1180,10 +754,12 @@ class ModuleManager {
       this.moduleStatus.set(id, 'error');
     }
   }
+
   require(moduleId) {
     if (!this.loadedModules.has(moduleId)) throw new Error('Модуль ' + moduleId + ' не загружен');
     return this.loadedModules.get(moduleId);
   }
+
   renderModuleList() {
     var container = document.getElementById('moduleList');
     if (!container) return;
@@ -1203,6 +779,7 @@ class ModuleManager {
     }
     container.innerHTML = html;
   }
+
   initializeUserInterface() {
     Logger.log('Инициализация пользовательского интерфейса...', 'info');
     this.loadedModules.forEach(function(module, id) {
@@ -1218,27 +795,30 @@ class ModuleManager {
       }
     });
     updateSidebarProfile();
-    updateHeaderLevel();
   }
+
   async retryModule(id) {
     var config = MODULE_REGISTRY[id];
     if (config) { localStorage.removeItem(STORAGE_PREFIX + id); await this.loadModule(id, config); }
   }
+
   clearModule(id) {
     if (confirm('Удалить модуль "' + MODULE_REGISTRY[id].name + '" из кэша?')) {
       localStorage.removeItem(STORAGE_PREFIX + id);
       this.loadedModules.delete(id);
-      this.moduleStatus.set(id, 'error');
+      this.moduleStatus.delete(id);
       this.renderModuleList();
       Logger.log('Модуль ' + id + ' удалён из кэша', 'info');
     }
   }
+
   async checkAllModules() {
     Logger.log('Проверка обновлений...', 'info');
     await this.loadAllModules();
     this.initializeUserInterface();
-    alert('Все модули проверены!');
+    Notify.success('Все модули проверены!');
   }
+
   clearAllCache() {
     if (confirm('Удалить все модули из кэша?')) {
       Object.keys(localStorage).forEach(function(key) {
@@ -1251,6 +831,7 @@ class ModuleManager {
     }
   }
 }
+
 var moduleManager = new ModuleManager();
 document.addEventListener('DOMContentLoaded', function() {
   switchMode('user');
