@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
 <title>FITNESS ELITE — Premium Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -32,7 +33,6 @@
   --radius-md: 16px;
   --radius-lg: 24px;
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --sidebar-width: 320px;
 }
 
 body.light-theme {
@@ -91,22 +91,13 @@ select, input[type="text"], input[type="number"], input[type="time"], input[type
 select:focus, input:focus, textarea:focus { outline: none; border-color: var(--border-gold) !important; }
 select option { background: var(--bg-secondary) !important; color: var(--text-primary) !important; }
 
-/* === STICKY HEADER (z-index снижен до 100) === */
 .header-wrapper {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 10000;
   padding: 8px 12px;
   background: var(--bg-primary);
-  transition: background 0.3s, margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Когда sidebar открыт — шапка сдвигается */
-body.sidebar-open .header-wrapper {
-  margin-left: var(--sidebar-width);
-  max-width: calc(1200px - var(--sidebar-width));
+  transition: background 0.3s;
 }
 
 .header {
@@ -195,7 +186,6 @@ body.sidebar-open .header-wrapper {
 .hamburger.active span:nth-child(2) { opacity: 0; }
 .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* === SIDEBAR === */
 .sidebar-overlay {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -209,7 +199,7 @@ body.sidebar-open .header-wrapper {
 
 .sidebar {
   position: fixed; top: 0; left: 0;
-  width: var(--sidebar-width); max-width: 85vw;
+  width: 320px; max-width: 85vw;
   height: 100vh;
   background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
   border-right: 1px solid var(--border-gold);
@@ -241,7 +231,12 @@ body.sidebar-open .header-wrapper {
   box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
-.sidebar-profile-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.sidebar-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
 
 .sidebar-profile-avatar {
   width: 52px; height: 52px;
@@ -275,7 +270,11 @@ body.sidebar-open .header-wrapper {
 
 .sidebar-profile-name i { font-size: 0.85em; color: var(--accent-gold); opacity: 0.7; }
 
-.sidebar-profile-sub { font-size: 0.75em; color: var(--text-secondary); margin-top: 2px; }
+.sidebar-profile-sub {
+  font-size: 0.75em;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
 
 .profile-level-block {
   background: rgba(0,0,0,0.2);
@@ -284,10 +283,22 @@ body.sidebar-open .header-wrapper {
   border: 1px solid var(--border-subtle);
 }
 
-body.light-theme .profile-level-block { background: rgba(166, 124, 0, 0.08); }
+body.light-theme .profile-level-block {
+  background: rgba(166, 124, 0, 0.08);
+}
 
-.profile-level-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.profile-level-left { display: flex; align-items: center; gap: 8px; }
+.profile-level-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.profile-level-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .profile-level-icon {
   font-size: 1.3em;
@@ -298,6 +309,10 @@ body.light-theme .profile-level-block { background: rgba(166, 124, 0, 0.08); }
 @keyframes levelPulse {
   0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--accent-gold)); }
   50% { transform: scale(1.1); filter: drop-shadow(0 0 8px var(--accent-gold)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header::before, .profile-level-icon, .loading .icon-large, .profile-xp-fill::after { animation: none !important; }
 }
 
 .profile-level-num {
@@ -321,9 +336,24 @@ body.light-theme .profile-level-block { background: rgba(166, 124, 0, 0.08); }
   letter-spacing: 0.5px;
 }
 
-.profile-xp-block { display: flex; flex-direction: column; gap: 3px; min-width: 90px; }
-.profile-xp-text { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--text-secondary); }
-.profile-xp-text strong { color: var(--accent-gold); font-weight: 700; }
+.profile-xp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 90px;
+}
+
+.profile-xp-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7em;
+  color: var(--text-secondary);
+}
+
+.profile-xp-text strong {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
 
 .profile-xp-bar {
   height: 5px;
@@ -334,7 +364,9 @@ body.light-theme .profile-level-block { background: rgba(166, 124, 0, 0.08); }
   position: relative;
 }
 
-body.light-theme .profile-xp-bar { background: rgba(166, 124, 0, 0.15); }
+body.light-theme .profile-xp-bar {
+  background: rgba(166, 124, 0, 0.15);
+}
 
 .profile-xp-fill {
   height: 100%;
@@ -348,15 +380,22 @@ body.light-theme .profile-xp-bar { background: rgba(166, 124, 0, 0.15); }
 .profile-xp-fill::after {
   content: '';
   position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
   animation: xpShine 2.5s ease-in-out infinite;
 }
 
-@keyframes xpShine { 0% { left: -100%; } 100% { left: 100%; } }
+@keyframes xpShine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
 
-.profile-xp-fill.xp-gained { animation: xpGain 0.8s ease-out; }
+.profile-xp-fill.xp-gained {
+  animation: xpGain 0.8s ease-out;
+}
 
 @keyframes xpGain {
   0% { filter: brightness(1); }
@@ -364,8 +403,19 @@ body.light-theme .profile-xp-bar { background: rgba(166, 124, 0, 0.15); }
   100% { filter: brightness(1); }
 }
 
-.profile-ach-hint { font-size: 0.65em; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.profile-ach-hint i { color: var(--accent-gold); font-size: 0.9em; }
+.profile-ach-hint {
+  font-size: 0.65em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.profile-ach-hint i {
+  color: var(--accent-gold);
+  font-size: 0.9em;
+}
 
 .sidebar-section { padding: 0 16px; margin-bottom: 12px; }
 .sidebar-section-title {
@@ -398,21 +448,12 @@ body.light-theme .profile-xp-bar { background: rgba(166, 124, 0, 0.15); }
 
 .sidebar-divider { height: 1px; background: var(--border-subtle); margin: 8px 20px 12px; }
 
-/* === MAIN CONTENT === */
 .main-content { 
   max-width: 1200px; 
   margin: 0 auto; 
   padding: 0 12px 30px;
-  transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeIn 0.5s ease-out; 
 }
-
-/* Когда sidebar открыт — контент сдвигается */
-body.sidebar-open .main-content {
-  margin-left: var(--sidebar-width);
-  max-width: calc(1200px - var(--sidebar-width));
-}
-
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .screen { display: none; }
@@ -485,7 +526,6 @@ body.sidebar-open .main-content {
 
 .text-small { font-size: 0.85em; opacity: 0.7; color: var(--text-secondary); }
 
-/* === МОДАЛКИ (z-index выше шапки) === */
 .workout-modal, .survey-modal, .ex-modal, .calendar-modal {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -514,7 +554,6 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* Уведомление об ачивке (поверх всего) */
 .achievement-toast {
   position: fixed;
   top: 20px;
@@ -550,27 +589,66 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 }
 @keyframes particleFall { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(100vh) scale(0); opacity: 0; } }
 
+/* Notify (toast-уведомления для модулей) */
+.notify-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 10500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 340px;
+  pointer-events: none;
+}
+.notify-toast {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-gold);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.9em;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  color: var(--text-primary);
+  pointer-events: auto;
+  animation: notifyIn 0.3s ease-out;
+  display: flex;
+  align-items: start;
+  gap: 10px;
+}
+.notify-toast.success { border-left-color: var(--accent-success); }
+.notify-toast.warn { border-left-color: var(--accent-warning); }
+.notify-toast.error { border-left-color: var(--accent-error); }
+.notify-toast .notify-icon { font-size: 1.2em; color: var(--accent-gold); margin-top: 1px; }
+.notify-toast.success .notify-icon { color: var(--accent-success); }
+.notify-toast.warn .notify-icon { color: var(--accent-warning); }
+.notify-toast.error .notify-icon { color: var(--accent-error); }
+@keyframes notifyIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes notifyOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(20px); } }
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold-light); }
 
+@media (prefers-reduced-motion: reduce) {
+  .screen.active, .main-content, .loading .icon-large, .achievement-toast, .achievement-toast .ach-icon, .achievement-particle, .notify-toast { animation: none !important; transition: none !important; }
+}
+
 @media (max-width: 768px) {
   body { padding: 0; }
   .header-wrapper { padding: 6px 8px; }
-  body.sidebar-open .header-wrapper { margin-left: 0; max-width: 100%; }
   .header { padding: 10px 14px; border-radius: var(--radius-md); }
   .header h1 { font-size: 1.1em; }
   .header h1 i { font-size: 0.9em; }
   .hamburger { width: 36px; height: 36px; }
   .theme-btn { width: 34px; height: 34px; font-size: 0.95em; }
   .main-content { padding: 0 10px 24px; }
-  body.sidebar-open .main-content { margin-left: 0; max-width: 100%; }
   .dev-panel { padding: 16px; }
   .module-item { flex-direction: column; align-items: flex-start; }
   .module-item > div:last-child { width: 100%; justify-content: flex-end; }
   .sidebar { width: 280px; }
-  :root { --sidebar-width: 280px; }
+  .notify-container { right: 10px; left: 10px; max-width: none; }
 }
 
 @media (max-width: 480px) {
@@ -587,14 +665,15 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 
 <div id="achievementContainer"></div>
 <div class="achievement-particles" id="achievementParticles"></div>
+<div class="notify-container" id="notifyContainer"></div>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Главное меню">
   <div class="sidebar-header">
     <h2><i class="ph ph-barbell"></i> FITNESS ELITE</h2>
   </div>
   
-  <div class="sidebar-profile" id="sidebarProfile" onclick="openProfileModal()">
+  <div class="sidebar-profile" id="sidebarProfile" onclick="openProfileModal()" role="button" tabindex="0" aria-label="Редактировать профиль">
     <div class="sidebar-profile-top">
       <div class="sidebar-profile-avatar" id="sidebarAvatar">
         <i class="ph ph-user-circle"></i>
@@ -652,16 +731,16 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 <div class="header-wrapper">
   <div class="header" id="mainHeader">
     <div class="header-left">
-      <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()">
+      <button class="hamburger" id="hamburgerBtn" onclick="event.stopPropagation(); toggleSidebar()" aria-label="Открыть меню">
         <span></span><span></span><span></span>
       </button>
       <h1 onclick="event.stopPropagation(); goHome()"><i class="ph ph-barbell"></i> FITNESS ELITE</h1>
     </div>
     <div class="header-right">
-      <button class="theme-btn" id="themeDarkBtn" onclick="event.stopPropagation(); setTheme('dark')" title="Тёмная тема">
+      <button class="theme-btn" id="themeDarkBtn" onclick="event.stopPropagation(); setTheme('dark')" title="Тёмная тема" aria-label="Тёмная тема">
         <i class="ph ph-moon-stars"></i>
       </button>
-      <button class="theme-btn" id="themeLightBtn" onclick="event.stopPropagation(); setTheme('light')" title="Светлая тема">
+      <button class="theme-btn" id="themeLightBtn" onclick="event.stopPropagation(); setTheme('light')" title="Светлая тема" aria-label="Светлая тема">
         <i class="ph ph-sun-horizon"></i>
       </button>
     </div>
@@ -716,63 +795,134 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 </div>
 
 <script>
+/* ============================================================
+   Logger — уровни + фильтр + инкрементальный рендер
+   ============================================================ */
 const Logger = {
   logs: [],
+  level: 'info',
+  maxLogs: 500,
+  _levels: { debug: 0, info: 1, warn: 2, error: 3 },
+
   log: function(message, type) {
     type = type || 'info';
+    if (this._levels[type] < this._levels[this.level]) return;
     var timestamp = new Date().toLocaleTimeString();
     this.logs.push({ timestamp: timestamp, message: message, type: type });
+    if (this.logs.length > this.maxLogs) this.logs.shift();
     if (type === 'error') console.error('[' + timestamp + '] ' + message);
     else if (type === 'warn') console.warn('[' + timestamp + '] ' + message);
+    else if (type === 'debug') console.debug('[' + timestamp + '] ' + message);
     else console.log('[' + timestamp + '] ' + message);
-    this.renderConsole();
+    this.appendToConsole({ timestamp: timestamp, message: message, type: type });
   },
+
+  setLevel: function(level) { this.level = level; },
+  debug: function(m) { this.log(m, 'debug'); },
+  info: function(m) { this.log(m, 'info'); },
+  warn: function(m) { this.log(m, 'warn'); },
+  error: function(m) { this.log(m, 'error'); },
+
+  appendToConsole: function(log) {
+    var container = document.getElementById('consoleLog');
+    if (!container) return;
+    var div = document.createElement('div');
+    div.className = log.type;
+    div.textContent = '[' + log.timestamp + '] ' + log.message;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  },
+
   renderConsole: function() {
     var container = document.getElementById('consoleLog');
     if (!container) return;
-    var html = '';
-    for (var i = 0; i < this.logs.length; i++) {
-      var log = this.logs[i];
-      html += '<div class="' + log.type + '">[' + log.timestamp + '] ' + log.message + '</div>';
-    }
-    container.innerHTML = html;
-    container.scrollTop = container.scrollHeight;
+    container.innerHTML = '';
+    for (var i = 0; i < this.logs.length; i++) this.appendToConsole(this.logs[i]);
   },
-  clear: function() { this.logs = []; this.renderConsole(); }
+
+  clear: function() { this.logs = []; this.renderConsole(); },
+
+  export: function() {
+    var text = this.logs.map(function(l) {
+      return '[' + l.timestamp + '] [' + l.type + '] ' + l.message;
+    }).join('\n');
+    var blob = new Blob([text], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'fitness_logs_' + new Date().toISOString().slice(0, 10) + '.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 };
 
+/* ============================================================
+   Notify — тосты для модулей
+   ============================================================ */
+const Notify = {
+  _show: function(message, type, icon, duration) {
+    var container = document.getElementById('notifyContainer');
+    if (!container) return;
+    var toast = document.createElement('div');
+    toast.className = 'notify-toast ' + type;
+    toast.innerHTML = '<i class="ph ' + icon + ' notify-icon"></i><div>' + String(message).replace(/[<>]/g, '') + '</div>';
+    container.appendChild(toast);
+    setTimeout(function() {
+      toast.style.animation = 'notifyOut 0.3s ease-out forwards';
+      setTimeout(function() { toast.remove(); }, 320);
+    }, duration || 3000);
+  },
+  info: function(m) { this._show(m, 'info', 'ph-info'); },
+  success: function(m) { this._show(m, 'success', 'ph-check-circle'); },
+  warn: function(m) { this._show(m, 'warn', 'ph-warning'); },
+  error: function(m) { this._show(m, 'error', 'ph-x-circle'); },
+
+  confirm: function(message) {
+    return new Promise(function(resolve) {
+      resolve(window.confirm(message));
+    });
+  }
+};
+
+/* ============================================================
+   MODULE_REGISTRY — обновлённые версии
+   ============================================================ */
 const MODULE_REGISTRY = {
-  'core': { name: 'Ядро системы', version: '3.4.0',
+  'core': { name: 'Ядро системы', version: '4.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
     required: true, description: 'Базовый функционал' },
-  'welcome': { name: 'Главная', version: '6.4.0',
+  'welcome': { name: 'Главная', version: '7.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
     required: false, description: 'Экран приветствия' },
-  'exercises': { name: 'База упражнений', version: '5.4.0',
+  'exercises': { name: 'База упражнений', version: '6.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
     required: false, description: 'CRUD упражнений с избранным' },
-  'plan': { name: 'План тренировок', version: '4.4.0',
+  'plan': { name: 'План тренировок', version: '5.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
     required: false, description: 'Настройка плана' },
-  'workout': { name: 'Тренировка', version: '3.4.0',
+  'workout': { name: 'Тренировка', version: '4.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js',
     required: false, description: 'Экран тренировки' },
-  'stats': { name: 'Статистика', version: '4.4.0',
+  'stats': { name: 'Статистика', version: '5.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js',
     required: false, description: 'Графики и аналитика' },
-  'survey': { name: 'Опросы', version: '3.4.0',
+  'survey': { name: 'Опросы', version: '4.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js',
     required: false, description: 'Конструктор опросов' },
-  'achievements': { name: 'Достижения', version: '1.2.0',
+  'achievements': { name: 'Достижения', version: '2.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js',
     required: false, description: 'Система достижений' },
-  'settings': { name: 'Настройки', version: '3.4.0',
+  'settings': { name: 'Настройки', version: '4.0.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js',
     required: false, description: 'Параметры и данные' }
 };
 
 const STORAGE_PREFIX = 'ft_module_';
+const FETCH_TIMEOUT_MS = 10000;
 
+/* ============================================================
+   Тема
+   ============================================================ */
 function getTheme() {
   try {
     var settings = JSON.parse(localStorage.getItem('ft_settings')) || {};
@@ -791,60 +941,69 @@ function setTheme(theme) {
     settings.theme = theme;
     localStorage.setItem('ft_settings', JSON.stringify(settings));
   } catch (e) {}
-  document.getElementById('themeDarkBtn').classList.toggle('active', theme === 'dark');
-  document.getElementById('themeLightBtn').classList.toggle('active', theme === 'light');
-  if (typeof Logger !== 'undefined') Logger.log('Тема изменена: ' + theme, 'info');
+  var darkBtn = document.getElementById('themeDarkBtn');
+  var lightBtn = document.getElementById('themeLightBtn');
+  if (darkBtn) darkBtn.classList.toggle('active', theme === 'dark');
+  if (lightBtn) lightBtn.classList.toggle('active', theme === 'light');
+  if (typeof Logger !== 'undefined') Logger.info('Тема изменена: ' + theme);
 }
 
 function applyTheme() {
   var theme = getTheme();
   document.body.classList.toggle('light-theme', theme === 'light');
-  document.getElementById('themeDarkBtn').classList.toggle('active', theme === 'dark');
-  document.getElementById('themeLightBtn').classList.toggle('active', theme === 'light');
+  var darkBtn = document.getElementById('themeDarkBtn');
+  var lightBtn = document.getElementById('themeLightBtn');
+  if (darkBtn) darkBtn.classList.toggle('active', theme === 'dark');
+  if (lightBtn) lightBtn.classList.toggle('active', theme === 'light');
 }
 
 function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebarOverlay');
   var hamburger = document.getElementById('hamburgerBtn');
-  sidebar.classList.toggle('active');
-  overlay.classList.toggle('active');
-  hamburger.classList.toggle('active');
-  // Добавляем/убираем класс sidebar-open для адаптации шапки и контента
-  document.body.classList.toggle('sidebar-open', sidebar.classList.contains('active'));
+  if (sidebar) sidebar.classList.toggle('active');
+  if (overlay) overlay.classList.toggle('active');
+  if (hamburger) hamburger.classList.toggle('active');
 }
 
 function goHome() {
   if (typeof Core !== 'undefined') Core.navigate('welcome');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('active')) toggleSidebar();
 }
 
 function switchMode(mode) {
-  document.getElementById('userInterface').style.display = mode === 'user' ? 'block' : 'none';
-  document.getElementById('devInterface').style.display = mode === 'dev' ? 'block' : 'none';
+  var ui = document.getElementById('userInterface');
+  var dev = document.getElementById('devInterface');
+  if (ui) ui.style.display = mode === 'user' ? 'block' : 'none';
+  if (dev) dev.style.display = mode === 'dev' ? 'block' : 'none';
   if (mode === 'dev') renderBugReportsList();
 }
 
 function clearConsole() { Logger.clear(); }
 
+/* ============================================================
+   Профиль (сайдбар)
+   ============================================================ */
+function _safeParse(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch (e) { return fallback; }
+}
+
 function updateSidebarProfile() {
   var nameEl = document.getElementById('sidebarName');
   var avatarEl = document.getElementById('sidebarAvatar');
   if (!nameEl || !avatarEl) return;
-  
-  var userName = '';
-  var userAvatar = null;
-  try {
-    userName = JSON.parse(localStorage.getItem('ft_user_name')) || '';
-    userAvatar = JSON.parse(localStorage.getItem('ft_user_avatar'));
-  } catch (e) {}
-  
-  nameEl.innerHTML = '<span>' + (userName || 'Гость') + '</span><i class="ph ph-pencil-simple"></i>';
-  
-  if (userAvatar && typeof userAvatar === 'string' && userAvatar.startsWith('data:image')) {
-    avatarEl.innerHTML = '<img src="' + userAvatar + '" alt="avatar">';
-  } else if (userAvatar && typeof userAvatar === 'string') {
+
+  var userName = _safeParse('ft_user_name', '');
+  var userAvatar = _safeParse('ft_user_avatar', null);
+
+  nameEl.innerHTML = '<span>' + String(userName || 'Гость').replace(/[<>]/g, '') + '</span><i class="ph ph-pencil-simple"></i>';
+
+  if (userAvatar && typeof userAvatar === 'string' && userAvatar.indexOf('data:image') === 0) {
+    avatarEl.innerHTML = '<img src="' + userAvatar.replace(/[<>"]/g, '') + '" alt="avatar">';
+  } else if (userAvatar && typeof userAvatar === 'string' && /^ph-[a-z0-9-]+$/.test(userAvatar)) {
     avatarEl.innerHTML = '<i class="ph ' + userAvatar + '"></i>';
   } else {
     avatarEl.innerHTML = '<i class="ph ph-user-circle"></i>';
@@ -852,12 +1011,11 @@ function updateSidebarProfile() {
 }
 
 function openProfileModal() {
-  var userName = '';
-  var userAvatar = null;
-  try {
-    userName = JSON.parse(localStorage.getItem('ft_user_name')) || '';
-    userAvatar = JSON.parse(localStorage.getItem('ft_user_avatar'));
-  } catch (e) {}
+  var userName = _safeParse('ft_user_name', '');
+  var userAvatar = _safeParse('ft_user_avatar', null);
+
+  var old = document.getElementById('profileModal');
+  if (old) old.remove();
 
   var modal = document.createElement('div');
   modal.className = 'ex-modal';
@@ -865,9 +1023,9 @@ function openProfileModal() {
   modal.style.zIndex = '2100';
 
   var avatarPreview = '';
-  if (userAvatar && typeof userAvatar === 'string' && userAvatar.startsWith('data:image')) {
-    avatarPreview = '<img src="' + userAvatar + '" style="width:100%;height:100%;object-fit:cover">';
-  } else if (userAvatar && typeof userAvatar === 'string') {
+  if (userAvatar && typeof userAvatar === 'string' && userAvatar.indexOf('data:image') === 0) {
+    avatarPreview = '<img src="' + userAvatar.replace(/[<>"]/g, '') + '" style="width:100%;height:100%;object-fit:cover">';
+  } else if (userAvatar && typeof userAvatar === 'string' && /^ph-[a-z0-9-]+$/.test(userAvatar)) {
     avatarPreview = '<i class="ph ' + userAvatar + '" style="font-size:3em;color:var(--accent-gold)"></i>';
   } else {
     avatarPreview = '<i class="ph ph-user-circle" style="font-size:3em;color:var(--accent-gold)"></i>';
@@ -877,7 +1035,7 @@ function openProfileModal() {
   content.className = 'ex-modal-content';
   content.style.maxWidth = '450px';
   content.innerHTML =
-    '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'profileModal\').remove()"><i class="ph ph-x"></i></button>' +
+    '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'profileModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
     '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-user-circle"></i> Профиль</h2>' +
     '<div style="text-align:center;margin:20px 0">' +
       '<div style="width:100px;height:100px;border-radius:50%;border:3px solid var(--border-gold);overflow:hidden;background:var(--bg-primary);display:inline-flex;align-items:center;justify-content:center">' + avatarPreview + '</div>' +
@@ -889,7 +1047,7 @@ function openProfileModal() {
     '</div>' +
     '<div style="margin-bottom:16px">' +
       '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Имя:</label>' +
-      '<input type="text" id="profileNameInput" value="' + userName + '" placeholder="Введи своё имя" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
+      '<input type="text" id="profileNameInput" value="' + String(userName || '').replace(/"/g, '&quot;') + '" placeholder="Введи своё имя" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
     '</div>' +
     '<div style="display:flex;gap:10px;justify-content:flex-end">' +
       '<button class="btn btn-secondary" onclick="document.getElementById(\'profileModal\').remove()">Отмена</button>' +
@@ -907,7 +1065,10 @@ function uploadAvatarFromProfile() {
   input.onchange = function(e) {
     var file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('Файл слишком большой. Максимум 2 МБ.'); return; }
+    if (file.size > 2 * 1024 * 1024) {
+      if (typeof Notify !== 'undefined') Notify.warn('Файл слишком большой. Максимум 2 МБ.'); else alert('Файл слишком большой. Максимум 2 МБ.');
+      return;
+    }
     var reader = new FileReader();
     reader.onload = function(ev) {
       var img = new Image();
@@ -922,9 +1083,10 @@ function uploadAvatarFromProfile() {
         ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
         var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         localStorage.setItem('ft_user_avatar', JSON.stringify(dataUrl));
-        document.getElementById('profileModal').remove();
+        var modal = document.getElementById('profileModal');
+        if (modal) modal.remove();
         updateSidebarProfile();
-        alert('Аватар обновлён!');
+        if (typeof Notify !== 'undefined') Notify.success('Аватар обновлён!'); else alert('Аватар обновлён!');
       };
       img.src = ev.target.result;
     };
@@ -949,31 +1111,58 @@ function chooseIconFromProfile() {
     {id:'ph-trophy', label:'Трофей'},
     {id:'ph-rocket', label:'Ракета'}
   ];
-  var choice = prompt('Введи номер иконки (1-' + icons.length + '):\n' + icons.map(function(ic, i) { return (i+1) + '. ' + ic.label; }).join('\n'));
-  if (!choice) return;
-  var idx = parseInt(choice) - 1;
-  if (idx >= 0 && idx < icons.length) {
-    localStorage.setItem('ft_user_avatar', JSON.stringify(icons[idx].id));
-    document.getElementById('profileModal').remove();
-    updateSidebarProfile();
+
+  var old = document.getElementById('iconPickerModal');
+  if (old) old.remove();
+
+  var modal = document.createElement('div');
+  modal.className = 'ex-modal';
+  modal.id = 'iconPickerModal';
+  modal.style.zIndex = '2200';
+  var content = document.createElement('div');
+  content.className = 'ex-modal-content';
+  content.style.maxWidth = '450px';
+
+  var html = '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'iconPickerModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>';
+  html += '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0">Выбери иконку</h2>';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px">';
+  for (var i = 0; i < icons.length; i++) {
+    html += '<button onclick="_setAvatarIcon(\'' + icons[i].id + '\')" style="padding:16px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-secondary);transition:all 0.2s" onmouseover="this.style.borderColor=\'var(--border-gold)\'" onmouseout="this.style.borderColor=\'var(--border-subtle)\'"><i class="ph ' + icons[i].id + '" style="font-size:2em;color:var(--accent-gold)"></i><span style="font-size:0.75em">' + icons[i].label + '</span></button>';
   }
+  html += '</div>';
+
+  content.innerHTML = html;
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+}
+
+function _setAvatarIcon(iconId) {
+  localStorage.setItem('ft_user_avatar', JSON.stringify(iconId));
+  var modal = document.getElementById('iconPickerModal');
+  if (modal) modal.remove();
+  updateSidebarProfile();
 }
 
 function removeAvatarFromProfile() {
   if (!confirm('Удалить аватар?')) return;
   localStorage.removeItem('ft_user_avatar');
-  document.getElementById('profileModal').remove();
+  var modal = document.getElementById('profileModal');
+  if (modal) modal.remove();
   updateSidebarProfile();
 }
 
 function saveProfileFromModal() {
   var name = document.getElementById('profileNameInput').value.trim();
   localStorage.setItem('ft_user_name', JSON.stringify(name));
-  document.getElementById('profileModal').remove();
+  var modal = document.getElementById('profileModal');
+  if (modal) modal.remove();
   updateSidebarProfile();
-  alert('Профиль сохранён!');
+  if (typeof Notify !== 'undefined') Notify.success('Профиль сохранён!'); else alert('Профиль сохранён!');
 }
 
+/* ============================================================
+   Баг-репорты
+   ============================================================ */
 function getBugReports() {
   try { return JSON.parse(localStorage.getItem('ft_bug_reports')) || []; }
   catch (e) { return []; }
@@ -984,8 +1173,12 @@ function saveBugReports(reports) {
 }
 
 function openBugReportModal() {
-  if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
-  
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('active')) toggleSidebar();
+
+  var old = document.getElementById('bugReportModal');
+  if (old) old.remove();
+
   var modal = document.createElement('div');
   modal.className = 'ex-modal';
   modal.id = 'bugReportModal';
@@ -1002,10 +1195,10 @@ function openBugReportModal() {
       var severityLabel = r.severity === 'high' ? 'Высокая' : r.severity === 'medium' ? 'Средняя' : 'Низкая';
       reportsHtml += '<div style="background:var(--bg-card);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ' + severityColor + '">';
       reportsHtml += '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">';
-      reportsHtml += '<div style="font-weight:600;color:var(--text-primary);flex:1">' + r.title + '</div>';
+      reportsHtml += '<div style="font-weight:600;color:var(--text-primary);flex:1">' + String(r.title || '').replace(/[<>]/g, '') + '</div>';
       reportsHtml += '<button class="btn btn-danger" style="padding:4px 8px;font-size:0.75em;margin-left:8px" onclick="deleteBugReport(' + i + ')"><i class="ph ph-trash"></i></button>';
       reportsHtml += '</div>';
-      reportsHtml += '<div style="font-size:0.8em;opacity:0.7;margin-bottom:6px">' + r.description + '</div>';
+      reportsHtml += '<div style="font-size:0.8em;opacity:0.7;margin-bottom:6px">' + String(r.description || '').replace(/[<>]/g, '') + '</div>';
       reportsHtml += '<div style="font-size:0.75em;opacity:0.6;display:flex;justify-content:space-between">';
       reportsHtml += '<span style="color:' + severityColor + ';font-weight:600">' + severityLabel + '</span>';
       reportsHtml += '<span>' + new Date(r.timestamp).toLocaleString('ru-RU') + '</span>';
@@ -1019,7 +1212,7 @@ function openBugReportModal() {
   content.className = 'ex-modal-content';
   content.style.maxWidth = '500px';
   content.innerHTML =
-    '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'bugReportModal\').remove()"><i class="ph ph-x"></i></button>' +
+    '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'bugReportModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
     '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-bug"></i> Баг-репорт</h2>' +
     '<div style="background:var(--accent-gold-dim);border:1px solid var(--border-gold);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.9em;display:flex;align-items:start;gap:10px">' +
       '<i class="ph ph-info" style="color:var(--accent-gold);font-size:1.2em;margin-top:2px"></i>' +
@@ -1061,8 +1254,8 @@ function submitBugReport() {
   var steps = document.getElementById('bugSteps').value.trim();
   var severity = document.getElementById('bugSeverity').value;
 
-  if (!title) { alert('Введи заголовок'); return; }
-  if (!description) { alert('Введи описание'); return; }
+  if (!title) { if (typeof Notify !== 'undefined') Notify.warn('Введи заголовок'); else alert('Введи заголовок'); return; }
+  if (!description) { if (typeof Notify !== 'undefined') Notify.warn('Введи описание'); else alert('Введи описание'); return; }
 
   var reports = getBugReports();
   reports.unshift({
@@ -1075,9 +1268,10 @@ function submitBugReport() {
     status: 'new'
   });
   saveBugReports(reports);
-  document.getElementById('bugReportModal').remove();
-  alert('✅ Баг-репорт сохранён! Спасибо!');
-  if (typeof Logger !== 'undefined') Logger.log('Баг-репорт: ' + title, 'warn');
+  var modal = document.getElementById('bugReportModal');
+  if (modal) modal.remove();
+  if (typeof Notify !== 'undefined') Notify.success('Баг-репорт сохранён! Спасибо!'); else alert('✅ Баг-репорт сохранён! Спасибо!');
+  Logger.warn('Баг-репорт: ' + title);
 }
 
 function deleteBugReport(idx) {
@@ -1085,7 +1279,8 @@ function deleteBugReport(idx) {
   var reports = getBugReports();
   reports.splice(idx, 1);
   saveBugReports(reports);
-  document.getElementById('bugReportModal').remove();
+  var modal = document.getElementById('bugReportModal');
+  if (modal) modal.remove();
   openBugReportModal();
 }
 
@@ -1103,8 +1298,8 @@ function renderBugReportsList() {
     var severityColor = r.severity === 'high' ? 'var(--accent-error)' : r.severity === 'medium' ? 'var(--accent-warning)' : 'var(--accent-success)';
     var severityLabel = r.severity === 'high' ? 'Высокая' : r.severity === 'medium' ? 'Средняя' : 'Низкая';
     html += '<div class="module-item" style="border-left:3px solid ' + severityColor + '">';
-    html += '<div style="flex:1"><div style="font-weight:600;font-size:1.05em">' + r.title + '</div>';
-    html += '<div class="text-small" style="margin-top:4px">' + r.description.substring(0, 100) + (r.description.length > 100 ? '...' : '') + '</div>';
+    html += '<div style="flex:1"><div style="font-weight:600;font-size:1.05em">' + String(r.title || '').replace(/[<>]/g, '') + '</div>';
+    html += '<div class="text-small" style="margin-top:4px">' + String(r.description || '').slice(0, 100).replace(/[<>]/g, '') + (String(r.description || '').length > 100 ? '...' : '') + '</div>';
     html += '<div class="text-small" style="margin-top:4px"><span style="color:' + severityColor + ';font-weight:600">' + severityLabel + '</span> · ' + new Date(r.timestamp).toLocaleString('ru-RU') + '</div></div>';
     html += '<button class="btn btn-danger" onclick="deleteBugReportFromDev(' + i + ')" style="padding:8px 14px"><i class="ph ph-trash"></i></button>';
     html += '</div>';
@@ -1124,45 +1319,48 @@ function clearBugReports() {
   if (!confirm('Удалить ВСЕ баг-репорты?')) return;
   localStorage.removeItem('ft_bug_reports');
   renderBugReportsList();
-  alert('Все репорты удалены');
+  if (typeof Notify !== 'undefined') Notify.success('Все репорты удалены'); else alert('Все репорты удалены');
 }
 
+/* ============================================================
+   Header XP/Level — использует Core.utils (если доступен)
+   ============================================================ */
 function updateHeaderLevel() {
-  var stats = null;
-  try { stats = JSON.parse(localStorage.getItem('ft_stats')) || {xp:0, level:1, streak:0, yes:0}; } catch(e) {}
+  var stats = _safeParse('ft_stats', {xp:0, level:1, streak:0, yes:0});
   if (!stats) return;
-  
+
   var level = stats.level || 1;
   var xp = stats.xp || 0;
   var xpNeeded = level * 100;
-  var xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
-  
-  var levelIcon = 'ph-star';
-  if (level >= 50) levelIcon = 'ph-diamond';
-  else if (level >= 20) levelIcon = 'ph-crown';
-  else if (level >= 10) levelIcon = 'ph-trophy';
-  else if (level >= 5) levelIcon = 'ph-star-four';
-  
+  var xpPercent = xpNeeded > 0 ? Math.min(100, Math.round((xp / xpNeeded) * 100)) : 0;
+
+  // Используем Core.utils, если доступен
+  var levelIcon = (typeof Core !== 'undefined' && Core.utils && Core.utils.getLevelIcon)
+    ? Core.utils.getLevelIcon(level)
+    : (level >= 50 ? 'ph-diamond' : level >= 20 ? 'ph-crown' : level >= 10 ? 'ph-trophy' : level >= 5 ? 'ph-star-four' : 'ph-star');
+
   var iconEl = document.getElementById('headerLevelIcon');
-  if (iconEl) iconEl.className = 'ph ' + levelIcon + ' profile-level-icon';
-  
+  if (iconEl) {
+    iconEl.className = 'ph ' + levelIcon + ' profile-level-icon';
+  }
+
   var numEl = document.getElementById('headerLevelNum');
   if (numEl) {
     var oldVal = parseInt(numEl.textContent) || 0;
     if (oldVal !== level) animateNumber(numEl, oldVal, level, 600);
     else numEl.textContent = level;
   }
-  
+
   var xpCurEl = document.getElementById('headerXpCurrent');
   if (xpCurEl) {
     var oldXp = parseInt(xpCurEl.textContent) || 0;
     if (oldXp !== xp) animateNumber(xpCurEl, oldXp, xp, 800);
     else xpCurEl.textContent = xp;
   }
-  
+
   var xpNeedEl = document.getElementById('headerXpNeeded');
   if (xpNeedEl) xpNeedEl.textContent = xpNeeded;
-  
+
   var fillEl = document.getElementById('headerXpFill');
   if (fillEl) {
     var oldWidth = parseFloat(fillEl.style.width) || 0;
@@ -1174,7 +1372,7 @@ function updateHeaderLevel() {
       setTimeout(function() { fillEl.classList.remove('xp-gained'); }, 800);
     }
   }
-  
+
   var achThresholds = [5, 10, 20, 50, 100];
   var nextAch = null;
   for (var i = 0; i < achThresholds.length; i++) {
@@ -1206,23 +1404,31 @@ function animateNumber(el, from, to, duration) {
   requestAnimationFrame(step);
 }
 
+/* ============================================================
+   Тосты достижений
+   ============================================================ */
 function showAchievementToast(name, description, icon) {
   icon = icon || 'ph-trophy';
   var container = document.getElementById('achievementContainer');
   if (!container) return;
-  
+
+  // Ограничиваем количество одновременных тостов
+  if (container.children.length >= 3) {
+    container.firstChild.remove();
+  }
+
   var toast = document.createElement('div');
   toast.className = 'achievement-toast';
   toast.innerHTML = 
-    '<i class="ph ph-fill ' + icon + ' ach-icon"></i>' +
+    '<i class="ph ph-fill ' + String(icon).replace(/[<>"]/g, '') + ' ach-icon"></i>' +
     '<div class="ach-text">' +
       '<div class="ach-title">🏆 Достижение разблокировано!</div>' +
-      '<div class="ach-desc"><strong>' + name + '</strong> — ' + description + '</div>' +
+      '<div class="ach-desc"><strong>' + String(name || '').replace(/[<>]/g, '') + '</strong> — ' + String(description || '').replace(/[<>]/g, '') + '</div>' +
     '</div>';
   container.appendChild(toast);
-  
+
   createAchievementParticles();
-  
+
   setTimeout(function() { toast.classList.add('show'); }, 50);
   setTimeout(function() { 
     toast.classList.remove('show');
@@ -1233,7 +1439,8 @@ function showAchievementToast(name, description, icon) {
 function createAchievementParticles() {
   var container = document.getElementById('achievementParticles');
   if (!container) return;
-  for (var i = 0; i < 30; i++) {
+  var count = Math.min(20, 20); // ограничено 20
+  for (var i = 0; i < count; i++) {
     var p = document.createElement('div');
     p.className = 'achievement-particle';
     p.style.left = Math.random() * 100 + '%';
@@ -1253,21 +1460,41 @@ function refreshHeaderAfterXP() {
   updateHeaderLevel();
 }
 
+/* ============================================================
+   ModuleManager
+   ============================================================ */
 class ModuleManager {
-  constructor() { this.loadedModules = new Map(); this.moduleStatus = new Map(); }
+  constructor() {
+    this.loadedModules = new Map();
+    this.moduleStatus = new Map();
+    this.fetchController = null;
+  }
 
   async init() {
-    Logger.log('Инициализация менеджера модулей...', 'info');
+    Logger.info('Инициализация менеджера модулей...');
     applyTheme();
     updateSidebarProfile();
     updateHeaderLevel();
     await this.loadAllModules();
     this.renderModuleList();
-    var self = this;
-    setTimeout(function() { self.initializeUserInterface(); }, 100);
+    this.initializeUserInterface();
   }
 
-  async loadAllModules() { for (var id in MODULE_REGISTRY) await this.loadModule(id, MODULE_REGISTRY[id]); }
+  async loadAllModules() {
+    // core — первым, последовательно
+    if (MODULE_REGISTRY.core) {
+      await this.loadModule('core', MODULE_REGISTRY.core);
+    }
+    // остальные — параллельно
+    var ids = [];
+    for (var id in MODULE_REGISTRY) {
+      if (id !== 'core') ids.push(id);
+    }
+    var self = this;
+    await Promise.all(ids.map(function(id) {
+      return self.loadModule(id, MODULE_REGISTRY[id]);
+    }));
+  }
 
   async loadModule(id, config) {
     var storageKey = STORAGE_PREFIX + id;
@@ -1276,28 +1503,40 @@ class ModuleManager {
       try {
         var cached = JSON.parse(cachedData);
         if (cached.version === config.version) {
-          Logger.log('Модуль ' + id + ' актуален (v' + cached.version + ')', 'info');
+          Logger.info('Модуль ' + id + ' актуален (v' + cached.version + ')');
           this.executeModule(id, cached.code);
-          this.moduleStatus.set(id, 'loaded');
+          this.moduleStatus.set(id, this.loadedModules.has(id) ? 'loaded' : 'error');
           return;
         }
-      } catch (e) { Logger.log('Ошибка чтения кэша ' + id, 'warn'); }
+      } catch (e) { Logger.warn('Ошибка чтения кэша ' + id); }
     }
-    Logger.log('Загрузка модуля ' + id + '...', 'info');
+    Logger.info('Загрузка модуля ' + id + '...');
     this.moduleStatus.set(id, 'loading');
     this.renderModuleList();
+
     try {
-      var response = await fetch(config.url);
+      var controller = new AbortController();
+      this.fetchController = controller;
+      var timeoutId = setTimeout(function() { controller.abort(); }, FETCH_TIMEOUT_MS);
+
+      var response = await fetch(config.url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      this.fetchController = null;
+
       if (!response.ok) throw new Error('HTTP ' + response.status);
       var code = await response.text();
       localStorage.setItem(storageKey, JSON.stringify({ version: config.version, code: code, loadedAt: Date.now() }));
-      Logger.log('Модуль ' + id + ' загружен (v' + config.version + ')', 'info');
+      Logger.info('Модуль ' + id + ' загружен (v' + config.version + ')');
       this.executeModule(id, code);
-      this.moduleStatus.set(id, 'loaded');
+      this.moduleStatus.set(id, this.loadedModules.has(id) ? 'loaded' : 'error');
     } catch (error) {
-      Logger.log('Ошибка загрузки ' + id + ': ' + error.message, 'error');
+      var msg = error.name === 'AbortError' ? 'Таймаут загрузки' : error.message;
+      Logger.error('Ошибка загрузки ' + id + ': ' + msg);
       this.moduleStatus.set(id, 'error');
-      if (config.required) alert('Критическая ошибка: не удалось загрузить модуль "' + config.name + '"');
+      if (config.required) {
+        if (typeof Notify !== 'undefined') Notify.error('Критическая ошибка: не удалось загрузить модуль «' + config.name + '»');
+        else alert('Критическая ошибка: не удалось загрузить модуль "' + config.name + '"');
+      }
     }
     this.renderModuleList();
   }
@@ -1306,12 +1545,14 @@ class ModuleManager {
     try {
       var moduleExports = {};
       var moduleContext = { exports: moduleExports, module: { exports: moduleExports } };
-      var func = new Function('module', 'exports', 'require', 'Logger', code);
+      // sourceURL для отладки
+      var codeWithSource = code + '\n//# sourceURL=module-' + id + '.js';
+      var func = new Function('module', 'exports', 'require', 'Logger', codeWithSource);
       func.call(moduleContext, moduleContext.module, moduleContext.exports, this.require.bind(this), Logger);
       this.loadedModules.set(id, moduleContext.module.exports);
-      Logger.log('Модуль ' + id + ' выполнен', 'info');
+      Logger.info('Модуль ' + id + ' выполнен');
     } catch (error) {
-      Logger.log('Ошибка выполнения ' + id + ': ' + error.message, 'error');
+      Logger.error('Ошибка выполнения ' + id + ': ' + error.message);
       this.moduleStatus.set(id, 'error');
     }
   }
@@ -1329,28 +1570,29 @@ class ModuleManager {
       var config = MODULE_REGISTRY[id];
       var status = this.moduleStatus.get(id) || 'loading';
       var statusText = { 'loaded': 'Загружен', 'loading': 'Загрузка...', 'error': 'Ошибка' }[status];
+      var statusColor = status === 'loaded' ? 'var(--accent-success)' : status === 'error' ? 'var(--accent-error)' : 'var(--accent-gold)';
       html += '<div class="module-item ' + status + '">';
       html += '<div style="flex:1;min-width:200px"><div style="font-weight:600;font-size:1.05em">' + config.name + '</div>';
       html += '<div class="text-small" style="margin-top:4px">' + config.description + '</div>';
-      html += '<div class="text-small" style="margin-top:4px">v' + config.version + ' · ' + statusText + '</div></div>';
+      html += '<div class="text-small" style="margin-top:4px">v' + config.version + ' · <span style="color:' + statusColor + '">' + statusText + '</span></div></div>';
       html += '<div style="display:flex;gap:8px">';
-      if (status === 'error') html += '<button class="btn btn-secondary" onclick="moduleManager.retryModule(\'' + id + '\')" style="padding:8px 14px"><i class="ph ph-arrows-clockwise"></i></button>';
-      html += '<button class="btn btn-danger" onclick="moduleManager.clearModule(\'' + id + '\')" style="padding:8px 14px"><i class="ph ph-trash"></i></button>';
+      if (status === 'error') html += '<button class="btn btn-secondary" onclick="moduleManager.retryModule(\'' + id + '\')" style="padding:8px 14px" aria-label="Повторить"><i class="ph ph-arrows-clockwise"></i></button>';
+      html += '<button class="btn btn-danger" onclick="moduleManager.clearModule(\'' + id + '\')" style="padding:8px 14px" aria-label="Удалить"><i class="ph ph-trash"></i></button>';
       html += '</div></div>';
     }
     container.innerHTML = html;
   }
 
   initializeUserInterface() {
-    Logger.log('Инициализация пользовательского интерфейса...', 'info');
+    Logger.info('Инициализация пользовательского интерфейса...');
     this.loadedModules.forEach(function(module, id) {
       if (module && module.init) {
         try {
-          Logger.log('Вызов init() для модуля ' + id + '...', 'info');
+          Logger.info('Вызов init() для модуля ' + id + '...');
           module.init();
-          Logger.log('Модуль ' + id + ' инициализирован', 'info');
+          Logger.info('Модуль ' + id + ' инициализирован');
         } catch (error) {
-          Logger.log('Ошибка инициализации ' + id + ': ' + error.message, 'error');
+          Logger.error('Ошибка инициализации ' + id + ': ' + error.message);
           console.error('Error in module ' + id + ':', error);
         }
       }
@@ -1365,35 +1607,46 @@ class ModuleManager {
   }
 
   clearModule(id) {
-    if (confirm('Удалить модуль "' + MODULE_REGISTRY[id].name + '" из кэша?')) {
-      localStorage.removeItem(STORAGE_PREFIX + id);
-      this.loadedModules.delete(id);
-      this.moduleStatus.delete(id);
-      this.renderModuleList();
-      Logger.log('Модуль ' + id + ' удалён из кэша', 'info');
-    }
+    if (!confirm('Удалить модуль "' + MODULE_REGISTRY[id].name + '" из кэша?')) return;
+    localStorage.removeItem(STORAGE_PREFIX + id);
+    this.loadedModules.delete(id);
+    this.moduleStatus.delete(id);
+    this.renderModuleList();
+    Logger.info('Модуль ' + id + ' удалён из кэша');
   }
 
   async checkAllModules() {
-    Logger.log('Проверка обновлений...', 'info');
+    Logger.info('Проверка обновлений...');
     await this.loadAllModules();
     this.initializeUserInterface();
-    alert('Все модули проверены!');
+    if (typeof Notify !== 'undefined') Notify.success('Все модули проверены!'); else alert('Все модули проверены!');
   }
 
   clearAllCache() {
-    if (confirm('Удалить все модули из кэша?')) {
-      Object.keys(localStorage).forEach(function(key) {
-        if (key.startsWith(STORAGE_PREFIX)) localStorage.removeItem(key);
-      });
-      this.loadedModules.clear();
-      this.moduleStatus.clear();
-      this.renderModuleList();
-      location.reload();
-    }
+    if (!confirm('Удалить все модули из кэша?')) return;
+    Object.keys(localStorage).forEach(function(key) {
+      if (key.indexOf(STORAGE_PREFIX) === 0) localStorage.removeItem(key);
+    });
+    this.loadedModules.clear();
+    this.moduleStatus.clear();
+    this.renderModuleList();
+    location.reload();
   }
 }
 
+/* ============================================================
+   Глобальные обработчики ошибок
+   ============================================================ */
+window.addEventListener('error', function(e) {
+  Logger.error('Глобальная ошибка: ' + (e.message || 'unknown') + (e.filename ? ' @ ' + e.filename + ':' + e.lineno : ''));
+});
+window.addEventListener('unhandledrejection', function(e) {
+  Logger.error('Unhandled promise rejection: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+});
+
+/* ============================================================
+   Инициализация
+   ============================================================ */
 var moduleManager = new ModuleManager();
 document.addEventListener('DOMContentLoaded', function() {
   switchMode('user');

@@ -4,6 +4,7 @@ const SurveyModule = {
   _currentQ: 0,
   _answers: {},
   _surveyCallback: null,
+  _isTestMode: false,
 
   EMOJI_SETS: {
     mood: { label: 'Настроение', emojis: { 1: '😢', 2: '😟', 3: '😐', 4: '🙂', 5: '😊', 6: '😄', 7: '🤩' } },
@@ -15,21 +16,21 @@ const SurveyModule = {
   },
 
   init: function() {
-    console.log('Survey module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль опросов инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { SurveyModule.setup(); });
     } else { this.setup(); }
   },
+
   setup: function() {
     this.createSurveyScreen();
-    if (typeof Core !== 'undefined') Core.addNavButton('Опросы', 'survey', '<i class="ph ph-clipboard-text"></i>');
+    if (typeof Core !== 'undefined') {
+      Core.addNavButton('Опросы', 'survey', '<i class="ph ph-clipboard-text"></i>');
+      Core.registerScreen('survey', function() { SurveyModule.createSurveyScreen(); });
+    }
   },
 
-  getSurveyConfig: function() {
-    if (typeof FTStorage !== 'undefined') return FTStorage.get('survey_config') || null;
-    return null;
-  },
+  getSurveyConfig: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('survey_config') : null) || null; },
   saveSurveyConfig: function(c) { if (typeof FTStorage !== 'undefined') FTStorage.set('survey_config', c); },
 
   getDefaultSurvey: function() {
@@ -45,6 +46,7 @@ const SurveyModule = {
   },
 
   createSurveyScreen: function() {
+    var esc = Core.utils.escapeHtml;
     var screen = document.getElementById('screen-survey');
     if (!screen) {
       screen = document.createElement('div');
@@ -52,9 +54,7 @@ const SurveyModule = {
       screen.className = 'screen';
       document.getElementById('userInterface').appendChild(screen);
     }
-    var config = this.getSurveyConfig();
-    if (!config) config = this.getDefaultSurvey();
-
+    var config = this.getSurveyConfig() || this.getDefaultSurvey();
     var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
 
     var css = '<style>' +
@@ -68,6 +68,10 @@ const SurveyModule = {
       '.type-badge.number { background:rgba(74,222,128,0.2); color:#4ade80; }' +
       '.type-badge.text { background:rgba(160,160,176,0.2); color:var(--text-secondary); }' +
       '.type-badge.yesno { background:rgba(167,139,250,0.2); color:#a78bfa; }' +
+      '.metric-chip { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:16px; cursor:pointer; transition:all 0.2s; user-select:none; white-space:nowrap; flex-shrink:0; font-size:0.85em; }' +
+      '.metric-chip:hover { border-color:var(--border-gold); }' +
+      '.metric-chip.active { border-color:var(--accent-gold); background:var(--accent-gold-dim); }' +
+      '@media (prefers-reduced-motion: reduce) { .survey-q, .metric-chip { transition: none !important; } }' +
     '</style>';
 
     var html = css + '<div style="padding:16px;max-width:700px;margin:0 auto">';
@@ -91,7 +95,7 @@ const SurveyModule = {
       html += '<div class="survey-q">';
       html += '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px">';
       html += '<div style="flex:1">';
-      html += '<div style="font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--accent-gold);font-weight:700">' + (i + 1) + '.</span> ' + q.text;
+      html += '<div style="font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--accent-gold);font-weight:700">' + (i + 1) + '.</span> ' + esc(q.text);
       if (isNumeric) html += ' <i class="ph ph-chart-line-up" style="color:var(--accent-gold);font-size:0.9em" title="Появится на графике"></i>';
       html += '</div>';
       html += '<div style="font-size:0.85em;opacity:0.7;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
@@ -102,8 +106,8 @@ const SurveyModule = {
       html += '</div>';
       html += '</div>';
       html += '<div style="display:flex;gap:6px">';
-      html += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" onclick="SurveyModule.editQuestion(' + i + ')"><i class="ph ph-pencil-simple"></i></button>';
-      html += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="SurveyModule.deleteQuestion(' + i + ')"><i class="ph ph-trash"></i></button>';
+      html += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" onclick="SurveyModule.editQuestion(' + i + ')" aria-label="Редактировать"><i class="ph ph-pencil-simple"></i></button>';
+      html += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="SurveyModule.deleteQuestion(' + i + ')" aria-label="Удалить"><i class="ph ph-trash"></i></button>';
       html += '</div></div></div>';
     }
 
@@ -120,25 +124,27 @@ const SurveyModule = {
   },
 
   openAddQuestionModal: function(editIdx) {
+    var esc = Core.utils.escapeHtml;
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
-    var q = editIdx !== undefined ? config.questions[editIdx] : null;
+    var q = (editIdx !== undefined && editIdx !== null) ? config.questions[editIdx] : null;
     var isEdit = q !== null;
+    var oldModal = document.getElementById('questionModal');
+    if (oldModal) oldModal.remove();
 
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'questionModal';
     modal.style.zIndex = '2100';
-
     var content = document.createElement('div');
     content.className = 'ex-modal-content';
     content.style.maxWidth = '500px';
 
     content.innerHTML =
-      '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'questionModal\').remove()"><i class="ph ph-x"></i></button>' +
+      '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'questionModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
       '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-plus-circle"></i> ' + (isEdit ? 'Редактировать вопрос' : 'Новый вопрос') + '</h2>' +
       '<div style="margin-bottom:14px">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Текст вопроса:</label>' +
-        '<input type="text" id="qText" value="' + (q ? q.text : '') + '" placeholder="Например: Как ты себя чувствуешь?" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
+        '<input type="text" id="qText" value="' + esc(q ? q.text : '') + '" placeholder="Например: Как ты себя чувствуешь?" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
       '</div>' +
       '<div style="margin-bottom:14px">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Тип вопроса:</label>' +
@@ -182,6 +188,7 @@ const SurveyModule = {
   },
 
   renderTypeSettings: function(type, q) {
+    var esc = Core.utils.escapeHtml;
     var container = document.getElementById('typeSettings');
     if (!container) return;
     q = q || {};
@@ -201,7 +208,7 @@ const SurveyModule = {
         '<div id="emojiSetSelector" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px"></div>' +
         '<div id="customEmojiEditor" style="display:none">' +
           '<label style="font-size:0.85em;opacity:0.7">Свои эмодзи (через запятую, от худшего к лучшему):</label>' +
-          '<input type="text" id="qEmojiCustom" value="' + (q.emojiList || '') + '" placeholder="😢,😟,😐,🙂,😊" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);margin-top:4px">' +
+          '<input type="text" id="qEmojiCustom" value="' + esc(q.emojiList || '') + '" placeholder="😢,😟,😐,🙂,😊" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);margin-top:4px">' +
         '</div>' +
       '</div>';
       setTimeout(function() { SurveyModule.renderEmojiSets(q); }, 10);
@@ -217,10 +224,10 @@ const SurveyModule = {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-hash" style="color:#4ade80"></i> Числовое поле:</label>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
-          '<div><label style="font-size:0.8em;opacity:0.7">Мин (опц.):</label><input type="number" id="qMin" value="' + (q.min || '') + '" placeholder="—" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
-          '<div><label style="font-size:0.8em;opacity:0.7">Макс (опц.):</label><input type="number" id="qMax" value="' + (q.max || '') + '" placeholder="—" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
+          '<div><label style="font-size:0.8em;opacity:0.7">Мин (опц.):</label><input type="number" id="qMin" value="' + (q.min !== undefined ? q.min : '') + '" placeholder="—" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
+          '<div><label style="font-size:0.8em;opacity:0.7">Макс (опц.):</label><input type="number" id="qMax" value="' + (q.max !== undefined ? q.max : '') + '" placeholder="—" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary)"></div>' +
         '</div>' +
-        '<div style="margin-top:10px"><label style="font-size:0.8em;opacity:0.7">Единица измерения (опц.):</label><input type="text" id="qUnit" value="' + (q.unit || '') + '" placeholder="кг, см, мин..." style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);margin-top:4px"></div>' +
+        '<div style="margin-top:10px"><label style="font-size:0.8em;opacity:0.7">Единица измерения (опц.):</label><input type="text" id="qUnit" value="' + esc(q.unit || '') + '" placeholder="кг, см, мин..." style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);margin-top:4px"></div>' +
       '</div>';
     } else if (type === 'yesno') {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
@@ -238,7 +245,7 @@ const SurveyModule = {
     var container = document.getElementById('emojiSetSelector');
     if (!container) return;
     var sets = this.EMOJI_SETS;
-    var currentSet = q && q.emojiSetName ? q.emojiSetName : 'mood';
+    var currentSet = (q && q.emojiSetName) ? q.emojiSetName : 'mood';
     container.innerHTML = '';
     for (var key in sets) {
       var s = sets[key];
@@ -265,7 +272,10 @@ const SurveyModule = {
 
   saveQuestion: function(editIdx) {
     var text = document.getElementById('qText').value.trim();
-    if (!text) { alert('Введи текст вопроса'); return; }
+    if (!text) {
+      if (typeof Notify !== 'undefined') Notify.warn('Введи текст вопроса'); else alert('Введи текст вопроса');
+      return;
+    }
 
     var typeSelector = document.getElementById('typeSelector');
     var activeType = typeSelector.querySelector('.metric-chip.active');
@@ -283,14 +293,21 @@ const SurveyModule = {
     }
 
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
-    var q = { id: editIdx !== null && editIdx !== undefined && config.questions[editIdx] ? config.questions[editIdx].id : 'q_' + Date.now(), type: type, text: text };
+    var isEdit = editIdx !== null && editIdx !== undefined && config.questions[editIdx];
+    var q = {
+      id: isEdit ? config.questions[editIdx].id : Core.utils.generateId('q'),
+      type: type, text: text
+    };
 
     if (type === 'rating' || type === 'range') {
       var minEl = document.getElementById('qMin');
       var maxEl = document.getElementById('qMax');
       q.min = minEl ? parseInt(minEl.value) || 1 : 1;
       q.max = maxEl ? parseInt(maxEl.value) || 10 : 10;
-      if (q.min >= q.max) { alert('Мин должен быть меньше макс'); return; }
+      if (q.min >= q.max) {
+        if (typeof Notify !== 'undefined') Notify.warn('Мин должен быть меньше макс'); else alert('Мин должен быть меньше макс');
+        return;
+      }
     } else if (type === 'number') {
       var minEl = document.getElementById('qMin');
       var maxEl = document.getElementById('qMax');
@@ -305,7 +322,10 @@ const SurveyModule = {
       if (setName === 'custom') {
         var customEl = document.getElementById('qEmojiCustom');
         var emojiList = customEl ? customEl.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e; }) : [];
-        if (emojiList.length < 2) { alert('Укажи хотя бы 2 эмодзи через запятую'); return; }
+        if (emojiList.length < 2) {
+          if (typeof Notify !== 'undefined') Notify.warn('Укажи хотя бы 2 эмодзи через запятую'); else alert('Укажи хотя бы 2 эмодзи через запятую');
+          return;
+        }
         q.emojiList = emojiList.join(',');
         q.emojiSet = {};
         emojiList.forEach(function(e, i) { q.emojiSet[i + 1] = e; });
@@ -321,13 +341,14 @@ const SurveyModule = {
       }
     }
 
-    if (editIdx !== null && editIdx !== undefined) {
+    if (isEdit) {
       config.questions[editIdx] = q;
     } else {
       config.questions.push(q);
     }
     this.saveSurveyConfig(config);
-    document.getElementById('questionModal').remove();
+    var modal = document.getElementById('questionModal');
+    if (modal) modal.remove();
     this.createSurveyScreen();
   },
 
@@ -343,9 +364,40 @@ const SurveyModule = {
 
   testSurvey: function() {
     var config = this.getSurveyConfig() || this.getDefaultSurvey();
-    if (config.questions.length === 0) { alert('Нет вопросов'); return; }
+    if (config.questions.length === 0) {
+      if (typeof Notify !== 'undefined') Notify.warn('Нет вопросов'); else alert('Нет вопросов');
+      return;
+    }
+    this._isTestMode = true;
     this.runSurvey(config, function(answers) {
-      alert('Опрос пройден! Ответы:\n\n' + JSON.stringify(answers, null, 2));
+      var modal = document.createElement('div');
+      modal.className = 'ex-modal';
+      modal.id = 'testResultModal';
+      modal.style.zIndex = '2300';
+      var content = document.createElement('div');
+      content.className = 'ex-modal-content';
+      content.style.maxWidth = '500px';
+      var pretty = JSON.stringify(answers, null, 2);
+      content.innerHTML =
+        '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'testResultModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
+        '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0">Результат теста</h2>' +
+        '<pre style="background:var(--bg-primary);padding:14px;border-radius:10px;overflow:auto;max-height:400px;font-size:0.85em;white-space:pre-wrap">' + Core.utils.escapeHtml(pretty) + '</pre>' +
+        '<div style="display:flex;gap:10px;margin-top:16px">' +
+          '<button class="btn btn-secondary" style="flex:1" onclick="document.getElementById(\'testResultModal\').remove()">Закрыть</button>' +
+          '<button class="btn btn-primary" style="flex:1" id="copyTestResult"><i class="ph ph-copy"></i> Скопировать</button>' +
+        '</div>';
+      modal.appendChild(content);
+      document.body.appendChild(modal);
+      var copyBtn = document.getElementById('copyTestResult');
+      if (copyBtn) {
+        copyBtn.onclick = function() {
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(pretty).then(function() {
+              if (typeof Notify !== 'undefined') Notify.success('Скопировано'); else alert('Скопировано');
+            });
+          }
+        };
+      }
     });
   },
 
@@ -353,6 +405,8 @@ const SurveyModule = {
     this._currentQ = 0;
     this._answers = {};
     this._surveyCallback = callback;
+    var oldModal = document.getElementById('finalSurveyModal');
+    if (oldModal) oldModal.remove();
     var modal = document.createElement('div');
     modal.className = 'workout-modal';
     modal.id = 'finalSurveyModal';
@@ -368,8 +422,9 @@ const SurveyModule = {
     var currentQ = SurveyModule._currentQ || 0;
     if (currentQ >= config.questions.length) {
       modal.remove();
-      SurveyModule._saveSurveyAnswers();
+      if (!SurveyModule._isTestMode) SurveyModule._saveSurveyAnswers();
       if (SurveyModule._surveyCallback) SurveyModule._surveyCallback(SurveyModule._answers);
+      SurveyModule._isTestMode = false;
       return;
     }
     var q = config.questions[currentQ];
@@ -394,12 +449,14 @@ const SurveyModule = {
       var buttonsDiv = document.createElement('div');
       buttonsDiv.style.cssText = 'display:flex;gap:6px;justify-content:center;flex-wrap:wrap';
       for (var v = q.min || 1; v <= (q.max || 10); v++) {
-        var btn = document.createElement('button');
-        btn.className = 'btn btn-secondary';
-        btn.textContent = v;
-        btn.style.cssText = 'width:44px;height:44px;font-size:1.1em';
-        (function(val) { btn.onclick = function() { SurveyModule._surveyAnswer(val); }; })(v);
-        buttonsDiv.appendChild(btn);
+        (function(val) {
+          var btn = document.createElement('button');
+          btn.className = 'btn btn-secondary';
+          btn.textContent = val;
+          btn.style.cssText = 'width:44px;height:44px;font-size:1.1em';
+          btn.onclick = function() { SurveyModule._surveyAnswer(val); };
+          buttonsDiv.appendChild(btn);
+        })(v);
       }
       answerArea.appendChild(buttonsDiv);
     } else if (q.type === 'emoji') {
@@ -407,13 +464,15 @@ const SurveyModule = {
       var buttonsDiv = document.createElement('div');
       buttonsDiv.style.cssText = 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap';
       for (var key in emojiSet) {
-        var btn = document.createElement('button');
-        btn.className = 'btn btn-secondary';
-        btn.textContent = emojiSet[key];
-        btn.title = 'Вариант ' + key;
-        btn.style.cssText = 'width:50px;height:50px;font-size:1.5em';
-        (function(val) { btn.onclick = function() { SurveyModule._surveyAnswer(val); }; })(parseInt(key));
-        buttonsDiv.appendChild(btn);
+        (function(val) {
+          var btn = document.createElement('button');
+          btn.className = 'btn btn-secondary';
+          btn.textContent = emojiSet[key];
+          btn.title = 'Вариант ' + key;
+          btn.style.cssText = 'width:50px;height:50px;font-size:1.5em';
+          btn.onclick = function() { SurveyModule._surveyAnswer(val); };
+          buttonsDiv.appendChild(btn);
+        })(parseInt(key));
       }
       answerArea.appendChild(buttonsDiv);
     } else if (q.type === 'range') {
@@ -449,7 +508,10 @@ const SurveyModule = {
       submitBtn.style.cssText = 'width:100%;margin-top:12px';
       submitBtn.onclick = function() {
         var val = parseFloat(input.value);
-        if (isNaN(val)) { alert('Введи число'); return; }
+        if (isNaN(val)) {
+          if (typeof Notify !== 'undefined') Notify.warn('Введи число'); else alert('Введи число');
+          return;
+        }
         SurveyModule._surveyAnswer(val);
       };
       answerArea.appendChild(submitBtn);
@@ -531,31 +593,51 @@ const SurveyModule = {
   },
 
   _saveSurveyAnswers: function() {
-    var todayStr = new Date().toISOString().slice(0, 10);
-    var history = [];
-    if (typeof FTStorage !== 'undefined') history = FTStorage.get('history') || [];
+    var todayStr = Core.utils.formatLocalDate(new Date());
+    var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
     var dayRecord = null;
     for (var i = 0; i < history.length; i++) {
       if (history[i].date === todayStr) { dayRecord = history[i]; break; }
     }
     if (!dayRecord) {
-      dayRecord = { date: todayStr, dayName: ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][(new Date().getDay() + 6) % 7], muscleGroup: '', exercises: [], details: [], duration: 0, timestamp: Date.now(), survey: {} };
+      dayRecord = {
+        date: todayStr,
+        dayName: Core.utils.getDayName(Core.utils.getTodayIndex()),
+        muscleGroup: '', exercises: [], details: [], duration: 0,
+        timestamp: Date.now(), survey: {}
+      };
       history.push(dayRecord);
     }
     if (!dayRecord.survey) dayRecord.survey = {};
+
+    // Проверка: если опрос уже был сегодня — не начисляем XP повторно
+    var alreadyHadSurvey = Object.keys(dayRecord.survey).length > 0;
+
     for (var key in SurveyModule._answers) {
       dayRecord.survey[key] = SurveyModule._answers[key];
     }
-    var stats = null;
-    if (typeof FTStorage !== 'undefined') stats = FTStorage.get('stats') || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
-    if (stats) {
+
+    if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
+    Core._historyMapCache = null;
+
+    if (!alreadyHadSurvey) {
+      var stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
       stats.xp = (stats.xp || 0) + 10;
       var xpNeeded = stats.level * 100;
-      if (stats.xp >= xpNeeded) { stats.xp -= xpNeeded; stats.level++; }
+      while (stats.xp >= xpNeeded) {
+        stats.xp -= xpNeeded;
+        stats.level++;
+        xpNeeded = stats.level * 100;
+      }
       if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+      if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
+      if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
+        AchievementsModule.checkAchievements();
+      }
+      if (typeof Notify !== 'undefined') Notify.success('Опрос сохранён! +10 XP'); else alert('✅ Опрос сохранён! +10 XP.');
+    } else {
+      if (typeof Notify !== 'undefined') Notify.success('Опрос обновлён'); else alert('✅ Опрос обновлён.');
     }
-    if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
-    alert('✅ Опрос сохранён! +10 XP. Данные добавлены в статистику.');
   }
 };
 

@@ -3,9 +3,9 @@
 const ExercisesModule = {
   editingId: null,
   currentFilter: 'all',
+  _dragScrollInited: false,
 
   init: function() {
-    console.log('Exercises module initialized');
     if (typeof Logger !== 'undefined') Logger.log('Модуль базы упражнений инициализирован', 'info');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() { ExercisesModule.setup(); });
@@ -14,12 +14,15 @@ const ExercisesModule = {
 
   setup: function() {
     this.createExercisesScreen();
-    if (typeof Core !== 'undefined') Core.addNavButton('База упражнений', 'exercises', '<i class="ph ph-books"></i>');
+    if (typeof Core !== 'undefined') {
+      Core.addNavButton('База упражнений', 'exercises', '<i class="ph ph-books"></i>');
+      Core.registerScreen('exercises', function() { ExercisesModule.createExercisesScreen(); });
+    }
   },
 
-  getDB: function() { if (typeof FTStorage !== 'undefined') return FTStorage.get('db') || []; return []; },
+  getDB: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('db') : null) || []; },
   saveDB: function(db) { if (typeof FTStorage !== 'undefined') FTStorage.set('db', db); },
-  getCategories: function() { if (typeof FTStorage !== 'undefined') return FTStorage.get('categories') || []; return []; },
+  getCategories: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('categories') : null) || []; },
   saveCategories: function(c) { if (typeof FTStorage !== 'undefined') FTStorage.set('categories', c); },
 
   getDefaultExercise: function() {
@@ -33,12 +36,6 @@ const ExercisesModule = {
     }
     this.saveDB(db);
     this.createExercisesScreen();
-  },
-
-  renderStars: function(count) {
-    var s = '';
-    for (var i = 1; i <= 5; i++) s += i <= count ? '<i class="ph-fill ph-star" style="color:var(--accent-gold)"></i>' : '<i class="ph ph-star" style="color:var(--text-secondary);opacity:0.3"></i>';
-    return s;
   },
 
   parseVideoUrl: function(url) {
@@ -57,6 +54,7 @@ const ExercisesModule = {
   },
 
   createExercisesScreen: function() {
+    var esc = Core.utils.escapeHtml;
     var screen = document.getElementById('screen-exercises');
     if (!screen) {
       screen = document.createElement('div');
@@ -67,20 +65,16 @@ const ExercisesModule = {
 
     var db = this.getDB();
     var categories = this.getCategories();
-    
     var favCount = 0;
     for (var i = 0; i < db.length; i++) if (db[i].favorite) favCount++;
 
     var filtered = db;
     if (this.currentFilter === 'favorites') {
-      filtered = [];
-      for (var i = 0; i < db.length; i++) if (db[i].favorite) filtered.push(db[i]);
+      filtered = db.filter(function(e) { return e.favorite; });
     } else if (this.currentFilter === 'uncategorized') {
-      filtered = [];
-      for (var i = 0; i < db.length; i++) if (!db[i].muscleGroup || db[i].muscleGroup === '') filtered.push(db[i]);
+      filtered = db.filter(function(e) { return !e.muscleGroup; });
     } else if (this.currentFilter !== 'all') {
-      filtered = [];
-      for (var i = 0; i < db.length; i++) if (db[i].muscleGroup === this.currentFilter) filtered.push(db[i]);
+      filtered = db.filter(function(e) { return e.muscleGroup === ExercisesModule.currentFilter; });
     }
 
     var css = '<style>' +
@@ -107,6 +101,7 @@ const ExercisesModule = {
       '.ex-view-section { background:var(--bg-primary); padding:14px; border-radius:10px; margin-bottom:12px; }' +
       '.ex-view-section h3 { color:var(--accent-gold); margin:0 0 10px 0; display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-size:1.1em; }' +
       '.ex-view-actions { display:flex; gap:10px; margin-top:20px; }' +
+      '@media (prefers-reduced-motion: reduce) { .ex-card, .cat-btn, .fav-btn { transition: none !important; } }' +
     '</style>';
 
     var toolbarHtml = '<div style="background:var(--bg-card);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
@@ -114,21 +109,23 @@ const ExercisesModule = {
     toolbarHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
     toolbarHtml += '<div style="display:flex;gap:6px;align-items:center">';
     var isSystemFilter = ['all', 'uncategorized', 'favorites'].indexOf(this.currentFilter) !== -1;
-    toolbarHtml += '<button class="cat-action-btn" ' + (isSystemFilter ? 'disabled' : '') + ' onclick="ExercisesModule.openCategoryForm(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Редактировать"><i class="ph ph-pencil-simple"></i></button>';
-    toolbarHtml += '<button class="cat-action-btn danger" ' + (isSystemFilter ? 'disabled' : '') + ' onclick="ExercisesModule.deleteCategory(\'' + this.currentFilter.replace(/'/g, "\\'") + '\')" title="Удалить"><i class="ph ph-trash"></i></button>';
+    toolbarHtml += '<button class="cat-action-btn" ' + (isSystemFilter ? 'disabled' : '') + ' onclick="ExercisesModule.openCategoryForm(\'' + esc(this.currentFilter).replace(/'/g, "\\'") + '\')" title="Редактировать"><i class="ph ph-pencil-simple"></i></button>';
+    toolbarHtml += '<button class="cat-action-btn danger" ' + (isSystemFilter ? 'disabled' : '') + ' onclick="ExercisesModule.deleteCategory(\'' + esc(this.currentFilter).replace(/'/g, "\\'") + '\')" title="Удалить"><i class="ph ph-trash"></i></button>';
     toolbarHtml += '<button class="cat-action-btn" onclick="ExercisesModule.openCategoryForm()" title="Добавить категорию" style="background:var(--accent-gold);color:#000;border-color:var(--accent-gold)"><i class="ph ph-plus"></i></button>';
     toolbarHtml += '</div></div>';
-    
+
     toolbarHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
-    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')" style="flex-shrink:0"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
     if (favCount > 0) {
-      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')" style="flex-shrink:0"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
+      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
     }
-    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')" style="flex-shrink:0"><i class="ph ph-question"></i> Без категории</button>';
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
     for (var i = 0; i < categories.length; i++) {
+      var cat = categories[i];
       var count = 0;
-      for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
-      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')" style="flex-shrink:0"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
+      for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === cat) count++;
+      var safeCat = esc(cat).replace(/'/g, "\\'");
+      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === cat ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + safeCat + '\')"><i class="ph ph-tag"></i> ' + esc(cat) + ' (' + count + ')</button>';
     }
     toolbarHtml += '</div>';
     toolbarHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Скролль мышкой или пальцем. Кликни на категорию.</div>';
@@ -136,14 +133,18 @@ const ExercisesModule = {
 
     var addBtnText = 'Добавить упражнение';
     if (this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites') {
-      addBtnText = 'Добавить в "' + this.currentFilter + '"';
+      addBtnText = 'Добавить в «' + esc(this.currentFilter) + '»';
     }
-    var addBtnHtml = '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:16px" onclick="ExercisesModule.openExForm(null, \'' + (this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites' ? this.currentFilter.replace(/'/g, "\\'") : '') + '\')"><i class="ph ph-plus-circle"></i> ' + addBtnText + '</button>';
+    var defaultCat = (this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites')
+      ? this.currentFilter : '';
+    var addBtnHtml = '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:1em;font-weight:600;margin-bottom:16px" onclick="ExercisesModule.openExForm(null, \'' + esc(defaultCat).replace(/'/g, "\\'") + '\')"><i class="ph ph-plus-circle"></i> ' + addBtnText + '</button>';
 
     var listHtml = '';
     if (filtered.length === 0) {
       var emptyIcon = this.currentFilter === 'favorites' ? 'ph-star' : 'ph-books';
-      var emptyText = this.currentFilter === 'favorites' ? 'Нет избранных упражнений. Нажми ☆ на упражнении.' : 'Ничего не найдено';
+      var emptyText = this.currentFilter === 'favorites'
+        ? 'Нет избранных упражнений. Нажми ☆ на упражнении.'
+        : 'Ничего не найдено. Добавь первое упражнение!';
       listHtml = '<div style="text-align:center;padding:40px;opacity:0.6"><i class="ph ' + emptyIcon + '" style="font-size:3em;color:var(--accent-gold);margin-bottom:10px;display:block"></i><p>' + emptyText + '</p></div>';
     } else {
       for (var i = 0; i < filtered.length; i++) {
@@ -151,23 +152,22 @@ const ExercisesModule = {
         var diff = ex.difficulty || 3;
         var eff = ex.effectiveness || 3;
         var isFav = ex.favorite ? 'favorite' : '';
-        listHtml += '<div class="ex-card ' + isFav + '" onclick="ExercisesModule.viewExercise(\'' + ex.id + '\')">';
+        listHtml += '<div class="ex-card ' + isFav + '" onclick="ExercisesModule.viewExercise(\'' + esc(ex.id) + '\')">';
         listHtml += '<div style="display:flex;justify-content:space-between;align-items:start">';
         listHtml += '<div style="flex:1">';
-        listHtml += '<h4 style="margin:0 0 6px 0;color:var(--accent-gold);font-size:1.05em;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + ex.name;
-        if (ex.videoUrl) listHtml += '<i class="ph ph-video-camera" style="color:var(--accent-neon)"></i>';
-        if (ex.imageUrl) listHtml += '<i class="ph ph-image" style="color:var(--accent-neon)"></i>';
+        listHtml += '<h4 style="margin:0 0 6px 0;color:var(--accent-gold);font-size:1.05em;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + esc(ex.name);
+        if (ex.videoUrl) listHtml += ' <i class="ph ph-video-camera" style="color:var(--accent-neon)"></i>';
+        if (ex.imageUrl) listHtml += ' <i class="ph ph-image" style="color:var(--accent-neon)"></i>';
         listHtml += '</h4>';
-        listHtml += '<div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории') + '</div>';
+        listHtml += '<div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i class="ph ph-tag"></i> ' + esc(ex.muscleGroup || 'Без категории') + '</div>';
         listHtml += '<div style="font-size:0.8em;opacity:0.7;display:flex;gap:16px;flex-wrap:wrap">';
-        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> ' + this.renderStars(diff) + '</span>';
-        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-target" style="color:var(--accent-success)"></i> ' + this.renderStars(eff) + '</span>';
-        listHtml += '</div>';
-        listHtml += '</div>';
+        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> ' + Core.utils.renderStars(diff) + '</span>';
+        listHtml += '<span style="display:flex;align-items:center;gap:4px"><i class="ph ph-target" style="color:var(--accent-success)"></i> ' + Core.utils.renderStars(eff) + '</span>';
+        listHtml += '</div></div>';
         listHtml += '<div style="display:flex;gap:6px;margin-left:10px;align-items:center">';
-        listHtml += '<button class="fav-btn ' + (ex.favorite ? 'active' : '') + '" onclick="event.stopPropagation();ExercisesModule.toggleFavorite(\'' + ex.id + '\')" title="В избранное"><i class="' + (ex.favorite ? 'ph-fill' : 'ph') + ' ph-star"></i></button>';
-        listHtml += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" onclick="event.stopPropagation();ExercisesModule.editExercise(\'' + ex.id + '\')"><i class="ph ph-pencil-simple"></i></button>';
-        listHtml += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="event.stopPropagation();ExercisesModule.deleteExercise(\'' + ex.id + '\')"><i class="ph ph-trash"></i></button>';
+        listHtml += '<button class="fav-btn ' + (ex.favorite ? 'active' : '') + '" onclick="event.stopPropagation();ExercisesModule.toggleFavorite(\'' + esc(ex.id) + '\')" title="В избранное"><i class="' + (ex.favorite ? 'ph-fill' : 'ph') + ' ph-star"></i></button>';
+        listHtml += '<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.85em" onclick="event.stopPropagation();ExercisesModule.editExercise(\'' + esc(ex.id) + '\')"><i class="ph ph-pencil-simple"></i></button>';
+        listHtml += '<button class="btn btn-danger" style="padding:6px 10px;font-size:0.85em" onclick="event.stopPropagation();ExercisesModule.deleteExercise(\'' + esc(ex.id) + '\')"><i class="ph ph-trash"></i></button>';
         listHtml += '</div></div></div>';
       }
     }
@@ -180,40 +180,64 @@ const ExercisesModule = {
         listHtml +
       '</div>';
 
-    setTimeout(function() { ExercisesModule.initDragScroll(); }, 100);
+    // Drag-scroll инициализируем один раз (флаг в объекте)
+    var self = this;
+    setTimeout(function() { self.initDragScroll(); }, 50);
   },
 
   initDragScroll: function() {
     var container = document.getElementById('catScrollContainer');
     if (!container) return;
+    if (container.dataset.dragInited === '1') return;
+    container.dataset.dragInited = '1';
+
     var isDown = false, startX, scrollLeft;
-    container.addEventListener('mousedown', function(e) { isDown = true; startX = e.pageX - container.offsetLeft; scrollLeft = container.scrollLeft; });
+    container.addEventListener('mousedown', function(e) {
+      isDown = true;
+      startX = e.pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
+    });
     container.addEventListener('mouseleave', function() { isDown = false; });
     container.addEventListener('mouseup', function() { isDown = false; });
-    container.addEventListener('mousemove', function(e) { if (!isDown) return; e.preventDefault(); var x = e.pageX - container.offsetLeft; container.scrollLeft = scrollLeft - (x - startX) * 2; });
+    container.addEventListener('mousemove', function(e) {
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - container.offsetLeft;
+      container.scrollLeft = scrollLeft - (x - startX) * 2;
+    });
     var touchStartX = 0, touchScrollLeft = 0;
-    container.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].pageX - container.offsetLeft; touchScrollLeft = container.scrollLeft; }, { passive: true });
-    container.addEventListener('touchmove', function(e) { var x = e.touches[0].pageX - container.offsetLeft; container.scrollLeft = touchScrollLeft - (x - touchStartX) * 2; }, { passive: true });
+    container.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].pageX - container.offsetLeft;
+      touchScrollLeft = container.scrollLeft;
+    }, { passive: true });
+    container.addEventListener('touchmove', function(e) {
+      var x = e.touches[0].pageX - container.offsetLeft;
+      container.scrollLeft = touchScrollLeft - (x - touchStartX) * 2;
+    }, { passive: true });
   },
 
   setFilter: function(f) { this.currentFilter = f; this.createExercisesScreen(); },
 
   openCategoryForm: function(oldName) {
-    var isEdit = oldName ? true : false;
+    var esc = Core.utils.escapeHtml;
+    var isEdit = !!oldName;
+    var oldModal = document.getElementById('catFormModal');
+    if (oldModal) oldModal.remove();
+
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'catFormModal';
     modal.innerHTML =
       '<div class="ex-modal-content" style="max-width:400px">' +
-        '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'catFormModal\').remove()"><i class="ph ph-x"></i></button>' +
+        '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'catFormModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
         '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px">' + (isEdit ? '<i class="ph ph-pencil-simple"></i> Редактировать' : '<i class="ph ph-plus-circle"></i> Новая категория') + '</h2>' +
         '<div style="margin-bottom:16px">' +
           '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Название:</label>' +
-          '<input type="text" id="catName" value="' + (isEdit ? oldName : '') + '" placeholder="Например: Грудь" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
+          '<input type="text" id="catName" value="' + esc(oldName || '') + '" placeholder="Например: Грудь" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' +
         '</div>' +
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
           '<button class="btn btn-secondary" onclick="document.getElementById(\'catFormModal\').remove()">Отмена</button>' +
-          '<button class="btn btn-primary" onclick="ExercisesModule.saveCategory(\'' + (isEdit ? oldName : '') + '\')"><i class="ph ph-floppy-disk"></i> Сохранить</button>' +
+          '<button class="btn btn-primary" onclick="ExercisesModule.saveCategory(\'' + esc(oldName || '').replace(/'/g, "\\'") + '\')"><i class="ph ph-floppy-disk"></i> Сохранить</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(modal);
@@ -221,10 +245,16 @@ const ExercisesModule = {
 
   saveCategory: function(oldName) {
     var newName = document.getElementById('catName').value.trim();
-    if (!newName) { alert('Введи название'); return; }
+    if (!newName) {
+      if (typeof Notify !== 'undefined') Notify.warn('Введи название'); else alert('Введи название');
+      return;
+    }
     var categories = this.getCategories();
     for (var i = 0; i < categories.length; i++) {
-      if (categories[i] === newName && categories[i] !== oldName) { alert('Такая категория уже существует'); return; }
+      if (categories[i] === newName && categories[i] !== oldName) {
+        if (typeof Notify !== 'undefined') Notify.warn('Такая категория уже существует'); else alert('Такая категория уже существует');
+        return;
+      }
     }
     if (oldName) {
       for (var i = 0; i < categories.length; i++) if (categories[i] === oldName) { categories[i] = newName; break; }
@@ -232,18 +262,19 @@ const ExercisesModule = {
       for (var i = 0; i < db.length; i++) if (db[i].muscleGroup === oldName) db[i].muscleGroup = newName;
       this.saveDB(db);
       if (this.currentFilter === oldName) this.currentFilter = newName;
-    } else { categories.push(newName); }
+    } else {
+      categories.push(newName);
+    }
     this.saveCategories(categories);
-    document.getElementById('catFormModal').remove();
+    var modal = document.getElementById('catFormModal');
+    if (modal) modal.remove();
     this.createExercisesScreen();
   },
 
   deleteCategory: function(name) {
-    if (!confirm('Удалить категорию "' + name + '"?\n\nУпражнения станут "Без категории".')) return;
+    if (!confirm('Удалить категорию «' + name + '»?\n\nУпражнения станут «Без категории».')) return;
     var categories = this.getCategories();
-    var newC = [];
-    for (var i = 0; i < categories.length; i++) if (categories[i] !== name) newC.push(categories[i]);
-    this.saveCategories(newC);
+    this.saveCategories(categories.filter(function(c) { return c !== name; }));
     var db = this.getDB();
     for (var i = 0; i < db.length; i++) if (db[i].muscleGroup === name) db[i].muscleGroup = '';
     this.saveDB(db);
@@ -252,6 +283,7 @@ const ExercisesModule = {
   },
 
   openExForm: function(id, defaultCategory) {
+    var esc = Core.utils.escapeHtml;
     this.editingId = id || null;
     var db = this.getDB();
     var categories = this.getCategories();
@@ -263,18 +295,21 @@ const ExercisesModule = {
     for (var i = 0; i < categories.length; i++) {
       var selected = (ex.muscleGroup === categories[i]) ? 'selected' : '';
       if (defaultCategory && !id && categories[i] === defaultCategory) selected = 'selected';
-      optionsHtml += '<option value="' + categories[i] + '" ' + selected + '>' + categories[i] + '</option>';
+      optionsHtml += '<option value="' + esc(categories[i]) + '" ' + selected + '>' + esc(categories[i]) + '</option>';
     }
+
+    var oldModal = document.getElementById('exFormModal');
+    if (oldModal) oldModal.remove();
 
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'exFormModal';
     modal.innerHTML =
       '<div class="ex-modal-content">' +
-        '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exFormModal\').remove()"><i class="ph ph-x"></i></button>' +
+        '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'exFormModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
         '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px">' + (id ? '<i class="ph ph-pencil-simple"></i> Редактирование' : '<i class="ph ph-plus-circle"></i> Новое упражнение') + '</h2>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Название: <span style="color:var(--accent-error)">*</span></label>' +
-          '<input type="text" id="exName" value="' + ex.name + '" placeholder="Например: Отжимания" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
+          '<input type="text" id="exName" value="' + esc(ex.name) + '" placeholder="Например: Отжимания" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em">Категория:</label>' +
           '<select id="exMuscleGroup" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em">' + optionsHtml + '</select></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">' +
@@ -294,15 +329,15 @@ const ExercisesModule = {
             '<option value="5" ' + (ex.effectiveness==5?'selected':'') + '>5 — Максимальная</option></select></div>' +
         '</div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-text-t"></i> Описание:</label>' +
-          '<textarea id="exDescription" rows="3" placeholder="Техника выполнения..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical">' + ex.description + '</textarea></div>' +
+          '<textarea id="exDescription" rows="3" placeholder="Техника выполнения..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical">' + esc(ex.description) + '</textarea></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-image"></i> Картинка (URL):</label>' +
-          '<input type="text" id="exImage" value="' + ex.imageUrl + '" placeholder="https://example.com/image.jpg" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
+          '<input type="text" id="exImage" value="' + esc(ex.imageUrl) + '" placeholder="https://example.com/image.jpg" style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-video-camera"></i> Видео (URL):</label>' +
-          '<input type="text" id="exVideo" value="' + ex.videoUrl + '" placeholder="YouTube, VK, Rutube..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
+          '<input type="text" id="exVideo" value="' + esc(ex.videoUrl) + '" placeholder="YouTube, VK, Rutube..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-backpack"></i> Инвентарь:</label>' +
-          '<input type="text" id="exInventory" value="' + ex.inventory + '" placeholder="гантели 10кг, коврик..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
+          '<input type="text" id="exInventory" value="' + esc(ex.inventory) + '" placeholder="гантели 10кг, коврик..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em"></div>' +
         '<div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-push-pin"></i> Заметки:</label>' +
-          '<textarea id="exNotes" rows="2" placeholder="Личные заметки..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical">' + ex.notes + '</textarea></div>' +
+          '<textarea id="exNotes" rows="2" placeholder="Личные заметки..." style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:1em;resize:vertical">' + esc(ex.notes) + '</textarea></div>' +
         '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
           '<button class="btn btn-secondary" onclick="document.getElementById(\'exFormModal\').remove()">Отмена</button>' +
           '<button class="btn btn-primary" onclick="ExercisesModule.saveExercise()"><i class="ph ph-floppy-disk"></i> Сохранить</button>' +
@@ -313,7 +348,10 @@ const ExercisesModule = {
 
   saveExercise: function() {
     var name = document.getElementById('exName').value.trim();
-    if (!name) { alert('Укажи название'); return; }
+    if (!name) {
+      if (typeof Notify !== 'undefined') Notify.warn('Укажи название'); else alert('Укажи название');
+      return;
+    }
     var db = this.getDB();
     var exData = {
       name: name,
@@ -334,15 +372,19 @@ const ExercisesModule = {
         break;
       }
     } else {
-      exData.id = 'ex_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      exData.id = Core.utils.generateId('ex');
       exData.createdAt = Date.now();
       exData.favorite = false;
       db.push(exData);
     }
     this.saveDB(db);
-    document.getElementById('exFormModal').remove();
+    var modal = document.getElementById('exFormModal');
+    if (modal) modal.remove();
     this.editingId = null;
     this.createExercisesScreen();
+    if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
+      AchievementsModule.checkAchievements();
+    }
   },
 
   editExercise: function(id) { this.openExForm(id); },
@@ -350,30 +392,31 @@ const ExercisesModule = {
   deleteExercise: function(id) {
     if (!confirm('Удалить упражнение?')) return;
     var db = this.getDB();
-    var newDb = [];
-    for (var i = 0; i < db.length; i++) if (db[i].id !== id) newDb.push(db[i]);
-    this.saveDB(newDb);
+    this.saveDB(db.filter(function(e) { return e.id !== id; }));
     this.createExercisesScreen();
   },
 
   viewExercise: function(id) {
+    var esc = Core.utils.escapeHtml;
     var db = this.getDB();
     var ex = null;
     for (var i = 0; i < db.length; i++) if (db[i].id === id) { ex = db[i]; break; }
     if (!ex) return;
 
     var self = this;
+    var oldModal = document.getElementById('exViewModal');
+    if (oldModal) oldModal.remove();
 
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'exViewModal';
-
     var content = document.createElement('div');
     content.className = 'ex-modal-content';
 
     var closeBtn = document.createElement('button');
     closeBtn.style.cssText = 'float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer';
     closeBtn.innerHTML = '<i class="ph ph-x"></i>';
+    closeBtn.setAttribute('aria-label', 'Закрыть');
     closeBtn.onclick = function() { modal.remove(); };
     content.appendChild(closeBtn);
 
@@ -383,6 +426,7 @@ const ExercisesModule = {
     title.style.cssText = 'font-family:var(--font-display);color:var(--accent-gold);margin:0;flex:1';
     title.textContent = ex.name;
     titleRow.appendChild(title);
+
     var favBtn = document.createElement('button');
     favBtn.className = 'fav-btn ' + (ex.favorite ? 'active' : '');
     favBtn.title = 'В избранное';
@@ -396,28 +440,28 @@ const ExercisesModule = {
 
     var catDiv = document.createElement('div');
     catDiv.style.cssText = 'font-size:0.9em;opacity:0.7;margin-bottom:12px;display:flex;align-items:center;gap:6px';
-    catDiv.innerHTML = '<i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории');
+    catDiv.innerHTML = '<i class="ph ph-tag"></i> ' + esc(ex.muscleGroup || 'Без категории');
     content.appendChild(catDiv);
 
     var starsDiv = document.createElement('div');
     starsDiv.style.cssText = 'display:flex;gap:20px;margin-bottom:16px;font-size:0.9em;flex-wrap:wrap';
-    starsDiv.innerHTML = 
-      '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> Сложность: ' + this.renderStars(ex.difficulty || 3) + '</div>' +
-      '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-success)"></i> Эффективность: ' + this.renderStars(ex.effectiveness || 3) + '</div>';
+    starsDiv.innerHTML =
+      '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-fire" style="color:var(--accent-warning)"></i> Сложность: ' + Core.utils.renderStars(ex.difficulty || 3) + '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-success)"></i> Эффективность: ' + Core.utils.renderStars(ex.effectiveness || 3) + '</div>';
     content.appendChild(starsDiv);
 
     if (ex.inventory) {
       var invDiv = document.createElement('div');
       invDiv.className = 'ex-view-section';
       invDiv.style.cssText = 'display:flex;align-items:start;gap:8px';
-      invDiv.innerHTML = '<i class="ph ph-backpack" style="color:var(--accent-gold);font-size:1.1em;margin-top:2px"></i><div><strong style="color:var(--accent-gold)">Инвентарь:</strong> ' + ex.inventory + '</div>';
+      invDiv.innerHTML = '<i class="ph ph-backpack" style="color:var(--accent-gold);font-size:1.1em;margin-top:2px"></i><div><strong style="color:var(--accent-gold)">Инвентарь:</strong> ' + esc(ex.inventory) + '</div>';
       content.appendChild(invDiv);
     }
 
     if (ex.description) {
       var descDiv = document.createElement('div');
       descDiv.className = 'ex-view-section';
-      descDiv.innerHTML = '<h3><i class="ph ph-text-t"></i> Описание</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + ex.description + '</p>';
+      descDiv.innerHTML = '<h3><i class="ph ph-text-t"></i> Описание</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + esc(ex.description) + '</p>';
       content.appendChild(descDiv);
     }
 
@@ -427,10 +471,8 @@ const ExercisesModule = {
       var imgTitle = document.createElement('h3');
       imgTitle.innerHTML = '<i class="ph ph-image"></i> Изображение';
       imgDiv.appendChild(imgTitle);
-      
       var imgWrap = document.createElement('div');
       imgWrap.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:100px';
-      
       var img = document.createElement('img');
       img.src = ex.imageUrl;
       img.alt = ex.name;
@@ -449,7 +491,6 @@ const ExercisesModule = {
       var videoTitle = document.createElement('h3');
       videoTitle.innerHTML = '<i class="ph ph-video-camera"></i> Видео';
       videoDiv.appendChild(videoTitle);
-      
       var videoInfo = this.parseVideoUrl(ex.videoUrl);
       if (videoInfo) {
         if (videoInfo.type === 'iframe') {
@@ -475,6 +516,7 @@ const ExercisesModule = {
         var link = document.createElement('a');
         link.href = ex.videoUrl;
         link.target = '_blank';
+        link.rel = 'noopener';
         link.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--bg-card);border-radius:8px;color:var(--accent-neon);text-decoration:none;border:1px solid var(--border-subtle)';
         link.innerHTML = '<i class="ph ph-external-link"></i> Открыть внешнее видео';
         videoDiv.appendChild(link);
@@ -486,26 +528,24 @@ const ExercisesModule = {
       var notesDiv = document.createElement('div');
       notesDiv.className = 'ex-view-section';
       notesDiv.style.cssText = 'border-left:3px solid var(--accent-gold)';
-      notesDiv.innerHTML = '<h3><i class="ph ph-push-pin"></i> Заметки</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + ex.notes + '</p>';
+      notesDiv.innerHTML = '<h3><i class="ph ph-push-pin"></i> Заметки</h3><p style="white-space:pre-wrap;margin:0;line-height:1.6">' + esc(ex.notes) + '</p>';
       content.appendChild(notesDiv);
     }
 
     var actionsDiv = document.createElement('div');
     actionsDiv.className = 'ex-view-actions';
-    
     var closeBtn2 = document.createElement('button');
     closeBtn2.className = 'btn btn-secondary';
     closeBtn2.innerHTML = '<i class="ph ph-x"></i> Закрыть';
     closeBtn2.onclick = function() { modal.remove(); };
     actionsDiv.appendChild(closeBtn2);
-
     var editBtn = document.createElement('button');
     editBtn.className = 'btn btn-primary';
     editBtn.innerHTML = '<i class="ph ph-pencil-simple"></i> Редактировать';
     editBtn.onclick = function() { modal.remove(); self.editExercise(ex.id); };
     actionsDiv.appendChild(editBtn);
-
     content.appendChild(actionsDiv);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
   }
