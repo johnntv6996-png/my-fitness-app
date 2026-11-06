@@ -187,27 +187,37 @@ const WelcomeModule = {
       if (totalXpEl) self.animateValue(totalXpEl, 0, totalXp, 1200);
     }, 300);
   },
-  startWorkout: function() {
-    var todayIdx = Core.utils.getTodayIndex();
-    var dayName = Core.utils.getDayName(todayIdx);
-    var todayStr = Core.utils.formatLocalDate(new Date());
-    var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
-    var filtered = [];
-    for (var i = 0; i < history.length; i++) {
-      if (!(history[i].date === todayStr && history[i].dayName === dayName && history[i].skipped)) {
-        filtered.push(history[i]);
-      }
-    }
-    if (typeof FTStorage !== 'undefined') FTStorage.set('history', filtered);
-    Core._historyMapCache = null;
-    if (typeof WorkoutModule !== 'undefined' && WorkoutModule.openWorkoutModal) {
-      WorkoutModule.openWorkoutModal();
-    } else if (typeof Notify !== 'undefined') {
-      Notify.error('Модуль тренировки ещё не загружен');
-    } else {
-      alert('Модуль тренировки ещё не загружен');
-    }
-  },
+	startWorkout: function() {
+		var todayIdx = Core.utils.getTodayIndex();
+		var dayName = Core.utils.getDayName(todayIdx);
+		var todayStr = Core.utils.formatLocalDate(new Date());
+		var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
+		var historyMap = Core.getHistoryMap(history);
+		var todayRecord = historyMap[todayStr];
+		
+		// Если день уже пройден — уведомление
+		if (todayRecord && !todayRecord.skipped && todayRecord.exercises && todayRecord.exercises.length > 0) {
+			if (typeof Notify !== 'undefined') Notify.info('Тренировка уже проведена сегодня!');
+			else alert('Тренировка уже проведена сегодня!');
+			return;
+		}
+		
+		var filtered = [];
+		for (var i = 0; i < history.length; i++) {
+			if (!(history[i].date === todayStr && history[i].dayName === dayName && history[i].skipped)) {
+				filtered.push(history[i]);
+			}
+		}
+		if (typeof FTStorage !== 'undefined') FTStorage.set('history', filtered);
+		if (typeof Core !== 'undefined') Core._historyMapCache = null;
+		if (typeof WorkoutModule !== 'undefined' && WorkoutModule.openWorkoutModal) {
+			WorkoutModule.openWorkoutModal();
+		} else if (typeof Notify !== 'undefined') {
+			Notify.error('Модуль тренировки ещё не загружен');
+		} else {
+			alert('Модуль тренировки ещё не загружен');
+		}
+	},
   goToPlan: function() {
     if (typeof moduleManager !== 'undefined' && moduleManager.loadedModules && moduleManager.loadedModules.has('plan')) {
       Core.navigate('plan');
@@ -217,52 +227,55 @@ const WelcomeModule = {
       alert('Модуль "План" ещё не добавлен.');
     }
   },
-  handleAnswer: function(answer) {
-    var todayIdx = Core.utils.getTodayIndex();
-    var dayName = Core.utils.getDayName(todayIdx);
-    var todayStr = Core.utils.formatLocalDate(new Date());
-    var stats = this.getStats();
-    var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
-    var plan = (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || [];
-    var historyMap = Core.getHistoryMap(history);
-    var todayRecord = historyMap[todayStr];
-    if (answer === 'later') {
-      if (stats.lastLaterDate === todayStr) {
-        if (typeof Notify !== 'undefined') Notify.info('Уже напомнил сегодня 🙂');
-        return;
-      }
-      stats.later = (stats.later || 0) + 1;
-      stats.lastLaterDate = todayStr;
-      if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
-      if (typeof Notify !== 'undefined') Notify.info('Хорошо, напомню позже!');
-      this.createWelcomeScreen();
-    } else if (answer === 'no') {
-      if (todayRecord && todayRecord.skipped) {
-        if (typeof Notify !== 'undefined') Notify.info('День уже отмечен как пропущенный');
-        return;
-      }
-      stats.no = (stats.no || 0) + 1;
-      stats.streak = 0;
-      stats.lastWorkoutDate = null;
-      if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
-      if (!todayRecord) {
-        var muscleGroup = '';
-        if (plan[todayIdx] && plan[todayIdx].muscleGroup) muscleGroup = plan[todayIdx].muscleGroup;
-        todayRecord = {
-          date: todayStr, dayName: dayName, muscleGroup: muscleGroup,
-          exercises: [], details: [], duration: 0, skipped: true, timestamp: Date.now()
-        };
-        history.push(todayRecord);
-      } else {
-        todayRecord.skipped = true;
-      }
-      if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
-      Core._historyMapCache = null;
-      if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
-      if (typeof Notify !== 'undefined') Notify.info('Понял, день пропущен. Завтра новый шанс!');
-      this.createWelcomeScreen();
-    }
-  }
+	handleAnswer: function(answer) {
+		var todayIdx = Core.utils.getTodayIndex();
+		var dayName = Core.utils.getDayName(todayIdx);
+		var todayStr = Core.utils.formatLocalDate(new Date());
+		var stats = this.getStats();
+		var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
+		var plan = (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || [];
+		var historyMap = Core.getHistoryMap(history);
+		var todayRecord = historyMap[todayStr];
+		
+		if (answer === 'later') {
+			if (stats.lastLaterDate === todayStr) {
+				if (typeof Notify !== 'undefined') Notify.info('Уже напомнил сегодня 🙂');
+				return;
+			}
+			stats.later = (stats.later || 0) + 1;
+			stats.lastLaterDate = todayStr;
+			if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+			// Показываем уведомление "напомню через 3 часа"
+			if (typeof Notify !== 'undefined') Notify.info('Напомню через 3 часа ⏰');
+			else alert('Напомню через 3 часа ⏰');
+			this.createWelcomeScreen();
+		} else if (answer === 'no') {
+			if (todayRecord && todayRecord.skipped) {
+				if (typeof Notify !== 'undefined') Notify.info('День уже отмечен как пропущенный');
+				return;
+			}
+			stats.no = (stats.no || 0) + 1;
+			stats.streak = 0;
+			stats.lastWorkoutDate = null;
+			if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+			if (!todayRecord) {
+				var muscleGroup = '';
+				if (plan[todayIdx] && plan[todayIdx].muscleGroup) muscleGroup = plan[todayIdx].muscleGroup;
+				todayRecord = {
+					date: todayStr, dayName: dayName, muscleGroup: muscleGroup,
+					exercises: [], details: [], duration: 0, skipped: true, timestamp: Date.now()
+				};
+				history.push(todayRecord);
+			} else {
+				todayRecord.skipped = true;
+			}
+			if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
+			if (typeof Core !== 'undefined') Core._historyMapCache = null;
+			if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
+			if (typeof Notify !== 'undefined') Notify.info('Понял, день пропущен. Завтра новый шанс!');
+			this.createWelcomeScreen();
+		}
+	}
 };
 window.WelcomeModule = WelcomeModule;
 module.exports = WelcomeModule;

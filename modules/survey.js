@@ -567,7 +567,7 @@ const SurveyModule = {
       dayRecord.survey[key] = SurveyModule._answers[key];
     }
     if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
-    Core._historyMapCache = null;
+    if (typeof Core !== 'undefined') Core._historyMapCache = null;
     if (!alreadyHadSurvey) {
       var stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
       stats.xp = (stats.xp || 0) + 10;

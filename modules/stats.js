@@ -13,6 +13,7 @@ const StatsModule = {
   lastMouseY: -1,
   _chartDataCache: null,
   _chartDataCacheKey: null,
+	_legendExpanded: false,
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль статистики инициализирован', 'info');
     if (document.readyState === 'loading') {
@@ -327,14 +328,15 @@ const StatsModule = {
       var zoomFactor = e.deltaY > 0 ? 1.15 : 0.87;
       self.zoomAtPoint(mouseX, mouseY, rect.width, rect.height, zoomFactor);
     }, { passive: false });
-    wrap.addEventListener('pointerdown', function(e) {
-      if (e.button !== 0 && e.pointerType === 'mouse') return;
-      self.isPanning = true;
-      self.panStart = { x: e.clientX, y: e.clientY };
-      self.panStartZoom = { xMin: self.zoom.xMin, xMax: self.zoom.xMax, yMin: self.zoom.yMin, yMax: self.zoom.yMax };
-      wrap.style.cursor = 'grabbing';
-      wrap.setPointerCapture && wrap.setPointerCapture(e.pointerId);
-    });
+		wrap.addEventListener('pointerdown', function(e) {
+			if (e.target.closest('.chart-legend')) return;
+			if (e.button !== 0 && e.pointerType === 'mouse') return;
+			self.isPanning = true;
+			self.panStart = { x: e.clientX, y: e.clientY };
+			self.panStartZoom = { xMin: self.zoom.xMin, xMax: self.zoom.xMax, yMin: self.zoom.yMin, yMax: self.zoom.yMax };
+			wrap.style.cursor = 'grabbing';
+			wrap.setPointerCapture && wrap.setPointerCapture(e.pointerId);
+		});
     wrap.addEventListener('pointermove', function(e) {
       if (!self.isPanning) { self.handleTooltip(e); return; }
       var rect = canvas.getBoundingClientRect();
@@ -604,37 +606,32 @@ const StatsModule = {
       var y = height - padding.bottom - ((v - this.zoom.yMin) / yRange) * chartHeight;
       ctx.fillText(v, padding.left - 4, y + 4);
     }
-    var oldLegend = document.getElementById('chartLegend');
-    if (oldLegend) oldLegend.remove();
-    var legendDiv = document.createElement('div');
-    legendDiv.id = 'chartLegend';
-    legendDiv.className = 'chart-legend';
-    var activeCount = 0;
-    for (var key in metrics) if (this.activeMetrics[key]) activeCount++;
-    var isExpanded = legendDiv.dataset.expanded === 'true';
-    legendDiv.dataset.expanded = isExpanded ? 'true' : 'false';
-    legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
-      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
-      '<i class="ph ' + (isExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
-    '</div>' +
-    (isExpanded ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto" id="legendItems"></div>' : '');
-    if (isExpanded) {
-      var itemsDiv = legendDiv.querySelector('#legendItems');
-      for (var key in metrics) {
-        var m = metrics[key];
-        if (!this.activeMetrics[key]) continue;
-        var item = document.createElement('div');
-        item.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8em';
-        item.innerHTML = '<div style="width:10px;height:10px;border-radius:3px;background:' + m.color + ';flex-shrink:0"></div><div style="color:var(--text-secondary);flex:1">' + Core.utils.escapeHtml(m.label) + '</div>';
-        itemsDiv.appendChild(item);
-      }
-    }
-    legendDiv.onclick = function() {
-      var expanded = this.dataset.expanded === 'true';
-      this.dataset.expanded = expanded ? 'false' : 'true';
-      StatsModule.drawChart();
-    };
-    wrap.appendChild(legendDiv);
+		var oldLegend = document.getElementById('chartLegend');
+		if (oldLegend) oldLegend.remove();
+		var legendDiv = document.createElement('div');
+		legendDiv.id = 'chartLegend';
+		legendDiv.className = 'chart-legend';
+		var hasAny = false;
+		var itemsHtml = '';
+		var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
+		for (var key in metrics) {
+			var m = metrics[key];
+			if (!this.activeMetrics[key]) continue;
+			hasAny = true;
+			itemsHtml += '<div class="legend-item"><div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + esc(m.label) + '</div></div>';
+		}
+		var activeCount = 0;
+		for (var key in metrics) if (this.activeMetrics[key]) activeCount++;
+		legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+			'<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
+			'<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
+		'</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
+		legendDiv.onclick = function(e) {
+			e.stopPropagation();
+			StatsModule._legendExpanded = !StatsModule._legendExpanded;
+			StatsModule.drawChart();
+		};
+		if (hasAny) wrap.appendChild(legendDiv);
   },
   openCalendar: function() {
     var esc = Core.utils.escapeHtml;
