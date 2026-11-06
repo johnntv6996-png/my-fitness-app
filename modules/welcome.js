@@ -77,7 +77,6 @@ const WelcomeModule = {
     var totalXp = stats.xp + (stats.level - 1) * 100;
     var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
 
-    // Аватар
     var avatarHtml = '';
     if (userAvatar && userAvatar.startsWith('data:image')) {
       avatarHtml = '<img src="' + userAvatar + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-gold)">';
@@ -90,7 +89,6 @@ const WelcomeModule = {
     var css = '<style>' +
       '@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }' +
       '@keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }' +
-      '@keyframes glow { 0%,100% { box-shadow:0 0 10px rgba(212,175,55,0.3); } 50% { box-shadow:0 0 25px rgba(212,175,55,0.6); } }' +
       '.w-fade { animation:fadeInUp 0.5s ease-out both; }' +
       '.w-delay-1 { animation-delay:0.1s; } .w-delay-2 { animation-delay:0.2s; }' +
       '.w-delay-3 { animation-delay:0.3s; } .w-delay-4 { animation-delay:0.4s; }' +
@@ -98,17 +96,16 @@ const WelcomeModule = {
       '.w-card { transition:transform 0.2s, box-shadow 0.2s; }' +
       '.w-card:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,0.3); }' +
       '.w-icon { color:var(--accent-gold); }' +
-      '.go-circle-btn { width:110px; height:110px; border-radius:50%; background:linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%); color:#000; border:none; font-size:0.9em; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(212,175,55,0.4); transition:all 0.2s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }' +
-      '.go-circle-btn:hover { transform:scale(1.05); box-shadow:0 8px 30px rgba(212,175,55,0.6); }' +
-      '.go-circle-btn:active { transform:scale(0.97); }' +
-      '.go-circle-btn i { font-size:2em; }' +
-      '.sub-btn { padding:10px 16px; font-size:0.85em; border-radius:20px; border:1px solid var(--border-subtle); background:var(--bg-card); color:var(--text-secondary); cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }' +
+      '.go-circle-btn { width:140px; height:140px; border-radius:50%; background:linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%); color:#000; border:none; font-size:0.95em; font-weight:700; cursor:pointer; box-shadow:0 6px 24px rgba(212,175,55,0.5); transition:all 0.2s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }' +
+      '.go-circle-btn:hover { transform:scale(1.08); box-shadow:0 10px 35px rgba(212,175,55,0.7); }' +
+      '.go-circle-btn:active { transform:scale(0.95); }' +
+      '.go-circle-btn i { font-size:2.5em; }' +
+      '.sub-btn { padding:9px 14px; font-size:0.82em; border-radius:18px; border:1px solid var(--border-subtle); background:var(--bg-card); color:var(--text-secondary); cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }' +
       '.sub-btn:hover { background:var(--accent-gold-dim); color:var(--text-primary); border-color:var(--border-gold); }' +
       '.sub-btn.danger:hover { background:rgba(248,113,113,0.15); border-color:var(--accent-error); color:var(--accent-error); }' +
-      '@media (max-width: 480px) { .go-circle-btn { width:95px; height:95px; font-size:0.85em; } .go-circle-btn i { font-size:1.7em; } }' +
+      '@media (max-width: 480px) { .go-circle-btn { width:120px; height:120px; font-size:0.9em; } .go-circle-btn i { font-size:2.2em; } }' +
     '</style>';
 
-    // Статус дня
     var statusHtml = '';
     if (todayRecord) {
       if (todayRecord.skipped) {
@@ -118,55 +115,42 @@ const WelcomeModule = {
       }
     }
 
-    // Индикатор плана (вместо "нет плана" в карточке приветствия)
     var planIndicator = '';
     if (exCount > 0) {
-      planIndicator = '<div class="w-fade w-delay-2" style="background:var(--bg-card);border-radius:10px;padding:10px 14px;margin-bottom:16px;border:1px solid var(--border-subtle);font-size:0.88em;display:flex;align-items:center;gap:10px"><i class="ph ph-list-checks" style="color:var(--accent-gold);font-size:1.2em"></i><div style="flex:1"><strong style="color:var(--accent-gold)">' + dayName + '</strong> · ' + exCount + ' упражнений</div><div style="font-size:0.8em;opacity:0.7">' + (todayPlan.muscleGroup || '') + '</div></div>';
+      planIndicator = '<div class="w-fade w-delay-2" style="background:var(--bg-card);border-radius:10px;padding:10px 14px;margin-bottom:14px;border:1px solid var(--border-subtle);font-size:0.88em;display:flex;align-items:center;gap:10px"><i class="ph ph-list-checks" style="color:var(--accent-gold);font-size:1.2em"></i><div style="flex:1"><strong style="color:var(--accent-gold)">' + dayName + '</strong> · ' + exCount + ' упражнений</div><div style="font-size:0.8em;opacity:0.7">' + (todayPlan.muscleGroup || '') + '</div></div>';
     } else {
-      planIndicator = '<div class="w-fade w-delay-2" style="background:var(--bg-card);border-radius:10px;padding:10px 14px;margin-bottom:16px;border:1px solid var(--border-gold);font-size:0.88em;display:flex;align-items:center;gap:10px"><i class="ph ph-calendar-plus" style="color:var(--accent-warning);font-size:1.2em"></i><div style="flex:1"><strong style="color:var(--accent-warning)">План на сегодня не составлен</strong></div><button class="btn btn-primary" style="padding:6px 12px;font-size:0.8em" onclick="WelcomeModule.goToPlan()"><i class="ph ph-plus"></i> Создать</button></div>';
+      planIndicator = '<div class="w-fade w-delay-2" style="background:var(--bg-card);border-radius:10px;padding:10px 14px;margin-bottom:14px;border:1px solid var(--border-gold);font-size:0.88em;display:flex;align-items:center;gap:10px"><i class="ph ph-calendar-plus" style="color:var(--accent-warning);font-size:1.2em"></i><div style="flex:1"><strong style="color:var(--accent-warning)">План на сегодня не составлен</strong></div><button class="btn btn-primary" style="padding:6px 12px;font-size:0.8em" onclick="WelcomeModule.goToPlan()"><i class="ph ph-plus"></i> Создать</button></div>';
     }
 
     screen.innerHTML = css +
       '<div style="padding:12px;max-width:480px;margin:0 auto">' +
-
-      // Карточка приветствия
       '<div class="w-fade w-delay-1" style="background:var(--bg-card);border-radius:14px;padding:14px 18px;border:1px solid var(--border-subtle);margin-bottom:12px">' +
         '<div style="display:flex;align-items:center;gap:12px">' +
           avatarHtml +
           '<div style="flex:1;min-width:0"><div style="font-size:1.05em;font-weight:600;color:var(--accent-gold);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + greeting + '</div><div style="font-size:0.82em;opacity:0.7;margin-top:2px">Сегодня <strong>' + dayName + '</strong></div></div>' +
         '</div>' +
       '</div>' +
-
       planIndicator +
-
-      // Круглая кнопка + подкнопки
-      '<div class="w-fade w-delay-2" style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px">' +
+      '<div class="w-fade w-delay-2" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:16px">' +
         (exCount > 0 
           ? '<button class="go-circle-btn" id="btnStartWorkout"><i class="ph ph-play-circle"></i><span>Начать</span></button>'
           : '<button class="go-circle-btn" onclick="WelcomeModule.goToPlan()"><i class="ph ph-calendar-plus"></i><span>План</span></button>'
         ) +
-        '<div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:220px">' +
+        '<div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:180px">' +
           '<button class="sub-btn" onclick="WelcomeModule.handleAnswer(\'later\')"><i class="ph ph-clock"></i> Позже</button>' +
           '<button class="sub-btn danger" onclick="WelcomeModule.handleAnswer(\'no\')"><i class="ph ph-x"></i> Пропустить</button>' +
         '</div>' +
       '</div>' +
-
       statusHtml +
-
-      // Карточки статистики (в одну линию, меньше)
       '<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin:14px 0">' +
         '<div class="w-card w-fade w-delay-2" style="background:var(--bg-card);border-radius:10px;padding:10px 6px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-flame w-pulse w-icon" style="font-size:1.3em"></i><div style="font-size:1.1em;font-weight:bold;color:var(--accent-gold);line-height:1.2;margin-top:3px"><span class="w-anim-streak">0</span></div><div style="font-size:0.68em;opacity:0.7">стрик</div></div>' +
         '<div class="w-card w-fade w-delay-3" style="background:var(--bg-card);border-radius:10px;padding:10px 6px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-barbell w-icon" style="font-size:1.3em"></i><div style="font-size:1.1em;font-weight:bold;color:var(--accent-gold);line-height:1.2;margin-top:3px"><span class="w-anim-workouts">0</span></div><div style="font-size:0.68em;opacity:0.7">тренировок</div></div>' +
         '<div class="w-card w-fade w-delay-4" style="background:var(--bg-card);border-radius:10px;padding:10px 6px;text-align:center;border:1px solid var(--border-subtle)"><i class="ph ph-lightning w-icon" style="font-size:1.3em"></i><div style="font-size:1.1em;font-weight:bold;color:var(--accent-gold);line-height:1.2;margin-top:3px"><span class="w-anim-totalxp">0</span></div><div style="font-size:0.68em;opacity:0.7">всего XP</div></div>' +
       '</div>' +
-
-      // Мотивация
       '<div class="w-fade w-delay-4" style="background:var(--bg-card);border-radius:10px;padding:10px 14px;margin-bottom:12px;border-left:3px solid var(--accent-gold);font-size:0.88em;display:flex;align-items:center;gap:10px">' +
         '<i class="ph ' + motivation.icon + ' w-icon" style="font-size:1.2em"></i>' +
         '<div style="color:var(--accent-gold);font-weight:600">' + motivation.text + '</div>' +
       '</div>' +
-
-      // Подсказка про XP
       (hintsEnabled ? '<details class="w-fade w-delay-4" style="background:var(--bg-card);border-radius:10px;padding:10px 14px;font-size:0.78em;opacity:0.85;cursor:pointer;border:1px solid var(--border-subtle)">' +
         '<summary style="font-weight:600;color:var(--accent-gold);margin-bottom:6px;display:flex;align-items:center;gap:8px"><i class="ph ph-info"></i> Как получать XP</summary>' +
         '<div style="margin-top:6px;line-height:1.5">' +
@@ -176,7 +160,6 @@ const WelcomeModule = {
           '<div style="display:flex;align-items:center;gap:8px"><i class="ph ph-chart-bar" style="color:var(--accent-success)"></i> Данные: <strong>+10 XP</strong></div>' +
         '</div>' +
       '</details>' : '') +
-
       '</div>';
 
     var self = this;

@@ -58,7 +58,6 @@ body.light-theme {
 body.light-theme .header { background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%); }
 body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-theme .ex-modal, body.light-theme .calendar-modal { background: rgba(245, 242, 235, 0.9); }
 body.light-theme .console-log { background: #1a1a1f; color: #4ade80; }
-body.light-theme .chart-container, body.light-theme .workout-modal-content, body.light-theme .survey-modal-content, body.light-theme .ex-modal-content, body.light-theme .calendar-content { background: var(--bg-secondary); }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -91,11 +90,10 @@ select, input[type="text"], input[type="number"], input[type="time"], input[type
 select:focus, input:focus, textarea:focus { outline: none; border-color: var(--border-gold) !important; }
 select option { background: var(--bg-secondary) !important; color: var(--text-primary) !important; }
 
-/* === STICKY HEADER === */
 .header-wrapper {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 10000;
   padding: 8px 12px;
   background: var(--bg-primary);
   transition: background 0.3s;
@@ -187,7 +185,6 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 .hamburger.active span:nth-child(2) { opacity: 0; }
 .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* === SIDEBAR === */
 .sidebar-overlay {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -217,7 +214,6 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 .sidebar-header { padding: 0 20px 16px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 12px; }
 .sidebar-header h2 { font-family: var(--font-display); color: var(--accent-gold); font-size: 1.2em; display: flex; align-items: center; gap: 10px; }
 
-/* === ПРОФИЛЬ В SIDEBAR (с уровнем) === */
 .sidebar-profile {
   padding: 16px 20px;
   margin: 0 16px 16px;
@@ -279,7 +275,6 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   margin-top: 2px;
 }
 
-/* Уровень в профиле */
 .profile-level-block {
   background: rgba(0,0,0,0.2);
   border-radius: 10px;
@@ -448,7 +443,6 @@ body.light-theme .profile-xp-bar {
 
 .sidebar-divider { height: 1px; background: var(--border-subtle); margin: 8px 20px 12px; }
 
-/* === MAIN CONTENT === */
 .main-content { 
   max-width: 1200px; 
   margin: 0 auto; 
@@ -555,7 +549,6 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* Уведомление об ачивке */
 .achievement-toast {
   position: fixed;
   top: 20px;
@@ -623,18 +616,15 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 </head>
 <body>
 
-<!-- Контейнер для уведомлений об ачивках -->
 <div id="achievementContainer"></div>
 <div class="achievement-particles" id="achievementParticles"></div>
 
-<!-- SIDEBAR -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <h2><i class="ph ph-barbell"></i> FITNESS ELITE</h2>
   </div>
   
-  <!-- ПРОФИЛЬ С УРОВНЕМ -->
   <div class="sidebar-profile" id="sidebarProfile" onclick="openProfileModal()">
     <div class="sidebar-profile-top">
       <div class="sidebar-profile-avatar" id="sidebarAvatar">
@@ -690,7 +680,6 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
   </div>
 </aside>
 
-<!-- HEADER (sticky) -->
 <div class="header-wrapper">
   <div class="header" id="mainHeader">
     <div class="header-left">
@@ -710,7 +699,6 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
   </div>
 </div>
 
-<!-- MAIN CONTENT -->
 <div class="main-content">
   <div id="userInterface">
     <div id="screen-welcome" class="screen active">
@@ -816,7 +804,6 @@ const MODULE_REGISTRY = {
 
 const STORAGE_PREFIX = 'ft_module_';
 
-// === ТЕМА ===
 function getTheme() {
   try {
     var settings = JSON.parse(localStorage.getItem('ft_settings')) || {};
@@ -847,7 +834,6 @@ function applyTheme() {
   document.getElementById('themeLightBtn').classList.toggle('active', theme === 'light');
 }
 
-// === SIDEBAR ===
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('sidebarOverlay').classList.toggle('active');
@@ -868,7 +854,6 @@ function switchMode(mode) {
 
 function clearConsole() { Logger.clear(); }
 
-// === ПРОФИЛЬ ===
 function updateSidebarProfile() {
   var nameEl = document.getElementById('sidebarName');
   var avatarEl = document.getElementById('sidebarAvatar');
@@ -1015,7 +1000,6 @@ function saveProfileFromModal() {
   alert('Профиль сохранён!');
 }
 
-// === БАГ-РЕПОРТ ===
 function getBugReports() {
   try { return JSON.parse(localStorage.getItem('ft_bug_reports')) || []; }
   catch (e) { return []; }
@@ -1169,7 +1153,6 @@ function clearBugReports() {
   alert('Все репорты удалены');
 }
 
-// === ОБНОВЛЕНИЕ ШАПКИ (уровень + XP) ===
 function updateHeaderLevel() {
   var stats = null;
   try { stats = JSON.parse(localStorage.getItem('ft_stats')) || {xp:0, level:1, streak:0, yes:0}; } catch(e) {}
@@ -1220,7 +1203,6 @@ function updateHeaderLevel() {
     }
   }
   
-  // Подсказка до следующей ачивки
   var achThresholds = [5, 10, 20, 50, 100];
   var nextAch = null;
   for (var i = 0; i < achThresholds.length; i++) {
@@ -1252,7 +1234,6 @@ function animateNumber(el, from, to, duration) {
   requestAnimationFrame(step);
 }
 
-// === УВЕДОМЛЕНИЕ ОБ АЧИВКЕ ===
 function showAchievementToast(name, description, icon) {
   icon = icon || 'ph-trophy';
   var container = document.getElementById('achievementContainer');
@@ -1300,7 +1281,6 @@ function refreshHeaderAfterXP() {
   updateHeaderLevel();
 }
 
-// === MODULE MANAGER ===
 class ModuleManager {
   constructor() { this.loadedModules = new Map(); this.moduleStatus = new Map(); }
 

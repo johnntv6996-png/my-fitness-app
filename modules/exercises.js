@@ -90,7 +90,7 @@ const ExercisesModule = {
       '.ex-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:1000; display:flex; justify-content:center; align-items:center; padding:15px; }' +
       '.ex-modal-content { background:var(--bg-secondary); padding:28px; border-radius:24px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
-      '.cat-scroll-container { display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:8px 4px; scrollbar-width:none; cursor:grab; user-select:none; }' +
+      '.cat-scroll-container { display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:8px 4px; scrollbar-width:none; cursor:grab; user-select:none; -webkit-overflow-scrolling:touch; }' +
       '.cat-scroll-container:active { cursor:grabbing; }' +
       '.cat-scroll-container::-webkit-scrollbar { display:none; }' +
       '.cat-btn { padding:8px 14px; font-size:0.85em; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; transition:all 0.2s; background:var(--bg-card); color:var(--text-secondary); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0; }' +
@@ -109,7 +109,6 @@ const ExercisesModule = {
       '.ex-view-actions { display:flex; gap:10px; margin-top:20px; }' +
     '</style>';
 
-    // Тулбар категорий
     var toolbarHtml = '<div style="background:var(--bg-card);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border-subtle)">';
     toolbarHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">';
     toolbarHtml += '<div style="font-weight:600;font-size:0.95em;display:flex;align-items:center;gap:8px"><i class="ph ph-folder" style="color:var(--accent-gold)"></i> Категории</div>';
@@ -121,21 +120,20 @@ const ExercisesModule = {
     toolbarHtml += '</div></div>';
     
     toolbarHtml += '<div class="cat-scroll-container" id="catScrollContainer">';
-    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'all\')" style="flex-shrink:0"><i class="ph ph-squares-four"></i> Все (' + db.length + ')</button>';
     if (favCount > 0) {
-      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
+      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')" style="flex-shrink:0"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
     }
-    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
+    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')" style="flex-shrink:0"><i class="ph ph-question"></i> Без категории</button>';
     for (var i = 0; i < categories.length; i++) {
       var count = 0;
       for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === categories[i]) count++;
-      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
+      toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === categories[i] ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'' + categories[i].replace(/'/g, "\\'") + '\')" style="flex-shrink:0"><i class="ph ph-tag"></i> ' + categories[i] + ' (' + count + ')</button>';
     }
     toolbarHtml += '</div>';
-    toolbarHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Перетаскивай мышкой для навигации. Кликни на категорию для фильтрации.</div>';
+    toolbarHtml += '<div class="hint" style="margin-top:10px;display:flex;align-items:center;gap:6px"><i class="ph ph-info"></i> Скролль мышкой или пальцем. Кликни на категорию.</div>';
     toolbarHtml += '</div>';
 
-    // Кнопка "Добавить упражнение" ПОД категориями
     var addBtnText = 'Добавить упражнение';
     if (this.currentFilter !== 'all' && this.currentFilter !== 'uncategorized' && this.currentFilter !== 'favorites') {
       addBtnText = 'Добавить в "' + this.currentFilter + '"';
@@ -358,7 +356,6 @@ const ExercisesModule = {
     this.createExercisesScreen();
   },
 
-  // === ИСПРАВЛЕННАЯ ФУНКЦИЯ ПРОСМОТРА (через createElement) ===
   viewExercise: function(id) {
     var db = this.getDB();
     var ex = null;
@@ -367,7 +364,6 @@ const ExercisesModule = {
 
     var self = this;
 
-    // Создаём модалку
     var modal = document.createElement('div');
     modal.className = 'ex-modal';
     modal.id = 'exViewModal';
@@ -375,14 +371,12 @@ const ExercisesModule = {
     var content = document.createElement('div');
     content.className = 'ex-modal-content';
 
-    // Кнопка закрытия
     var closeBtn = document.createElement('button');
     closeBtn.style.cssText = 'float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer';
     closeBtn.innerHTML = '<i class="ph ph-x"></i>';
     closeBtn.onclick = function() { modal.remove(); };
     content.appendChild(closeBtn);
 
-    // Заголовок + избранное
     var titleRow = document.createElement('div');
     titleRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:12px';
     var title = document.createElement('h2');
@@ -400,13 +394,11 @@ const ExercisesModule = {
     titleRow.appendChild(favBtn);
     content.appendChild(titleRow);
 
-    // Категория
     var catDiv = document.createElement('div');
     catDiv.style.cssText = 'font-size:0.9em;opacity:0.7;margin-bottom:12px;display:flex;align-items:center;gap:6px';
     catDiv.innerHTML = '<i class="ph ph-tag"></i> ' + (ex.muscleGroup || 'Без категории');
     content.appendChild(catDiv);
 
-    // Звёзды
     var starsDiv = document.createElement('div');
     starsDiv.style.cssText = 'display:flex;gap:20px;margin-bottom:16px;font-size:0.9em;flex-wrap:wrap';
     starsDiv.innerHTML = 
@@ -414,7 +406,6 @@ const ExercisesModule = {
       '<div style="display:flex;align-items:center;gap:6px"><i class="ph ph-target" style="color:var(--accent-success)"></i> Эффективность: ' + this.renderStars(ex.effectiveness || 3) + '</div>';
     content.appendChild(starsDiv);
 
-    // Инвентарь
     if (ex.inventory) {
       var invDiv = document.createElement('div');
       invDiv.className = 'ex-view-section';
@@ -423,7 +414,6 @@ const ExercisesModule = {
       content.appendChild(invDiv);
     }
 
-    // Описание
     if (ex.description) {
       var descDiv = document.createElement('div');
       descDiv.className = 'ex-view-section';
@@ -431,7 +421,6 @@ const ExercisesModule = {
       content.appendChild(descDiv);
     }
 
-    // Изображение
     if (ex.imageUrl) {
       var imgDiv = document.createElement('div');
       imgDiv.className = 'ex-view-section';
@@ -454,7 +443,6 @@ const ExercisesModule = {
       content.appendChild(imgDiv);
     }
 
-    // Видео
     if (ex.videoUrl) {
       var videoDiv = document.createElement('div');
       videoDiv.className = 'ex-view-section';
@@ -494,7 +482,6 @@ const ExercisesModule = {
       content.appendChild(videoDiv);
     }
 
-    // Заметки
     if (ex.notes) {
       var notesDiv = document.createElement('div');
       notesDiv.className = 'ex-view-section';
@@ -503,7 +490,6 @@ const ExercisesModule = {
       content.appendChild(notesDiv);
     }
 
-    // Кнопки действий
     var actionsDiv = document.createElement('div');
     actionsDiv.className = 'ex-view-actions';
     

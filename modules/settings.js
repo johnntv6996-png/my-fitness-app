@@ -52,44 +52,26 @@ const SettingsModule = {
     var html = css + '<div style="padding:12px;max-width:500px;margin:0 auto">';
     html += '<h2 style="font-family:var(--font-display);font-size:1.8em;margin-bottom:16px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-gear"></i> Настройки</h2>';
 
-    // === ПРОФИЛЬ ===
     html += this.renderAccordion('profile', 'ph-user', 'Профиль', true);
-
-    // === ОПРОСЫ ===
     html += this.renderAccordion('survey', 'ph-clipboard-text', 'Опросы', false);
-
-    // === ИНТЕРФЕЙС ===
     html += this.renderAccordion('interface', 'ph-eye-slash', 'Интерфейс', false);
-
-    // === ДАННЫЕ ===
     html += this.renderAccordion('data', 'ph-database', 'Данные', false);
 
     html += '</div>';
     screen.innerHTML = html;
 
-    // Навесить обработчики
     document.querySelectorAll('.settings-header').forEach(function(header) {
       header.onclick = function() {
         var body = this.nextElementSibling;
         var isOpen = body.classList.contains('open');
-        // Закрыть все
         document.querySelectorAll('.settings-body').forEach(function(b) { b.classList.remove('open'); });
         document.querySelectorAll('.settings-header').forEach(function(h) { h.classList.remove('open'); });
-        // Открыть текущий если был закрыт
         if (!isOpen) {
           body.classList.add('open');
           this.classList.add('open');
         }
       };
     });
-
-    // Открыть первый по умолчанию
-    var firstHeader = document.querySelector('.settings-header');
-    if (firstHeader) {
-      firstHeader.classList.add('open');
-      var firstBody = firstHeader.nextElementSibling;
-      if (firstBody) firstBody.classList.add('open');
-    }
   },
 
   renderAccordion: function(id, icon, title, isOpen) {
@@ -222,7 +204,7 @@ const SettingsModule = {
     var settings = this.getSettings();
     settings.disableHints = document.getElementById('settingDisableHints').checked;
     this.saveSettings(settings);
-    alert('Настройки интерфейса сохранены! Перезагрузи страницу для применения.');
+    alert('Настройки интерфейса сохранены!');
   },
 
   exportData: function() {

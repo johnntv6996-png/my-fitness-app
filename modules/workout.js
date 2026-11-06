@@ -42,9 +42,6 @@ const WorkoutModule = {
     var db = this.getDB();
     var todayIdx = this.getTodayIndex();
     var todayPlan = plan[todayIdx] || { dayName: 'Сегодня', muscleGroup: '', exercises: [] };
-    var stats = this.getStats();
-    var xpNeeded = stats.level * 100;
-    var xpPercent = Math.min(100, Math.round((stats.xp / xpNeeded) * 100));
 
     this.closeWorkoutModal();
 
@@ -55,26 +52,17 @@ const WorkoutModule = {
     var content = document.createElement('div');
     content.className = 'workout-modal-content';
 
-    var statusBar = document.createElement('div');
-    statusBar.style.cssText = 'background:linear-gradient(135deg, #1a1a2e 0%, #151520 100%); border-radius:16px 16px 0 0; padding:16px 20px; border-bottom:1px solid var(--border-gold);';
-    statusBar.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-      '<div style="display:flex;align-items:center;gap:10px"><i class="ph ph-star" style="font-size:1.4em;color:var(--accent-gold)"></i><span style="font-size:1.4em;font-weight:bold;color:var(--accent-gold)">' + stats.level + '</span><span style="font-size:0.75em;opacity:0.7">уровень</span></div>' +
-      '<div style="text-align:right"><div style="font-size:0.75em;opacity:0.7">XP</div><div style="font-size:1em;font-weight:bold">' + stats.xp + '/' + xpNeeded + '</div></div></div>' +
-      '<div style="height:6px;background:rgba(0,0,0,0.3);border-radius:3px;overflow:hidden;border:1px solid var(--border-subtle)"><div style="height:100%;width:' + xpPercent + '%;background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));border-radius:3px"></div></div>' +
-      '<div style="text-align:center;font-size:0.7em;opacity:0.6;margin-top:6px">До следующего уровня: ' + (xpNeeded - stats.xp) + ' XP</div>';
-    content.appendChild(statusBar);
+    var header = document.createElement('div');
+    header.style.cssText = 'text-align:center; padding:10px 20px;';
+    header.innerHTML = '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;justify-content:center;gap:10px"><i class="ph ph-barbell"></i> ' + todayPlan.dayName + '</h2>' +
+      '<div style="font-size:0.9em;opacity:0.7;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ph ph-tag"></i> ' + (todayPlan.muscleGroup || 'Тренировка') + ' · <i class="ph ph-list-dashes"></i> ' + todayPlan.exercises.length + ' упражнений</div>';
+    content.appendChild(header);
 
     var closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="ph ph-x"></i>';
     closeBtn.style.cssText = 'position:sticky; top:10px; float:right; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-secondary); width:36px; height:36px; border-radius:50%; font-size:1.2em; cursor:pointer; z-index:10; margin:12px; display:flex; align-items:center; justify-content:center;';
     closeBtn.onclick = function() { self.closeWorkoutModal(); };
     content.appendChild(closeBtn);
-
-    var header = document.createElement('div');
-    header.style.cssText = 'text-align:center; padding:10px 20px;';
-    header.innerHTML = '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;justify-content:center;gap:10px"><i class="ph ph-barbell"></i> ' + todayPlan.dayName + '</h2>' +
-      '<div style="font-size:0.9em;opacity:0.7;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ph ph-tag"></i> ' + (todayPlan.muscleGroup || 'Тренировка') + ' · <i class="ph ph-list-dashes"></i> ' + todayPlan.exercises.length + ' упражнений</div>';
-    content.appendChild(header);
 
     if (todayPlan.exercises.length === 0) {
       var empty = document.createElement('div');
