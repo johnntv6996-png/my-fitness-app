@@ -32,6 +32,7 @@
   --radius-md: 16px;
   --radius-lg: 24px;
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-width: 320px;
 }
 
 body.light-theme {
@@ -90,13 +91,22 @@ select, input[type="text"], input[type="number"], input[type="time"], input[type
 select:focus, input:focus, textarea:focus { outline: none; border-color: var(--border-gold) !important; }
 select option { background: var(--bg-secondary) !important; color: var(--text-primary) !important; }
 
+/* === STICKY HEADER (z-index снижен до 100) === */
 .header-wrapper {
   position: sticky;
   top: 0;
-  z-index: 10000;
+  z-index: 100;
   padding: 8px 12px;
   background: var(--bg-primary);
-  transition: background 0.3s;
+  transition: background 0.3s, margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Когда sidebar открыт — шапка сдвигается */
+body.sidebar-open .header-wrapper {
+  margin-left: var(--sidebar-width);
+  max-width: calc(1200px - var(--sidebar-width));
 }
 
 .header {
@@ -185,6 +195,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 .hamburger.active span:nth-child(2) { opacity: 0; }
 .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+/* === SIDEBAR === */
 .sidebar-overlay {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -198,7 +209,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 
 .sidebar {
   position: fixed; top: 0; left: 0;
-  width: 320px; max-width: 85vw;
+  width: var(--sidebar-width); max-width: 85vw;
   height: 100vh;
   background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
   border-right: 1px solid var(--border-gold);
@@ -230,12 +241,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
-.sidebar-profile-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
+.sidebar-profile-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 
 .sidebar-profile-avatar {
   width: 52px; height: 52px;
@@ -269,11 +275,7 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
 
 .sidebar-profile-name i { font-size: 0.85em; color: var(--accent-gold); opacity: 0.7; }
 
-.sidebar-profile-sub {
-  font-size: 0.75em;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
+.sidebar-profile-sub { font-size: 0.75em; color: var(--text-secondary); margin-top: 2px; }
 
 .profile-level-block {
   background: rgba(0,0,0,0.2);
@@ -282,22 +284,10 @@ select option { background: var(--bg-secondary) !important; color: var(--text-pr
   border: 1px solid var(--border-subtle);
 }
 
-body.light-theme .profile-level-block {
-  background: rgba(166, 124, 0, 0.08);
-}
+body.light-theme .profile-level-block { background: rgba(166, 124, 0, 0.08); }
 
-.profile-level-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.profile-level-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.profile-level-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.profile-level-left { display: flex; align-items: center; gap: 8px; }
 
 .profile-level-icon {
   font-size: 1.3em;
@@ -331,24 +321,9 @@ body.light-theme .profile-level-block {
   letter-spacing: 0.5px;
 }
 
-.profile-xp-block {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 90px;
-}
-
-.profile-xp-text {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.7em;
-  color: var(--text-secondary);
-}
-
-.profile-xp-text strong {
-  color: var(--accent-gold);
-  font-weight: 700;
-}
+.profile-xp-block { display: flex; flex-direction: column; gap: 3px; min-width: 90px; }
+.profile-xp-text { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--text-secondary); }
+.profile-xp-text strong { color: var(--accent-gold); font-weight: 700; }
 
 .profile-xp-bar {
   height: 5px;
@@ -359,9 +334,7 @@ body.light-theme .profile-level-block {
   position: relative;
 }
 
-body.light-theme .profile-xp-bar {
-  background: rgba(166, 124, 0, 0.15);
-}
+body.light-theme .profile-xp-bar { background: rgba(166, 124, 0, 0.15); }
 
 .profile-xp-fill {
   height: 100%;
@@ -375,22 +348,15 @@ body.light-theme .profile-xp-bar {
 .profile-xp-fill::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
   animation: xpShine 2.5s ease-in-out infinite;
 }
 
-@keyframes xpShine {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
+@keyframes xpShine { 0% { left: -100%; } 100% { left: 100%; } }
 
-.profile-xp-fill.xp-gained {
-  animation: xpGain 0.8s ease-out;
-}
+.profile-xp-fill.xp-gained { animation: xpGain 0.8s ease-out; }
 
 @keyframes xpGain {
   0% { filter: brightness(1); }
@@ -398,19 +364,8 @@ body.light-theme .profile-xp-bar {
   100% { filter: brightness(1); }
 }
 
-.profile-ach-hint {
-  font-size: 0.65em;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.profile-ach-hint i {
-  color: var(--accent-gold);
-  font-size: 0.9em;
-}
+.profile-ach-hint { font-size: 0.65em; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.profile-ach-hint i { color: var(--accent-gold); font-size: 0.9em; }
 
 .sidebar-section { padding: 0 16px; margin-bottom: 12px; }
 .sidebar-section-title {
@@ -443,12 +398,21 @@ body.light-theme .profile-xp-bar {
 
 .sidebar-divider { height: 1px; background: var(--border-subtle); margin: 8px 20px 12px; }
 
+/* === MAIN CONTENT === */
 .main-content { 
   max-width: 1200px; 
   margin: 0 auto; 
   padding: 0 12px 30px;
+  transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeIn 0.5s ease-out; 
 }
+
+/* Когда sidebar открыт — контент сдвигается */
+body.sidebar-open .main-content {
+  margin-left: var(--sidebar-width);
+  max-width: calc(1200px - var(--sidebar-width));
+}
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .screen { display: none; }
@@ -521,6 +485,7 @@ body.light-theme .profile-xp-bar {
 
 .text-small { font-size: 0.85em; opacity: 0.7; color: var(--text-secondary); }
 
+/* === МОДАЛКИ (z-index выше шапки) === */
 .workout-modal, .survey-modal, .ex-modal, .calendar-modal {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -549,6 +514,7 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
+/* Уведомление об ачивке (поверх всего) */
 .achievement-toast {
   position: fixed;
   top: 20px;
@@ -592,16 +558,19 @@ body.light-theme .workout-modal, body.light-theme .survey-modal, body.light-them
 @media (max-width: 768px) {
   body { padding: 0; }
   .header-wrapper { padding: 6px 8px; }
+  body.sidebar-open .header-wrapper { margin-left: 0; max-width: 100%; }
   .header { padding: 10px 14px; border-radius: var(--radius-md); }
   .header h1 { font-size: 1.1em; }
   .header h1 i { font-size: 0.9em; }
   .hamburger { width: 36px; height: 36px; }
   .theme-btn { width: 34px; height: 34px; font-size: 0.95em; }
   .main-content { padding: 0 10px 24px; }
+  body.sidebar-open .main-content { margin-left: 0; max-width: 100%; }
   .dev-panel { padding: 16px; }
   .module-item { flex-direction: column; align-items: flex-start; }
   .module-item > div:last-child { width: 100%; justify-content: flex-end; }
   .sidebar { width: 280px; }
+  :root { --sidebar-width: 280px; }
 }
 
 @media (max-width: 480px) {
@@ -773,31 +742,31 @@ const Logger = {
 };
 
 const MODULE_REGISTRY = {
-  'core': { name: 'Ядро системы', version: '3.3.0',
+  'core': { name: 'Ядро системы', version: '3.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js',
     required: true, description: 'Базовый функционал' },
-  'welcome': { name: 'Главная', version: '6.3.0',
+  'welcome': { name: 'Главная', version: '6.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js',
     required: false, description: 'Экран приветствия' },
-  'exercises': { name: 'База упражнений', version: '5.3.0',
+  'exercises': { name: 'База упражнений', version: '5.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js',
     required: false, description: 'CRUD упражнений с избранным' },
-  'plan': { name: 'План тренировок', version: '4.3.0',
+  'plan': { name: 'План тренировок', version: '4.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js',
     required: false, description: 'Настройка плана' },
-  'workout': { name: 'Тренировка', version: '3.3.0',
+  'workout': { name: 'Тренировка', version: '3.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js',
     required: false, description: 'Экран тренировки' },
-  'stats': { name: 'Статистика', version: '4.3.0',
+  'stats': { name: 'Статистика', version: '4.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js',
     required: false, description: 'Графики и аналитика' },
-  'survey': { name: 'Опросы', version: '3.3.0',
+  'survey': { name: 'Опросы', version: '3.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js',
     required: false, description: 'Конструктор опросов' },
-  'achievements': { name: 'Достижения', version: '1.1.0',
+  'achievements': { name: 'Достижения', version: '1.2.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js',
     required: false, description: 'Система достижений' },
-  'settings': { name: 'Настройки', version: '3.3.0',
+  'settings': { name: 'Настройки', version: '3.4.0',
     url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js',
     required: false, description: 'Параметры и данные' }
 };
@@ -835,9 +804,14 @@ function applyTheme() {
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('active');
-  document.getElementById('sidebarOverlay').classList.toggle('active');
-  document.getElementById('hamburgerBtn').classList.toggle('active');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  var hamburger = document.getElementById('hamburgerBtn');
+  sidebar.classList.toggle('active');
+  overlay.classList.toggle('active');
+  hamburger.classList.toggle('active');
+  // Добавляем/убираем класс sidebar-open для адаптации шапки и контента
+  document.body.classList.toggle('sidebar-open', sidebar.classList.contains('active'));
 }
 
 function goHome() {
@@ -1170,9 +1144,7 @@ function updateHeaderLevel() {
   else if (level >= 5) levelIcon = 'ph-star-four';
   
   var iconEl = document.getElementById('headerLevelIcon');
-  if (iconEl) {
-    iconEl.className = 'ph ' + levelIcon + ' profile-level-icon';
-  }
+  if (iconEl) iconEl.className = 'ph ' + levelIcon + ' profile-level-icon';
   
   var numEl = document.getElementById('headerLevelNum');
   if (numEl) {
