@@ -13,7 +13,7 @@ const StatsModule = {
   lastMouseY: -1,
   _chartDataCache: null,
   _chartDataCacheKey: null,
-	_legendExpanded: false,
+  _legendExpanded: false,
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль статистики инициализирован', 'info');
     if (document.readyState === 'loading') {
@@ -75,73 +75,72 @@ const StatsModule = {
     if (!history || history.length === 0) return 'empty';
     return history.length + '_' + history[0].date + '_' + history[history.length - 1].date + '_' + (history[history.length - 1].timestamp || 0);
   },
-	buildChartData: function() {
-		var history = this.getHistory();
-		var key = this.buildChartDataCacheKey(history);
-		if (this._chartDataCache && this._chartDataCacheKey === key) return this._chartDataCache;
+  buildChartData: function() {
+    var history = this.getHistory();
+    var key = this.buildChartDataCacheKey(history);
+    if (this._chartDataCache && this._chartDataCacheKey === key) return this._chartDataCache;
 
-		if (history.length === 0) {
-			this._chartDataCache = { data: { exercises: [], weight: [], mood: [] }, labels: [], totalDays: 30 };
-			this._chartDataCacheKey = key;
-			return this._chartDataCache;
-		}
+    if (history.length === 0) {
+      this._chartDataCache = { data: { exercises: [], weight: [], mood: [] }, labels: [], totalDays: 30 };
+      this._chartDataCacheKey = key;
+      return this._chartDataCache;
+    }
 
-		var dates = history.map(function(h) { return h.date; }).sort();
-		var firstDate = new Date(dates[0] + 'T00:00:00');
-		var today = new Date();
-		today.setHours(0, 0, 0, 0);
-		var msPerDay = 1000 * 60 * 60 * 24;
-		var totalDays = Math.floor((today - firstDate) / msPerDay) + 1;
-		if (totalDays < 1) totalDays = 1;
+    var dates = history.map(function(h) { return h.date; }).sort();
+    var firstDate = new Date(dates[0] + 'T00:00:00');
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var msPerDay = 1000 * 60 * 60 * 24;
+    var totalDays = Math.floor((today - firstDate) / msPerDay) + 1;
+    if (totalDays < 1) totalDays = 1;
 
-		var data = { exercises: [], weight: [], mood: [] };
-		var labels = [];
-		var historyMap = (typeof Core !== 'undefined' && Core.getHistoryMap) ? Core.getHistoryMap(history) : {};
-		var config = this.getSurveyConfig();
-		var surveyKeys = [];
-		if (config && config.questions) {
-			for (var i = 0; i < config.questions.length; i++) {
-				var q = config.questions[i];
-				if (['rating', 'emoji', 'range', 'number'].indexOf(q.type) !== -1) {
-					var key2 = 'survey_' + q.id;
-					data[key2] = [];
-					surveyKeys.push(key2);
-				}
-			}
-		}
+    var data = { exercises: [], weight: [], mood: [] };
+    var labels = [];
+    var historyMap = (typeof Core !== 'undefined' && Core.getHistoryMap) ? Core.getHistoryMap(history) : {};
+    var config = this.getSurveyConfig();
+    var surveyKeys = [];
+    if (config && config.questions) {
+      for (var i = 0; i < config.questions.length; i++) {
+        var q = config.questions[i];
+        if (['rating', 'emoji', 'range', 'number'].indexOf(q.type) !== -1) {
+          var key2 = 'survey_' + q.id;
+          data[key2] = [];
+          surveyKeys.push(key2);
+        }
+      }
+    }
 
-		for (var i = 0; i < totalDays; i++) {
-			var date = new Date(firstDate);
-			date.setDate(date.getDate() + i);
-			var dateStr = (typeof Core !== 'undefined' && Core.utils && Core.utils.formatLocalDate) ? Core.utils.formatLocalDate(date) : date.toISOString().slice(0, 10);
-			var dayRecord = historyMap[dateStr] || null;
-			var exCount = 0;
-			if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
-			data.exercises.push(exCount);
-			data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
-			data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
-			for (var k = 0; k < surveyKeys.length; k++) {
-				var qId = surveyKeys[k].replace('survey_', '');
-				data[surveyKeys[k]].push(dayRecord && dayRecord.survey && dayRecord.survey[qId] !== undefined ? dayRecord.survey[qId] : null);
-			}
-			labels.push(date.getDate() + '.' + (date.getMonth() + 1));
-		}
+    for (var i = 0; i < totalDays; i++) {
+      var date = new Date(firstDate);
+      date.setDate(date.getDate() + i);
+      var dateStr = (typeof Core !== 'undefined' && Core.utils && Core.utils.formatLocalDate) ? Core.utils.formatLocalDate(date) : date.toISOString().slice(0, 10);
+      var dayRecord = historyMap[dateStr] || null;
+      var exCount = 0;
+      if (dayRecord && !dayRecord.skipped && dayRecord.exercises) exCount = dayRecord.exercises.length;
+      data.exercises.push(exCount);
+      data.weight.push(dayRecord && dayRecord.weight ? dayRecord.weight : null);
+      data.mood.push(dayRecord && dayRecord.mood ? dayRecord.mood : null);
+      for (var k = 0; k < surveyKeys.length; k++) {
+        var qId = surveyKeys[k].replace('survey_', '');
+        data[surveyKeys[k]].push(dayRecord && dayRecord.survey && dayRecord.survey[qId] !== undefined ? dayRecord.survey[qId] : null);
+      }
+      labels.push(date.getDate() + '.' + (date.getMonth() + 1));
+    }
 
-		this.totalDays = totalDays;
+    this.totalDays = totalDays;
 
-		// ИСПРАВЛЕНИЕ: не сбрасываем zoom.xMax, если он уже в допустимых пределах
-		if (this.zoom.xMaxLimit === undefined || this.zoom.xMax > totalDays - 1) {
-			this.zoom.xMin = 0;
-			this.zoom.xMax = totalDays - 1;
-			this.zoom.xMaxLimit = totalDays - 1;
-			this.zoom.xMinLimit = 0;
-		}
+    if (this.zoom.xMaxLimit === undefined || this.zoom.xMax > totalDays - 1) {
+      this.zoom.xMin = 0;
+      this.zoom.xMax = totalDays - 1;
+      this.zoom.xMaxLimit = totalDays - 1;
+      this.zoom.xMinLimit = 0;
+    }
 
-		this._chartDataCache = { data: data, labels: labels, totalDays: totalDays };
-		this._chartDataCacheKey = key;
-		return this._chartDataCache;
-	},
-	findMaxY: function(data) {
+    this._chartDataCache = { data: data, labels: labels, totalDays: totalDays };
+    this._chartDataCacheKey = key;
+    return this._chartDataCache;
+  },
+  findMaxY: function(data) {
     var maxVal = 10;
     var metrics = this.allMetrics;
     for (var key in metrics) {
@@ -209,7 +208,8 @@ const StatsModule = {
       '.chart-zoom-info { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-secondary); z-index:5; pointer-events:none; }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
-			'.chart-legend { position:absolute; top:40px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }'      'body.light-theme .chart-legend { background:rgba(245,242,235,0.9); }' +
+      '.chart-legend { position:absolute; top:40px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
+      'body.light-theme .chart-legend { background:rgba(245,242,235,0.9); }' +
       '.chart-legend::-webkit-scrollbar { width:4px; }' +
       '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
       '.legend-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.8em; }' +
@@ -327,15 +327,15 @@ const StatsModule = {
       var zoomFactor = e.deltaY > 0 ? 1.15 : 0.87;
       self.zoomAtPoint(mouseX, mouseY, rect.width, rect.height, zoomFactor);
     }, { passive: false });
-		wrap.addEventListener('pointerdown', function(e) {
-			if (e.target.closest('.chart-legend')) return;
-			if (e.button !== 0 && e.pointerType === 'mouse') return;
-			self.isPanning = true;
-			self.panStart = { x: e.clientX, y: e.clientY };
-			self.panStartZoom = { xMin: self.zoom.xMin, xMax: self.zoom.xMax, yMin: self.zoom.yMin, yMax: self.zoom.yMax };
-			wrap.style.cursor = 'grabbing';
-			wrap.setPointerCapture && wrap.setPointerCapture(e.pointerId);
-		});
+    wrap.addEventListener('pointerdown', function(e) {
+      if (e.target.closest('.chart-legend')) return;
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      self.isPanning = true;
+      self.panStart = { x: e.clientX, y: e.clientY };
+      self.panStartZoom = { xMin: self.zoom.xMin, xMax: self.zoom.xMax, yMin: self.zoom.yMin, yMax: self.zoom.yMax };
+      wrap.style.cursor = 'grabbing';
+      wrap.setPointerCapture && wrap.setPointerCapture(e.pointerId);
+    });
     wrap.addEventListener('pointermove', function(e) {
       if (!self.isPanning) { self.handleTooltip(e); return; }
       var rect = canvas.getBoundingClientRect();
@@ -540,18 +540,20 @@ const StatsModule = {
     var data = chartData.data;
     var labels = chartData.labels;
     this.totalDays = chartData.totalDays;
-    // НЕ сбрасываем yMin/yMax здесь — только в resetZoom
+    
     if (this.zoom.yMax === 0 || this.zoom.yMax < this.findMaxY(data)) {
       this.zoom.yMin = 0;
       this.zoom.yMax = this.findMaxY(data);
     }
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
+    
     var padding = this.getPadding(width, height);
     var chartWidth = width - padding.left - padding.right;
     var chartHeight = height - padding.top - padding.bottom;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var yRange = this.zoom.yMax - this.zoom.yMin;
     if (yRange <= 0) yRange = 10;
+    
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for (var i = 0; i <= 4; i++) {
@@ -560,6 +562,7 @@ const StatsModule = {
     }
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
+    
     var metrics = this.allMetrics;
     for (var key in metrics) {
       var m = metrics[key];
@@ -589,6 +592,7 @@ const StatsModule = {
         ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
       }
     }
+    
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -605,33 +609,33 @@ const StatsModule = {
       var y = height - padding.bottom - ((v - this.zoom.yMin) / yRange) * chartHeight;
       ctx.fillText(v, padding.left - 4, y + 4);
     }
-		// В конце drawChart замени блок легенды на:
-		var oldLegend = document.getElementById('chartLegend');
-		if (oldLegend) oldLegend.remove();
-		var legendDiv = document.createElement('div');
-		legendDiv.id = 'chartLegend';
-		legendDiv.className = 'chart-legend';
-		var hasAny = false;
-		var itemsHtml = '';
-		var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
-		for (var key in metrics) {
-			var m = metrics[key];
-			if (!this.activeMetrics[key]) continue;
-			hasAny = true;
-			itemsHtml += '<div class="legend-item"><div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + esc(m.label) + '</div></div>';
-		}
-		var activeCount = 0;
-		for (var key in metrics) if (this.activeMetrics[key]) activeCount++;
-		legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
-			'<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
-			'<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
-		'</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
-		legendDiv.onclick = function(e) {
-			e.stopPropagation();
-			StatsModule._legendExpanded = !StatsModule._legendExpanded;
-			StatsModule.drawChart();
-		};
-		if (hasAny) wrap.appendChild(legendDiv);
+    
+    var oldLegend = document.getElementById('chartLegend');
+    if (oldLegend) oldLegend.remove();
+    var legendDiv = document.createElement('div');
+    legendDiv.id = 'chartLegend';
+    legendDiv.className = 'chart-legend';
+    var hasAny = false;
+    var itemsHtml = '';
+    var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
+    for (var key in metrics) {
+      var m = metrics[key];
+      if (!this.activeMetrics[key]) continue;
+      hasAny = true;
+      itemsHtml += '<div class="legend-item"><div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + esc(m.label) + '</div></div>';
+    }
+    var activeCount = 0;
+    for (var key in metrics) if (this.activeMetrics[key]) activeCount++;
+    legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
+      '<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
+    '</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
+    legendDiv.onclick = function(e) {
+      e.stopPropagation();
+      StatsModule._legendExpanded = !StatsModule._legendExpanded;
+      StatsModule.drawChart();
+    };
+    if (hasAny) wrap.appendChild(legendDiv);
   },
   openCalendar: function() {
     var esc = Core.utils.escapeHtml;
