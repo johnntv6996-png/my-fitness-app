@@ -209,8 +209,7 @@ const StatsModule = {
       '.chart-zoom-info { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-secondary); z-index:5; pointer-events:none; }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
-      '.chart-legend { position:absolute; bottom:60px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; transition:all 0.3s; }' +
-      'body.light-theme .chart-legend { background:rgba(245,242,235,0.9); }' +
+			'.chart-legend { position:absolute; top:40px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }'      'body.light-theme .chart-legend { background:rgba(245,242,235,0.9); }' +
       '.chart-legend::-webkit-scrollbar { width:4px; }' +
       '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
       '.legend-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.8em; }' +
@@ -606,6 +605,7 @@ const StatsModule = {
       var y = height - padding.bottom - ((v - this.zoom.yMin) / yRange) * chartHeight;
       ctx.fillText(v, padding.left - 4, y + 4);
     }
+		// В конце drawChart замени блок легенды на:
 		var oldLegend = document.getElementById('chartLegend');
 		if (oldLegend) oldLegend.remove();
 		var legendDiv = document.createElement('div');

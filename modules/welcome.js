@@ -127,8 +127,7 @@ const WelcomeModule = {
     '</style>';
     screen.innerHTML = css +
       '<div style="padding:16px;max-width:500px;margin:0 auto">' +
-      '<div class="w-fade w-glow" style="background:linear-gradient(135deg, #1a1a2e 0%, #151520 100%);border-radius:16px;padding:16px 20px;margin-bottom:16px;border:1px solid var(--border-gold)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+			'<div class="w-fade w-glow" style="background:var(--bg-card);border-radius:16px;padding:16px 20px;margin-bottom:16px;border:1px solid var(--border-gold)">' +        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
           '<div style="display:flex;align-items:center;gap:10px">' +
             '<i class="ph ' + levelIcon + ' w-icon w-pulse" style="font-size:1.8em"></i>' +
             '<div style="font-size:1.8em;font-weight:bold;color:var(--accent-gold);line-height:1" class="w-anim-level">' + stats.level + '</div>' +

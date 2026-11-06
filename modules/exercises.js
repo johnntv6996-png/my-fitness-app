@@ -119,8 +119,9 @@ const ExercisesModule = {
     if (favCount > 0) {
       toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'favorites' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'favorites\')"><i class="ph-fill ph-star"></i> Избранное (' + favCount + ')</button>';
     }
-    toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')"><i class="ph ph-question"></i> Без категории</button>';
-    for (var i = 0; i < categories.length; i++) {
+		var uncCount = 0;
+		for (var j = 0; j < db.length; j++) if (!db[j].muscleGroup || db[j].muscleGroup === '') uncCount++;
+		toolbarHtml += '<button class="cat-btn ' + (this.currentFilter === 'uncategorized' ? 'active' : '') + '" onclick="ExercisesModule.setFilter(\'uncategorized\')" style="flex-shrink:0"><i class="ph ph-question"></i> Без категории (' + uncCount + ')</button>';    for (var i = 0; i < categories.length; i++) {
       var cat = categories[i];
       var count = 0;
       for (var j = 0; j < db.length; j++) if (db[j].muscleGroup === cat) count++;

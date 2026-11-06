@@ -4,14 +4,6 @@ const SurveyModule = {
   _answers: {},
   _surveyCallback: null,
   _isTestMode: false,
-  EMOJI_SETS: {
-    mood: { label: 'Настроение', emojis: { 1: '😢', 2: '😟', 3: '😐', 4: '🙂', 5: '😊', 6: '😄', 7: '🤩' } },
-    energy: { label: 'Энергия', emojis: { 1: '🪫', 2: '😴', 3: '😌', 4: '🙂', 5: '⚡', 6: '🔥', 7: '🚀' } },
-    pain: { label: 'Боль/Дискомфорт', emojis: { 1: '😫', 2: '😣', 3: '😖', 4: '😕', 5: '😐', 6: '🙂', 7: '😁' } },
-    sleep: { label: 'Сон', emojis: { 1: '😵', 2: '😪', 3: '😴', 4: '🥱', 5: '😌', 6: '😊', 7: '🤩' } },
-    motivation: { label: 'Мотивация', emojis: { 1: '🫠', 2: '😩', 3: '😐', 4: '🙂', 5: '💪', 6: '🔥', 7: '🏆' } },
-    custom: { label: 'Свой набор', emojis: {} }
-  },
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль опросов инициализирован', 'info');
     if (document.readyState === 'loading') {
@@ -140,7 +132,7 @@ const SurveyModule = {
     document.body.appendChild(modal);
     var types = [
       { id: 'rating', label: 'Оценка', icon: 'ph-star', desc: '1–10' },
-      { id: 'emoji', label: 'Эмодзи', icon: 'ph-smiley', desc: 'Выбор эмодзи' },
+      { id: 'emoji', label: 'Эмодзи', icon: 'ph-smiley', desc: 'Свои эмодзи' },
       { id: 'range', label: 'Диапазон', icon: 'ph-slider', desc: 'Слайдер' },
       { id: 'number', label: 'Число', icon: 'ph-hash', desc: 'Ввод числа' },
       { id: 'yesno', label: 'Да / Нет', icon: 'ph-check-circle', desc: 'Два варианта' },
@@ -178,15 +170,20 @@ const SurveyModule = {
         '</div>' +
       '</div>';
     } else if (type === 'emoji') {
+      // УБРАНЫ предустановленные наборы — только ввод своих эмодзи
+      var existingEmojiList = '';
+      if (q.emojiSet) {
+        var vals = Object.values(q.emojiSet);
+        existingEmojiList = vals.join(', ');
+      } else if (q.emojiList) {
+        existingEmojiList = q.emojiList;
+      }
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
-        '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-smiley" style="color:#f472b6"></i> Набор эмодзи:</label>' +
-        '<div id="emojiSetSelector" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px"></div>' +
-        '<div id="customEmojiEditor" style="display:none">' +
-          '<label style="font-size:0.85em;opacity:0.7">Свои эмодзи (через запятую, от худшего к лучшему):</label>' +
-          '<input type="text" id="qEmojiCustom" value="' + esc(q.emojiList || '') + '" placeholder="😢,😟,😐,🙂,😊" style="width:100%;padding:8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);margin-top:4px">' +
-        '</div>' +
+        '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-smiley" style="color:#f472b6"></i> Свои эмодзи:</label>' +
+        '<label style="font-size:0.8em;opacity:0.7;display:block;margin-bottom:6px">Введи эмодзи через запятую, от худшего к лучшему. Например: 😢, 😟, 😐, 🙂, 😊</label>' +
+        '<input type="text" id="qEmojiCustom" value="' + esc(existingEmojiList) + '" placeholder="😢, 😟, 😐, 🙂, 😊" style="width:100%;padding:10px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:1.1em">' +
+        '<div class="hint" style="display:flex;align-items:center;gap:4px;margin-top:6px"><i class="ph ph-info"></i> Минимум 2 эмодзи. Каждый станет отдельной кнопкой ответа.</div>' +
       '</div>';
-      setTimeout(function() { SurveyModule.renderEmojiSets(q); }, 10);
     } else if (type === 'range') {
       html = '<div style="background:var(--bg-primary);padding:14px;border-radius:10px;border:1px solid var(--border-subtle)">' +
         '<label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.9em"><i class="ph ph-slider" style="color:#60a5fa"></i> Диапазон:</label>' +
@@ -214,34 +211,6 @@ const SurveyModule = {
       '</div>';
     }
     container.innerHTML = html;
-  },
-  renderEmojiSets: function(q) {
-    var container = document.getElementById('emojiSetSelector');
-    if (!container) return;
-    var sets = this.EMOJI_SETS;
-    var currentSet = (q && q.emojiSetName) ? q.emojiSetName : 'mood';
-    container.innerHTML = '';
-    for (var key in sets) {
-      var s = sets[key];
-      var btn = document.createElement('div');
-      btn.className = 'metric-chip' + (currentSet === key ? ' active' : '');
-      btn.style.cssText = 'flex-direction:column;padding:8px;gap:2px;text-align:center;flex:1';
-      var preview = Object.values(s.emojis).slice(0, 5).join('');
-      btn.innerHTML = '<div style="font-size:1.2em">' + (preview || '⚙️') + '</div><div style="font-size:0.75em;font-weight:600">' + s.label + '</div>';
-      (function(setKey) {
-        btn.onclick = function() {
-          container.querySelectorAll('.metric-chip').forEach(function(c) { c.classList.remove('active'); });
-          btn.classList.add('active');
-          container.dataset.selectedSet = setKey;
-          var customEditor = document.getElementById('customEmojiEditor');
-          if (customEditor) customEditor.style.display = setKey === 'custom' ? 'block' : 'none';
-        };
-      })(key);
-      container.appendChild(btn);
-    }
-    container.dataset.selectedSet = currentSet;
-    var customEditor = document.getElementById('customEmojiEditor');
-    if (customEditor) customEditor.style.display = currentSet === 'custom' ? 'block' : 'none';
   },
   saveQuestion: function(editIdx) {
     var text = document.getElementById('qText').value.trim();
@@ -286,29 +255,18 @@ const SurveyModule = {
       if (maxEl && maxEl.value) q.max = parseInt(maxEl.value);
       if (unitEl) q.unit = unitEl.value.trim();
     } else if (type === 'emoji') {
-      var setSelector = document.getElementById('emojiSetSelector');
-      var setName = setSelector && setSelector.dataset.selectedSet ? setSelector.dataset.selectedSet : 'mood';
-      q.emojiSetName = setName;
-      if (setName === 'custom') {
-        var customEl = document.getElementById('qEmojiCustom');
-        var emojiList = customEl ? customEl.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e; }) : [];
-        if (emojiList.length < 2) {
-          if (typeof Notify !== 'undefined') Notify.warn('Укажи хотя бы 2 эмодзи через запятую'); else alert('Укажи хотя бы 2 эмодзи через запятую');
-          return;
-        }
-        q.emojiList = emojiList.join(',');
-        q.emojiSet = {};
-        emojiList.forEach(function(e, i) { q.emojiSet[i + 1] = e; });
-        q.min = 1;
-        q.max = emojiList.length;
-      } else {
-        var preset = this.EMOJI_SETS[setName];
-        if (preset) {
-          q.emojiSet = JSON.parse(JSON.stringify(preset.emojis));
-          q.min = 1;
-          q.max = Object.keys(preset.emojis).length;
-        }
+      // Только свои эмодзи — никаких предустановленных наборов
+      var customEl = document.getElementById('qEmojiCustom');
+      var emojiList = customEl ? customEl.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e; }) : [];
+      if (emojiList.length < 2) {
+        if (typeof Notify !== 'undefined') Notify.warn('Укажи хотя бы 2 эмодзи через запятую'); else alert('Укажи хотя бы 2 эмодзи через запятую');
+        return;
       }
+      q.emojiList = emojiList.join(', ');
+      q.emojiSet = {};
+      emojiList.forEach(function(e, i) { q.emojiSet[i + 1] = e; });
+      q.min = 1;
+      q.max = emojiList.length;
     }
     if (isEdit) {
       config.questions[editIdx] = q;
