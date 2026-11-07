@@ -219,7 +219,20 @@ const StatsModule = {
       'body.light-theme .chart-zoom-info { background:rgba(255,255,255,0.9); color:var(--text-primary); }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
-      '.chart-legend { position:absolute; top:40px; right:30px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
+      '.chart-h-scrollbar { position:absolute; bottom:6px; left:44px; right:28px; height:10px; z-index:5; }' +
+			'.chart-v-scrollbar { position:absolute; top:20px; right:6px; bottom:30px; width:10px; z-index:5; }' +
+			'.chart-h-scrollbar input, .chart-v-scrollbar input { -webkit-appearance:none; appearance:none; width:100%; height:100%; background:transparent; cursor:pointer; margin:0; outline:none; }' +
+			'.chart-h-scrollbar input::-webkit-slider-runnable-track { height:6px; background:rgba(212,175,55,0.15); border-radius:3px; }' +
+			'.chart-h-scrollbar input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; margin-top:-4px; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
+			'.chart-h-scrollbar input::-moz-range-track { height:6px; background:rgba(212,175,55,0.15); border-radius:3px; border:none; }' +
+			'.chart-h-scrollbar input::-moz-range-thumb { width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; border:none; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
+			'.chart-v-scrollbar input::-webkit-slider-runnable-track { width:6px; background:rgba(212,175,55,0.15); border-radius:3px; }' +
+			'.chart-v-scrollbar input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; margin-left:-4px; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
+			'.chart-v-scrollbar input::-moz-range-track { width:6px; background:rgba(212,175,55,0.15); border-radius:3px; border:none; }' +
+			'.chart-v-scrollbar input::-moz-range-thumb { width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; border:none; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
+			'.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; transform:rotate(180deg); }' +
+			'.chart-h-scrollbar input:disabled, .chart-v-scrollbar input:disabled { opacity:0.3; cursor:not-allowed; }' +
+			'.chart-legend { position:absolute; top:40px; right:30px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
       'body.light-theme .chart-legend { background:rgba(245,242,235,0.95); }' +
       '.chart-legend::-webkit-scrollbar { width:4px; }' +
       '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
@@ -273,7 +286,9 @@ const StatsModule = {
     chartHtml += '<canvas id="activityChart"></canvas>';
     chartHtml += '<button class="chart-reset-btn" onclick="StatsModule.resetZoom()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить</button>';
     chartHtml += '<div class="chart-zoom-info" id="zoomInfo">100%</div>';
-    chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
+    chartHtml += '<div class="chart-h-scrollbar" id="hScrollbar"><input type="range" id="hScroll" min="0" max="100" value="0" step="0.1" disabled></div>';
+		chartHtml += '<div class="chart-v-scrollbar" id="vScrollbar"><input type="range" id="vScroll" min="0" max="100" value="100" step="0.1" disabled></div>';
+		chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
     chartHtml += '</div></div>';
@@ -302,7 +317,7 @@ const StatsModule = {
     screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + streakHtml + '</div>';
     this.renderMetricChips();
     var self = this;
-		setTimeout(function() { self.setupChartInteractions(); self.drawChart(); }, 50);
+		setTimeout(function() { self.setupChartInteractions(); self.setupScrollbars(); self.drawChart(); }, 50);
   },
 
   renderMetricChips: function() {
@@ -329,6 +344,58 @@ const StatsModule = {
     this.drawChart();
   },
 
+	setupScrollbars: function() {
+		var hScroll = document.getElementById('hScroll');
+		var vScroll = document.getElementById('vScroll');
+		if (!hScroll || !vScroll) return;
+		var self = this;
+		hScroll.oninput = function() {
+			var val = parseFloat(this.value) / 100;
+			var xRange = self.zoom.xMax - self.zoom.xMin;
+			var maxX = self.totalDays - 1 - xRange;
+			if (maxX <= 0) return;
+			self.zoom.xMin = val * maxX;
+			self.zoom.xMax = self.zoom.xMin + xRange;
+			self.clampZoom();
+			self.drawChart();
+		};
+		vScroll.oninput = function() {
+			var val = parseFloat(this.value) / 100;
+			var yRange = self.zoom.yMax - self.zoom.yMin;
+			var maxY = self._currentMaxY - yRange;
+			if (maxY <= 0) return;
+			// val=0 → верх (yMin=maxY), val=1 → низ (yMin=0)
+			self.zoom.yMin = (1 - val) * maxY;
+			self.zoom.yMax = self.zoom.yMin + yRange;
+			self.clampZoom();
+			self.drawChart();
+		};
+	},
+
+	updateScrollbars: function() {
+		var hScroll = document.getElementById('hScroll');
+		var vScroll = document.getElementById('vScroll');
+		if (!hScroll || !vScroll) return;
+		var xRange = this.zoom.xMax - this.zoom.xMin;
+		var maxX = this.totalDays - 1 - xRange;
+		if (maxX <= 0.01) {
+			hScroll.value = 0;
+			hScroll.disabled = true;
+		} else {
+			hScroll.disabled = false;
+			hScroll.value = (this.zoom.xMin / maxX) * 100;
+		}
+		var yRange = this.zoom.yMax - this.zoom.yMin;
+		var maxY = (this._currentMaxY || 10) - yRange;
+		if (maxY <= 0.01) {
+			vScroll.value = 100;
+			vScroll.disabled = true;
+		} else {
+			vScroll.disabled = false;
+			vScroll.value = (1 - this.zoom.yMin / maxY) * 100;
+		}
+	},
+
   setupChartInteractions: function() {
     var wrap = document.getElementById('chartWrap');
     if (!wrap) return;
@@ -351,6 +418,8 @@ const StatsModule = {
       if (e.target.closest('.chart-legend')) return;
       if (e.target.closest('.chart-reset-btn')) return;
       if (e.target.closest('.chart-h-scrollbar')) return;
+			if (e.target.closest('.chart-v-scrollbar')) return;
+			if (e.target.closest('.chart-h-scrollbar')) return;
       if (e.target.closest('.chart-v-scrollbar')) return;
       if (e.target.closest('.chart-zoom-info')) return;
       if (e.button !== 0 && e.pointerType === 'mouse') return;
@@ -614,7 +683,7 @@ const StatsModule = {
     this.zoom.xMax = this.totalDays - 1;
     this.zoom.yMin = 0;
     this.zoom.yMax = this.findMaxY(chartData.data);
-    this._currentMaxY = this.zoom.yMax;
+		this._currentMaxY = this.zoom.yMax;
     this.clampZoom();
     this.drawChart();
   },
@@ -637,12 +706,12 @@ const StatsModule = {
     this.totalDays = chartData.totalDays;
 
     // Y-ось: от 0 до max значения (пик упирается в верх)
-    var maxY = this.findMaxY(data);
-    this._currentMaxY = maxY;
-    if (this.zoom.yMax === 0 || this.zoom.yMax < maxY) {
-      this.zoom.yMin = 0;
-      this.zoom.yMax = maxY;
-    }
+		var computedMaxY = this.findMaxY(data);
+		this._currentMaxY = computedMaxY;
+		if (this.zoom.yMax === 0 || this.zoom.yMax < computedMaxY) {
+			this.zoom.yMin = 0;
+			this.zoom.yMax = computedMaxY;
+		}
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
 
     var padding = this.getPadding(width, height);
@@ -783,7 +852,7 @@ const StatsModule = {
       self.drawChart();
     };
     if (hasAny) wrap.appendChild(legendDiv);
-
+		this.updateScrollbars();
   },
 
   openCalendar: function() {
