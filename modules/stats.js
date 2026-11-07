@@ -14,6 +14,7 @@ const StatsModule = {
   _chartDataCache: null,
   _chartDataCacheKey: null,
   _zoomInitialized: false,
+  _currentMaxY: 10,
 
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль статистики инициализирован', 'info');
@@ -206,7 +207,7 @@ const StatsModule = {
       '.chart-canvas-wrap canvas { display:block; width:100%; height:100%; }' +
       '.chart-h-scrollbar { position:absolute; bottom:4px; left:36px; right:20px; height:14px; }' +
       '.chart-v-scrollbar { position:absolute; top:20px; right:4px; bottom:30px; width:14px; }' +
-      '.chart-h-scrollbar input, .chart-v-scrollbar input { width:100%; height:100%; accent-color:var(--accent-gold); cursor:pointer; }' +
+      '.chart-h-scrollbar input, .chart-v-scrollbar input { width:100%; height:100%; accent-color:var(--accent-gold); cursor:pointer; margin:0; }' +
       '.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; }' +
       '.metrics-strip { display:flex; gap:6px; overflow-x:auto; padding:10px 4px; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; border-top:1px solid var(--border-subtle); }' +
       '.metrics-strip::-webkit-scrollbar { height: 6px; }' +
@@ -354,6 +355,7 @@ const StatsModule = {
       var yRange = self.zoom.yMax - self.zoom.yMin;
       var maxY = self._currentMaxY - yRange;
       if (maxY < 0) maxY = 0;
+      // val=100 → yMin=0 (низ), val=0 → yMin=maxY (верх)
       self.zoom.yMin = ((100 - val) / 100) * maxY;
       self.zoom.yMax = self.zoom.yMin + yRange;
       self.clampZoom();
@@ -625,7 +627,7 @@ const StatsModule = {
     if (xRange < 3) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 1.5; this.zoom.xMax = cx + 1.5; xRange = 3; }
     if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; yRange = 2; }
 
-    // Ограничения по границам данных
+    // ИСПРАВЛЕНИЕ: Ограничение максимального диапазона — не давать уйти в бесконечность
     if (xRange > this.totalDays) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays; }
     if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
 
@@ -650,6 +652,7 @@ const StatsModule = {
     this.zoom.xMax = this.totalDays - 1;
     this.zoom.yMin = 0;
     this.zoom.yMax = this.findMaxY(chartData.data);
+    this._currentMaxY = this.zoom.yMax;
     this.clampZoom();
     this.drawChart();
   },
@@ -687,7 +690,16 @@ const StatsModule = {
     var yRange = this.zoom.yMax - this.zoom.yMin;
     if (yRange <= 0) yRange = 10;
 
-    // Сетка
+    // ИСПРАВЛЕНИЕ: clip region для обрезки кривых по границам осей
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
+    ctx.clip();
+
+    // Сетка (рисуется ДО clip, чтобы быть видимой)
+    // Перемещаем сетку после restore
+    ctx.restore();
+
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for (var i = 0; i <= 4; i++) {
@@ -697,23 +709,18 @@ const StatsModule = {
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
-    // Рисуем серии
+    // Рисуем серии с clip
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
+    ctx.clip();
+
     var metrics = this.allMetrics;
     for (var key in metrics) {
       var m = metrics[key];
       if (!this.activeMetrics[key]) continue;
       var series = data[key];
       if (!series) continue;
-
-      // Находим видимый диапазон индексов (с запасом по 1 точке с каждой стороны для линий)
-      var firstVisibleIdx = -1;
-      var lastVisibleIdx = series.length;
-      for (var i = 0; i < series.length; i++) {
-        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-        if (x >= padding.left - chartWidth && firstVisibleIdx === -1) firstVisibleIdx = Math.max(0, i - 1);
-        if (x <= width - padding.right + chartWidth) lastVisibleIdx = Math.min(series.length, i + 2);
-      }
-      if (firstVisibleIdx === -1) firstVisibleIdx = 0;
 
       ctx.strokeStyle = m.color;
       ctx.lineWidth = 2.5;
@@ -723,14 +730,12 @@ const StatsModule = {
       var started = false;
       var prevX = null, prevY = null;
 
-      for (var i = firstVisibleIdx; i < lastVisibleIdx; i++) {
+      for (var i = 0; i < series.length; i++) {
         if (series[i] === null) { prevX = null; prevY = null; continue; }
         var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
         var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
 
-        // Обрезаем по краям canvas
         if (x < padding.left) {
-          // Интерполяция к левому краю
           if (prevX !== null && prevY !== null) {
             var t = (padding.left - prevX) / (x - prevX);
             var edgeY = prevY + t * (y - prevY);
@@ -756,17 +761,19 @@ const StatsModule = {
       }
       ctx.stroke();
 
-      // Точки
-      for (var i = firstVisibleIdx; i < lastVisibleIdx; i++) {
+      // Точки (только в видимой области)
+      for (var i = 0; i < series.length; i++) {
         if (series[i] === null) continue;
         var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
         var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
         if (x < padding.left - 5 || x > width - padding.right + 5) continue;
+        if (y < padding.top - 5 || y > height - padding.bottom + 5) continue;
         ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
         ctx.fillStyle = m.color; ctx.fill();
         ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
       }
     }
+    ctx.restore();
 
     // Подписи X
     ctx.fillStyle = '#a0a0b0';
@@ -803,10 +810,8 @@ const StatsModule = {
       hasAny = true;
       itemsHtml += '<div class="legend-item"><div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + esc(m.label) + '</div></div>';
     }
-    var activeCount = 0;
-    for (var key in metrics) if (this.activeMetrics[key]) activeCount++;
     legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
-      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
+      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + (this.activeMetrics ? Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]).length : 0) + ')</div>' +
       '<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
     '</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
     var self = this;
