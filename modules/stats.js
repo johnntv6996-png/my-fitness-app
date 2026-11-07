@@ -219,10 +219,13 @@ const StatsModule = {
       'body.light-theme .chart-zoom-info { background:rgba(255,255,255,0.9); color:var(--text-primary); }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
-      '.chart-legend { position:absolute; top:40px; right:30px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
-      'body.light-theme .chart-legend { background:rgba(245,242,235,0.95); }' +
-      '.chart-legend::-webkit-scrollbar { width:4px; }' +
-      '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
+      '.chart-legend { position:absolute; top:40px; right:30px; z-index:15; pointer-events:auto; display:flex; flex-direction:row-reverse; align-items:flex-start; gap:8px; }' +
+      '.legend-toggle { width:32px; height:32px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; flex-shrink:0; }' +
+      '.legend-toggle:hover { background:rgba(212,175,55,0.2); border-color:var(--accent-gold); }' +
+      '.legend-toggle i { color:var(--accent-gold); font-size:1.1em; }' +
+      '.legend-panel { background:rgba(10,10,15,0.95); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; max-height:220px; overflow-y:auto; min-width:180px; box-shadow:0 4px 12px rgba(0,0,0,0.5); }' +
+      'body.light-theme .legend-toggle { background:rgba(245,242,235,0.95); }' +
+      'body.light-theme .legend-panel { background:rgba(245,242,235,0.95); }' +
       '.legend-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.8em; }' +
       '.legend-item:last-child { margin-bottom:0; }' +
       '.legend-color { width:12px; height:12px; border-radius:3px; flex-shrink:0; }' +
@@ -756,11 +759,14 @@ const StatsModule = {
     }
 
     // Легенда (сворачиваемая)
+    // Легенда (компактная кнопка + раскрывающаяся панель)
     var oldLegend = document.getElementById('chartLegend');
     if (oldLegend) oldLegend.remove();
+
     var legendDiv = document.createElement('div');
     legendDiv.id = 'chartLegend';
     legendDiv.className = 'chart-legend';
+
     var hasAny = false;
     var itemsHtml = '';
     var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
@@ -768,18 +774,34 @@ const StatsModule = {
       var m = metrics[key];
       if (!this.activeMetrics[key]) continue;
       hasAny = true;
-      itemsHtml += '<div class="legend-item"><div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + esc(m.label) + '</div></div>';
+      itemsHtml += '<div class="legend-item" style="cursor:pointer;padding:4px 8px;border-radius:4px;transition:background 0.15s" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="event.stopPropagation();StatsModule.toggleMetricChip(\'' + esc(key) + '\')">';
+      itemsHtml += '<div class="legend-color" style="background:' + m.color + '"></div>';
+      itemsHtml += '<div class="legend-label">' + esc(m.label) + '</div>';
+      itemsHtml += '<i class="ph ' + (this.activeMetrics[key] ? 'ph-check-square' : 'ph-square') + '" style="color:var(--accent-gold);font-size:1em"></i>';
+      itemsHtml += '</div>';
     }
-    legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
-      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + (this.activeMetrics ? Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]).length : 0) + ')</div>' +
-      '<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
-    '</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
+
+    // Квадратная кнопка-триггер (всегда видна)
+    var toggleBtn = document.createElement('div');
+    toggleBtn.className = 'legend-toggle';
+    toggleBtn.innerHTML = '<i class="ph ph-list"></i>';
+    toggleBtn.title = 'Метрики';
     var self = this;
-    legendDiv.onclick = function(e) {
+    toggleBtn.onclick = function(e) {
       e.stopPropagation();
       self._legendExpanded = !self._legendExpanded;
       self.drawChart();
     };
+    legendDiv.appendChild(toggleBtn);
+
+    // Раскрытая панель (только если expanded и есть метрики)
+    if (this._legendExpanded && hasAny) {
+      var panel = document.createElement('div');
+      panel.className = 'legend-panel';
+      panel.innerHTML = '<div style="font-size:0.75em;color:var(--text-secondary);margin-bottom:6px;font-weight:600;display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики</div>' + itemsHtml;
+      legendDiv.appendChild(panel);
+    }
+
     if (hasAny) wrap.appendChild(legendDiv);
   },
 
