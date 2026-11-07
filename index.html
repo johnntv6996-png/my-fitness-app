@@ -614,8 +614,12 @@ function _getLevelIcon(level) {
 }
 
 function _cumulativeXpForLevel(level) {
+  if (typeof Core !== 'undefined' && Core.utils && Core.utils.cumulativeXpForLevel) {
+    return Core.utils.cumulativeXpForLevel(level);
+  }
+  // Фолбэк, если Core ещё не загружен: та же геометрическая формула
   var sum = 0;
-  for (var i = 1; i < level; i++) sum += i * 100;
+  for (var i = 1; i < level; i++) sum += Math.floor(100 * Math.pow(1.2, i - 1));
   return sum;
 }
 
@@ -655,14 +659,14 @@ const Logger = {
 
 // === Registry модулей ===
 const MODULE_REGISTRY = {
-  'core': { name: 'Ядро системы', version: '4.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js', required: true, description: 'Базовый функционал' },
+  'core': { name: 'Ядро системы', version: '4.0.2', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/core.js', required: true, description: 'Базовый функционал' },
   'welcome': { name: 'Главная', version: '7.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/welcome.js', required: false, description: 'Экран приветствия' },
   'exercises': { name: 'База упражнений', version: '6.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/exercises.js', required: false, description: 'CRUD упражнений' },
   'plan': { name: 'План тренировок', version: '5.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/plan.js', required: false, description: 'Настройка плана' },
-  'workout': { name: 'Тренировка', version: '4.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js', required: false, description: 'Экран тренировки' },
-  'stats': { name: 'Статистика', version: '5.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js', required: false, description: 'Графики и аналитика' },
-  'survey': { name: 'Опросы', version: '4.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js', required: false, description: 'Конструктор опросов' },
-  'achievements': { name: 'Достижения', version: '2.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js', required: false, description: 'Система достижений' },
+  'workout': { name: 'Тренировка', version: '4.0.2', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/workout.js', required: false, description: 'Экран тренировки' },
+  'stats': { name: 'Статистика', version: '5.0.2', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/stats.js', required: false, description: 'Графики и аналитика' },
+  'survey': { name: 'Опросы', version: '4.0.2', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/survey.js', required: false, description: 'Конструктор опросов' },
+  'achievements': { name: 'Достижения', version: '2.0.2', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/achievements.js', required: false, description: 'Система достижений' },
   'settings': { name: 'Настройки', version: '4.0.1', url: 'https://raw.githubusercontent.com/johnntv6996-png/my-fitness-app/main/modules/settings.js', required: false, description: 'Параметры и данные' }
 };
 
@@ -1021,31 +1025,38 @@ function updateHeaderLevel() {
   var stats = null;
   try { stats = JSON.parse(localStorage.getItem('ft_stats')) || {xp:0, level:1, streak:0, yes:0}; } catch (e) {}
   if (!stats) return;
+
   var level = stats.level || 1;
   var xp = stats.xp || 0;
-  var xpNeeded = level * 100;
+
+  // Единая формула XP (совпадает с Core.utils.xpForLevel / workout.js / survey.js)
+  var xpNeeded = (typeof Core !== 'undefined' && Core.utils && Core.utils.xpForLevel)
+    ? Core.utils.xpForLevel(level)
+    : Math.floor(100 * Math.pow(1.2, level - 1));
+  if (xpNeeded <= 0) xpNeeded = 100;
+
   var xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
-  
+
   var iconEl = document.getElementById('headerLevelIcon');
   if (iconEl) iconEl.className = 'ph ' + _getLevelIcon(level) + ' profile-level-icon';
-  
+
   var numEl = document.getElementById('headerLevelNum');
   if (numEl) {
     var oldVal = parseInt(numEl.textContent) || 0;
     if (oldVal !== level) animateNumber(numEl, oldVal, level, 600);
     else numEl.textContent = level;
   }
-  
+
   var xpCurEl = document.getElementById('headerXpCurrent');
   if (xpCurEl) {
     var oldXp = parseInt(xpCurEl.textContent) || 0;
     if (oldXp !== xp) animateNumber(xpCurEl, oldXp, xp, 800);
     else xpCurEl.textContent = xp;
   }
-  
+
   var xpNeedEl = document.getElementById('headerXpNeeded');
   if (xpNeedEl) xpNeedEl.textContent = xpNeeded;
-  
+
   var fillEl = document.getElementById('headerXpFill');
   if (fillEl) {
     var oldWidth = parseFloat(fillEl.style.width) || 0;
@@ -1057,7 +1068,8 @@ function updateHeaderLevel() {
       setTimeout(function() { fillEl.classList.remove('xp-gained'); }, 800);
     }
   }
-  
+
+  // Подсказка «до следующего достижения по уровню»
   var achThresholds = [5, 10, 20, 50, 100];
   var nextAch = null;
   for (var i = 0; i < achThresholds.length; i++) {
@@ -1098,7 +1110,7 @@ function showAchievementToast(name, description, icon) {
   var toast = document.createElement('div');
   toast.className = 'achievement-toast';
   toast.innerHTML = 
-    '<i class="ph ph-fill ' + _esc(icon) + ' ach-icon"></i>' +
+    '<i class="ph-fill ' + _esc(icon) + ' ach-icon"></i>' +
     '<div class="ach-text">' +
       '<div class="ach-title">🏆 Достижение разблокировано!</div>' +
       '<div class="ach-desc"><strong>' + _esc(name) + '</strong> — ' + _esc(description) + '</div>' +

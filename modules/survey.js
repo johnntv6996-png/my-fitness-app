@@ -18,7 +18,13 @@ const SurveyModule = {
     }
   },
   getSurveyConfig: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('survey_config') : null) || null; },
-  saveSurveyConfig: function(c) { if (typeof FTStorage !== 'undefined') FTStorage.set('survey_config', c); },
+  saveSurveyConfig: function(c) {
+    if (typeof FTStorage !== 'undefined') FTStorage.set('survey_config', c);
+    if (typeof StatsModule !== 'undefined') {
+      StatsModule._chartDataCache = null;
+      StatsModule._chartDataCacheKey = null;
+    }
+  },
   getDefaultSurvey: function() {
     return {
       questions: [
@@ -170,7 +176,6 @@ const SurveyModule = {
         '</div>' +
       '</div>';
     } else if (type === 'emoji') {
-      // УБРАНЫ предустановленные наборы — только ввод своих эмодзи
       var existingEmojiList = '';
       if (q.emojiSet) {
         var vals = Object.values(q.emojiSet);
@@ -255,7 +260,6 @@ const SurveyModule = {
       if (maxEl && maxEl.value) q.max = parseInt(maxEl.value);
       if (unitEl) q.unit = unitEl.value.trim();
     } else if (type === 'emoji') {
-      // Только свои эмодзи — никаких предустановленных наборов
       var customEl = document.getElementById('qEmojiCustom');
       var emojiList = customEl ? customEl.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e; }) : [];
       if (emojiList.length < 2) {
@@ -503,48 +507,60 @@ const SurveyModule = {
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
     SurveyModule._renderQuestion();
   },
-	_saveSurveyAnswers: function() {
-		var todayStr = Core.utils.formatLocalDate(new Date());
-		var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
-		var dayRecord = null;
-		for (var i = 0; i < history.length; i++) {
-			if (history[i].date === todayStr) { dayRecord = history[i]; break; }
-		}
-		if (!dayRecord) {
-			dayRecord = {
-				date: todayStr,
-				dayName: Core.utils.getDayName(Core.utils.getTodayIndex()),
-				muscleGroup: '', exercises: [], details: [], duration: 0,
-				timestamp: Date.now(), survey: {}
-			};
-			history.push(dayRecord);
-		}
-		if (!dayRecord.survey) dayRecord.survey = {};
-		var alreadyHadSurvey = Object.keys(dayRecord.survey).length > 0;
-		for (var key in SurveyModule._answers) {
-			dayRecord.survey[key] = SurveyModule._answers[key];
-		}
-		if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
-		if (typeof Core !== 'undefined') Core._historyMapCache = null;
-		if (!alreadyHadSurvey) {
-			var stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
-			stats.xp = (stats.xp || 0) + 10;
-			var xpNeeded = Math.floor(100 * Math.pow(1.2, stats.level - 1));
-			while (stats.xp >= xpNeeded) {
-				stats.xp -= xpNeeded;
-				stats.level++;
-				xpNeeded = Math.floor(100 * Math.pow(1.2, stats.level - 1));
-			}
-			if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
-			if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
-			if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
-				AchievementsModule.checkAchievements();
-			}
-			if (typeof Notify !== 'undefined') Notify.success('Опрос сохранён! +10 XP'); else alert('✅ Опрос сохранён! +10 XP.');
-		} else {
-			if (typeof Notify !== 'undefined') Notify.success('Опрос обновлён'); else alert('✅ Опрос обновлён.');
-		}
-	}
+  _saveSurveyAnswers: function() {
+    var todayStr = Core.utils.formatLocalDate(new Date());
+    var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
+    var dayRecord = null;
+    for (var i = 0; i < history.length; i++) {
+      if (history[i].date === todayStr) { dayRecord = history[i]; break; }
+    }
+    if (!dayRecord) {
+      dayRecord = {
+        date: todayStr,
+        dayName: Core.utils.getDayName(Core.utils.getTodayIndex()),
+        muscleGroup: '', exercises: [], details: [], duration: 0,
+        timestamp: Date.now(), survey: {}
+      };
+      history.push(dayRecord);
+    }
+    if (!dayRecord.survey) dayRecord.survey = {};
+    var alreadyHadSurvey = Object.keys(dayRecord.survey).length > 0;
+    for (var key in SurveyModule._answers) {
+      dayRecord.survey[key] = SurveyModule._answers[key];
+    }
+    if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
+    if (typeof Core !== 'undefined') Core._historyMapCache = null;
+    if (typeof StatsModule !== 'undefined') {
+      StatsModule._chartDataCache = null;
+      StatsModule._chartDataCacheKey = null;
+      var statsScreen = document.getElementById('screen-stats');
+      if (statsScreen && statsScreen.classList.contains('active') && typeof StatsModule.drawChart === 'function') {
+        StatsModule.drawChart();
+      }
+    }
+    if (!alreadyHadSurvey) {
+      var stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
+      stats.xp = (stats.xp || 0) + 10;
+      var xpNeeded = (typeof Core !== 'undefined' && Core.utils && Core.utils.xpForLevel)
+        ? Core.utils.xpForLevel(stats.level)
+        : Math.floor(100 * Math.pow(1.2, stats.level - 1));
+      while (stats.xp >= xpNeeded) {
+        stats.xp -= xpNeeded;
+        stats.level++;
+        xpNeeded = (typeof Core !== 'undefined' && Core.utils && Core.utils.xpForLevel)
+          ? Core.utils.xpForLevel(stats.level)
+          : Math.floor(100 * Math.pow(1.2, stats.level - 1));
+      }
+      if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+      if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
+      if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
+        AchievementsModule.checkAchievements();
+      }
+      if (typeof Notify !== 'undefined') Notify.success('Опрос сохранён! +10 XP'); else alert('✅ Опрос сохранён! +10 XP.');
+    } else {
+      if (typeof Notify !== 'undefined') Notify.success('Опрос обновлён'); else alert('✅ Опрос обновлён.');
+    }
+  }
 };
 window.SurveyModule = SurveyModule;
 module.exports = SurveyModule;

@@ -26,12 +26,11 @@ const AchievementsModule = {
   getHistory: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || []; },
   getUnlockedAchievements: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('unlocked_achievements') : null) || []; },
   saveUnlockedAchievements: function(a) { if (typeof FTStorage !== 'undefined') FTStorage.set('unlocked_achievements', a); },
-  
+
   getAllAchievements: function() {
     if (this._allCache) return this._allCache;
     var achievements = [];
-    
-    // Базовые
+
     achievements.push({ id: 'first_workout', name: 'Первый шаг', description: 'Заверши первую тренировку', icon: 'ph-shoe-prints', condition: function(s) { return s.yes >= 1; } });
     achievements.push({ id: 'exercises_added', name: 'Коллекционер', description: 'Добавь 5 упражнений в базу', icon: 'ph-books', condition: function() {
       var db = (typeof FTStorage !== 'undefined' ? FTStorage.get('db') : null) || [];
@@ -48,7 +47,6 @@ const AchievementsModule = {
       return false;
     }});
 
-    // Бесконечные вехи для тренировок
     var workoutTiers = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
     for (var i = 0; i < workoutTiers.length; i++) {
       var t = workoutTiers[i];
@@ -61,7 +59,6 @@ const AchievementsModule = {
       });
     }
 
-    // Бесконечные вехи для уровней
     var levelTiers = [5, 10, 20, 30, 50, 75, 100];
     for (var i = 0; i < levelTiers.length; i++) {
       var lv = levelTiers[i];
@@ -74,7 +71,6 @@ const AchievementsModule = {
       });
     }
 
-    // Бесконечные вехи для стрика
     var streakTiers = [3, 7, 14, 30, 60, 100, 365, 1000];
     for (var i = 0; i < streakTiers.length; i++) {
       var st = streakTiers[i];
@@ -97,7 +93,7 @@ const AchievementsModule = {
     var unlocked = this.getUnlockedAchievements();
     var all = this.getAllAchievements();
     var newUnlocked = [];
-    
+
     for (var i = 0; i < all.length; i++) {
       var ach = all[i];
       if (unlocked.indexOf(ach.id) === -1 && ach.condition(stats, history)) {
@@ -105,7 +101,7 @@ const AchievementsModule = {
         newUnlocked.push(ach);
       }
     }
-    
+
     if (newUnlocked.length > 0) {
       this.saveUnlockedAchievements(unlocked);
       for (var i = 0; i < newUnlocked.length; i++) {
@@ -124,7 +120,9 @@ const AchievementsModule = {
   },
 
   createAchievementsScreen: function() {
-    var esc = Core.utils.escapeHtml;
+    var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml)
+      ? Core.utils.escapeHtml
+      : function(t){ return t == null ? '' : String(t); };
     var screen = document.getElementById('screen-achievements');
     if (!screen) {
       screen = document.createElement('div');
@@ -134,7 +132,7 @@ const AchievementsModule = {
     }
     var unlocked = this.getUnlockedAchievements();
     var all = this.getAllAchievements();
-    
+
     var css = '<style>' +
       '.ach-card { background:var(--bg-card); border-radius:14px; padding:18px; margin-bottom:12px; border:1px solid var(--border-subtle); transition:all 0.2s; display:flex; align-items:center; gap:16px; }' +
       '.ach-card.unlocked { border-color:var(--border-gold); background:var(--accent-gold-dim); }' +
@@ -151,20 +149,20 @@ const AchievementsModule = {
       '.progress-fill { height:100%; background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light)); border-radius:3px; transition:width 0.5s; }' +
       '@media (prefers-reduced-motion: reduce) { .ach-card, .progress-fill { transition: none !important; } }' +
     '</style>';
-    
+
     var html = css + '<div style="padding:16px;max-width:700px;margin:0 auto">';
     html += '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-trophy"></i> Достижения</h2>';
     html += '<div style="background:var(--accent-gold-dim);border:1px solid var(--border-gold);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:0.9em;display:flex;align-items:center;gap:10px">';
     html += '<i class="ph ph-medal" style="color:var(--accent-gold);font-size:1.3em"></i>';
     html += '<div><strong style="color:var(--accent-gold)">' + unlocked.length + ' из ' + all.length + '</strong> достижений разблокировано</div>';
     html += '</div>';
-    
+
     var progressPercent = all.length > 0 ? Math.round((unlocked.length / all.length) * 100) : 0;
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;justify-content:space-between;font-size:0.85em;margin-bottom:6px"><span style="color:var(--text-secondary)">Общий прогресс</span><span style="color:var(--accent-gold);font-weight:600">' + progressPercent + '%</span></div>';
     html += '<div class="progress-bar"><div class="progress-fill" style="width:' + progressPercent + '%"></div></div>';
     html += '</div>';
-    
+
     var sorted = all.slice().sort(function(a, b) {
       var aU = unlocked.indexOf(a.id) !== -1;
       var bU = unlocked.indexOf(b.id) !== -1;
@@ -172,7 +170,7 @@ const AchievementsModule = {
       if (!aU && bU) return 1;
       return 0;
     });
-    
+
     for (var i = 0; i < sorted.length; i++) {
       var ach = sorted[i];
       var isUnlocked = unlocked.indexOf(ach.id) !== -1;

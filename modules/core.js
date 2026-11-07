@@ -51,17 +51,23 @@ const CoreModule = {
       if (level >= 5) return 'ph-star-four';
       return 'ph-star';
     },
-		// В modules/core.js, внутри utils, замени totalXp на:
-		totalXp: function(stats) {
-			stats = stats || {};
-			var level = stats.level || 1;
-			var xp = stats.xp || 0;
-			var total = 0;
-			for (var i = 1; i < level; i++) {
-				total += Math.floor(100 * Math.pow(1.2, i - 1));
-			}
-			return total + xp;
-		},
+    // Единая формула XP: сколько нужно для перехода с level на level+1
+    xpForLevel: function(level) {
+      return Math.floor(100 * Math.pow(1.2, Math.max(0, (level || 1) - 1)));
+    },
+    // Суммарный XP, накопленный до достижения level
+    cumulativeXpForLevel: function(level) {
+      var total = 0;
+      for (var i = 1; i < (level || 1); i++) total += this.xpForLevel(i);
+      return total;
+    },
+    // Совместимость со старым именем
+    totalXp: function(stats) {
+      stats = stats || {};
+      var level = stats.level || 1;
+      var xp = stats.xp || 0;
+      return this.cumulativeXpForLevel(level) + xp;
+    },
     generateId: function(prefix) {
       prefix = prefix || 'id';
       var rnd = (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -95,7 +101,6 @@ const CoreModule = {
   _historyMapLastDate: '',
   getHistoryMap: function(history) {
     history = history || [];
-    // Исправлена проверка кэша: сравниваем длину и последнюю дату, а не ссылку на объект
     var lastDate = history.length > 0 ? history[history.length - 1].date : '';
     if (this._historyMapSourceLength === history.length && this._historyMapLastDate === lastDate && this._historyMapCache) {
       return this._historyMapCache;
@@ -126,7 +131,7 @@ const CoreModule = {
     if (activeBtn) activeBtn.classList.add('active');
     if (typeof toggleSidebar === 'function' && document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
     if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
-    
+
     var renderer = this.screenRenderers[screenId];
     if (renderer) {
       try { renderer(); } catch (e) {

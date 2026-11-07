@@ -76,9 +76,14 @@ const StatsModule = {
     return colors[index % colors.length];
   },
 
+  // Ключ кэша учитывает последнюю запись (вес/настроение/опрос), чтобы инвалидироваться при изменениях внутри дня
   buildChartDataCacheKey: function(history) {
     if (!history || history.length === 0) return 'empty';
-    return history.length + '_' + history[0].date + '_' + history[history.length - 1].date + '_' + (history[history.length - 1].timestamp || 0);
+    var last = history[history.length - 1];
+    return history.length + '_' + history[0].date + '_' + last.date + '_' +
+      (last.timestamp || 0) + '_' +
+      JSON.stringify(last.survey || {}) + '_' +
+      (last.weight || '') + '_' + (last.mood || '');
   },
 
   buildChartData: function() {
@@ -135,7 +140,6 @@ const StatsModule = {
 
     this.totalDays = totalDays;
 
-    // Инициализация зума только один раз
     if (!this._zoomInitialized) {
       this.zoom.xMin = 0;
       this.zoom.xMax = totalDays - 1;
@@ -168,7 +172,7 @@ const StatsModule = {
     return maxVal;
   },
 
-	createStatsScreen: function() {
+  createStatsScreen: function() {
     var screen = document.getElementById('screen-stats');
     if (!screen) {
       screen = document.createElement('div');
@@ -217,9 +221,9 @@ const StatsModule = {
       '.metric-chip.active .check { opacity:1; }' +
       '.chart-zoom-info { position:absolute; top:10px; right:30px; background:rgba(0,0,0,0.7); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-primary); z-index:5; pointer-events:none; font-weight:600; }' +
       'body.light-theme .chart-zoom-info { background:rgba(255,255,255,0.9); color:var(--text-primary); }' +
-			'.chart-reset-btn { position:absolute; top:80px; right:30px; width:32px; height:32px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; z-index:4; flex-shrink:0; }' +
-			'.chart-reset-btn:hover { background:rgba(212,175,55,0.2); border-color:var(--accent-gold); }' +
-			'.chart-reset-btn i { color:var(--accent-gold); font-size:1.1em; }' +
+      '.chart-reset-btn { position:absolute; top:80px; right:30px; width:32px; height:32px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; z-index:4; flex-shrink:0; }' +
+      '.chart-reset-btn:hover { background:rgba(212,175,55,0.2); border-color:var(--accent-gold); }' +
+      '.chart-reset-btn i { color:var(--accent-gold); font-size:1.1em; }' +
       '.chart-legend { position:absolute; top:40px; right:30px; z-index:15; pointer-events:auto; display:flex; flex-direction:row-reverse; align-items:flex-start; gap:8px; }' +
       '.legend-toggle { width:32px; height:32px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; flex-shrink:0; }' +
       '.legend-toggle:hover { background:rgba(212,175,55,0.2); border-color:var(--accent-gold); }' +
@@ -308,7 +312,7 @@ const StatsModule = {
     var self = this;
     setTimeout(function() { self.setupChartInteractions(); self.drawChart(); }, 50);
   },
-	
+
   renderMetricChips: function() {
     var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
     var strip = document.getElementById('metricsStrip');
@@ -562,50 +566,45 @@ const StatsModule = {
     this.drawChart();
   },
 
-	clampZoom: function() {
-		var xRange = this.zoom.xMax - this.zoom.xMin;
-		var yRange = this.zoom.yMax - this.zoom.yMin;
-		var maxY = this._currentMaxY || 10;
+  clampZoom: function() {
+    var xRange = this.zoom.xMax - this.zoom.xMin;
+    var yRange = this.zoom.yMax - this.zoom.yMin;
+    var maxY = this._currentMaxY || 10;
 
-		// Максимальное приближение 500% = диапазон не меньше 1/5 от полного
-		var minXRange = (this.totalDays - 1) / 5;
-		var minYRange = maxY / 5;
-		if (minXRange < 3) minXRange = 3;
-		if (minYRange < 2) minYRange = 2;
+    var minXRange = (this.totalDays - 1) / 5;
+    var minYRange = maxY / 5;
+    if (minXRange < 3) minXRange = 3;
+    if (minYRange < 2) minYRange = 2;
 
-		// Ограничиваем минимальный размер окна (максимальный зум)
-		if (xRange < minXRange) {
-			var cx = (this.zoom.xMin + this.zoom.xMax) / 2;
-			this.zoom.xMin = cx - minXRange / 2;
-			this.zoom.xMax = cx + minXRange / 2;
-			xRange = minXRange;
-		}
-		if (yRange < minYRange) {
-			var cy = (this.zoom.yMin + this.zoom.yMax) / 2;
-			this.zoom.yMin = cy - minYRange / 2;
-			this.zoom.yMax = cy + minYRange / 2;
-			yRange = minYRange;
-		}
+    if (xRange < minXRange) {
+      var cx = (this.zoom.xMin + this.zoom.xMax) / 2;
+      this.zoom.xMin = cx - minXRange / 2;
+      this.zoom.xMax = cx + minXRange / 2;
+      xRange = minXRange;
+    }
+    if (yRange < minYRange) {
+      var cy = (this.zoom.yMin + this.zoom.yMax) / 2;
+      this.zoom.yMin = cy - minYRange / 2;
+      this.zoom.yMax = cy + minYRange / 2;
+      yRange = minYRange;
+    }
 
-		// Ограничения по границам данных (максимальное отдаление)
-		if (xRange > this.totalDays - 1) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays - 1; }
-		if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
+    if (xRange > this.totalDays - 1) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays - 1; }
+    if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
 
-		// Запрет ухода за границы
-		if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
-		if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
-		if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
-		if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
+    if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
+    if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
+    if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
+    if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
 
-		// Отображение процента (максимум 500%)
-		var info = document.getElementById('zoomInfo');
-		if (info) {
-			var xZoom = Math.round((this.totalDays - 1) / (this.zoom.xMax - this.zoom.xMin) * 100);
-			if (xZoom > 500) xZoom = 500;
-			if (xZoom < 100) xZoom = 100;
-			info.textContent = xZoom + '%';
-		}
-	},
+    var info = document.getElementById('zoomInfo');
+    if (info) {
+      var xZoom = Math.round((this.totalDays - 1) / (this.zoom.xMax - this.zoom.xMin) * 100);
+      if (xZoom > 500) xZoom = 500;
+      if (xZoom < 100) xZoom = 100;
+      info.textContent = xZoom + '%';
+    }
+  },
 
   resetZoom: function() {
     this._chartDataCache = null;
@@ -616,7 +615,7 @@ const StatsModule = {
     this.zoom.xMax = this.totalDays - 1;
     this.zoom.yMin = 0;
     this.zoom.yMax = this.findMaxY(chartData.data);
-		this._currentMaxY = this.zoom.yMax;
+    this._currentMaxY = this.zoom.yMax;
     this.clampZoom();
     this.drawChart();
   },
@@ -638,7 +637,6 @@ const StatsModule = {
     var labels = chartData.labels;
     this.totalDays = chartData.totalDays;
 
-    // Y-ось: от 0 до max значения (пик упирается в верх)
     var computedMaxY = this.findMaxY(data);
     this._currentMaxY = computedMaxY;
     if (this.zoom.yMax === 0 || this.zoom.yMax < computedMaxY) {
@@ -654,7 +652,6 @@ const StatsModule = {
     var yRange = this.zoom.yMax - this.zoom.yMin;
     if (yRange <= 0) yRange = 10;
 
-    // 1. Сетка (рисуется БЕЗ clip, чтобы быть видимой везде)
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for (var i = 0; i <= 4; i++) {
@@ -664,7 +661,6 @@ const StatsModule = {
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
-    // 2. Рисуем серии с clip (чтобы линии не вылезали за оси)
     ctx.save();
     ctx.beginPath();
     ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
@@ -699,7 +695,6 @@ const StatsModule = {
         var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
         var y = height - padding.bottom - ((val - this.zoom.yMin) / yRange) * chartHeight;
 
-        // Проверяем видимость точки
         if (x >= padding.left && x <= width - padding.right &&
             y >= padding.top && y <= height - padding.bottom) {
           ctx.beginPath();
@@ -714,7 +709,6 @@ const StatsModule = {
     }
     ctx.restore();
 
-    // 3. Подписи X
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -726,7 +720,6 @@ const StatsModule = {
       }
     }
 
-    // 4. Подписи Y
     ctx.textAlign = 'right';
     var yStep = Math.max(1, Math.ceil(yRange / 5));
     for (var v = Math.ceil(this.zoom.yMin); v <= Math.floor(this.zoom.yMax); v += yStep) {
@@ -734,7 +727,6 @@ const StatsModule = {
       ctx.fillText(v, padding.left - 4, y + 4);
     }
 
-    // 5. Легенда (компактная кнопка + раскрывающаяся панель)
     var oldLegend = document.getElementById('chartLegend');
     if (oldLegend) oldLegend.remove();
 
@@ -777,8 +769,8 @@ const StatsModule = {
 
     if (hasAny) wrap.appendChild(legendDiv);
   },
-	
-	openCalendar: function() {
+
+  openCalendar: function() {
     var oldTooltip = document.getElementById('calendarTooltip');
     if (oldTooltip) oldTooltip.remove();
     var oldModal = document.getElementById('calendarModal');
