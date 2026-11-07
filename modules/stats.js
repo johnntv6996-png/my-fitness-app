@@ -168,7 +168,7 @@ const StatsModule = {
     return maxVal;
   },
 
-  createStatsScreen: function() {
+	createStatsScreen: function() {
     var screen = document.getElementById('screen-stats');
     if (!screen) {
       screen = document.createElement('div');
@@ -219,20 +219,20 @@ const StatsModule = {
       'body.light-theme .chart-zoom-info { background:rgba(255,255,255,0.9); color:var(--text-primary); }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
-      '.chart-h-scrollbar { position:absolute; bottom:6px; left:44px; right:28px; height:10px; z-index:5; }' +
-			'.chart-v-scrollbar { position:absolute; top:20px; right:6px; bottom:30px; width:10px; z-index:5; }' +
-			'.chart-h-scrollbar input, .chart-v-scrollbar input { -webkit-appearance:none; appearance:none; width:100%; height:100%; background:transparent; cursor:pointer; margin:0; outline:none; }' +
-			'.chart-h-scrollbar input::-webkit-slider-runnable-track { height:6px; background:rgba(212,175,55,0.15); border-radius:3px; }' +
-			'.chart-h-scrollbar input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; margin-top:-4px; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
-			'.chart-h-scrollbar input::-moz-range-track { height:6px; background:rgba(212,175,55,0.15); border-radius:3px; border:none; }' +
-			'.chart-h-scrollbar input::-moz-range-thumb { width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; border:none; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
-			'.chart-v-scrollbar input::-webkit-slider-runnable-track { width:6px; background:rgba(212,175,55,0.15); border-radius:3px; }' +
-			'.chart-v-scrollbar input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; margin-left:-4px; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
-			'.chart-v-scrollbar input::-moz-range-track { width:6px; background:rgba(212,175,55,0.15); border-radius:3px; border:none; }' +
-			'.chart-v-scrollbar input::-moz-range-thumb { width:14px; height:14px; background:var(--accent-gold); border-radius:50%; cursor:pointer; border:none; box-shadow:0 0 6px rgba(212,175,55,0.6); }' +
-			'.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; transform:rotate(180deg); }' +
-			'.chart-h-scrollbar input:disabled, .chart-v-scrollbar input:disabled { opacity:0.3; cursor:not-allowed; }' +
-			'.chart-legend { position:absolute; top:40px; right:30px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
+      '.chart-h-scrollbar { position:absolute; bottom:6px; left:44px; right:28px; height:10px; z-index:5; overflow:hidden; }' +
+      '.chart-v-scrollbar { position:absolute; top:20px; right:6px; bottom:30px; width:10px; z-index:5; overflow:hidden; }' +
+      '.chart-h-scrollbar input, .chart-v-scrollbar input { -webkit-appearance:none; appearance:none; width:100%; height:100%; background:transparent; cursor:pointer; margin:0; outline:none; }' +
+      '.chart-h-scrollbar input::-webkit-scrollbar { height:6px; display:block; }' +
+      '.chart-h-scrollbar input::-webkit-scrollbar-track { background:var(--bg-primary); border-radius:3px; }' +
+      '.chart-h-scrollbar input::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
+      '.chart-h-scrollbar input::-webkit-scrollbar-thumb:hover { background:var(--accent-gold-light); }' +
+      '.chart-v-scrollbar input::-webkit-scrollbar { width:6px; display:block; }' +
+      '.chart-v-scrollbar input::-webkit-scrollbar-track { background:var(--bg-primary); border-radius:3px; }' +
+      '.chart-v-scrollbar input::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
+      '.chart-v-scrollbar input::-webkit-scrollbar-thumb:hover { background:var(--accent-gold-light); }' +
+      '.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; }' +
+      '.chart-h-scrollbar input:disabled, .chart-v-scrollbar input:disabled { opacity:0.3; cursor:not-allowed; }' +
+      '.chart-legend { position:absolute; top:40px; right:30px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
       'body.light-theme .chart-legend { background:rgba(245,242,235,0.95); }' +
       '.chart-legend::-webkit-scrollbar { width:4px; }' +
       '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
@@ -287,8 +287,8 @@ const StatsModule = {
     chartHtml += '<button class="chart-reset-btn" onclick="StatsModule.resetZoom()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить</button>';
     chartHtml += '<div class="chart-zoom-info" id="zoomInfo">100%</div>';
     chartHtml += '<div class="chart-h-scrollbar" id="hScrollbar"><input type="range" id="hScroll" min="0" max="100" value="0" step="0.1" disabled></div>';
-		chartHtml += '<div class="chart-v-scrollbar" id="vScrollbar"><input type="range" id="vScroll" min="0" max="100" value="100" step="0.1" disabled></div>';
-		chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
+    chartHtml += '<div class="chart-v-scrollbar" id="vScrollbar"><input type="range" id="vScroll" min="0" max="100" value="100" step="0.1" disabled></div>';
+    chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
     chartHtml += '</div></div>';
@@ -317,9 +317,9 @@ const StatsModule = {
     screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + streakHtml + '</div>';
     this.renderMetricChips();
     var self = this;
-		setTimeout(function() { self.setupChartInteractions(); self.setupScrollbars(); self.drawChart(); }, 50);
+    setTimeout(function() { self.setupChartInteractions(); self.setupScrollbars(); self.drawChart(); }, 50);
   },
-
+	
   renderMetricChips: function() {
     var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
     var strip = document.getElementById('metricsStrip');
