@@ -674,70 +674,56 @@ const StatsModule = {
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
     // Рисуем серии с clip
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
-    ctx.clip();
+		// Рисуем серии с clip
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
+		ctx.clip();
 
-    var metrics = this.allMetrics;
-    for (var key in metrics) {
-      var m = metrics[key];
-      if (!this.activeMetrics[key]) continue;
-      var series = data[key];
-      if (!series) continue;
+		var metrics = this.allMetrics;
+		for (var key in metrics) {
+			var m = metrics[key];
+			if (!this.activeMetrics[key]) continue;
+			var series = data[key];
+			if (!series) continue;
 
-      ctx.strokeStyle = m.color;
-      ctx.lineWidth = 2.5;
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      var started = false;
-      var prevX = null, prevY = null;
+			ctx.strokeStyle = m.color;
+			ctx.lineWidth = 2.5;
+			ctx.lineJoin = 'round';
+			ctx.lineCap = 'round';
+			ctx.beginPath();
+			var started = false;
 
-      for (var i = 0; i < series.length; i++) {
-        if (series[i] === null) { prevX = null; prevY = null; continue; }
-        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+			// Рисуем линию через ВСЕ точки (даже за пределами видимости)
+			for (var i = 0; i < series.length; i++) {
+				if (series[i] === null) { started = false; continue; }
+				var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+				var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+				
+				if (!started) { ctx.moveTo(x, y); started = true; }
+				else ctx.lineTo(x, y);
+			}
+			ctx.stroke();
 
-        if (x < padding.left) {
-          if (prevX !== null && prevY !== null) {
-            var t = (padding.left - prevX) / (x - prevX);
-            var edgeY = prevY + t * (y - prevY);
-            if (!started) { ctx.moveTo(padding.left, edgeY); started = true; }
-            else ctx.lineTo(padding.left, edgeY);
-          }
-          prevX = x; prevY = y;
-          continue;
-        }
-        if (x > width - padding.right) {
-          if (prevX !== null && prevY !== null) {
-            var t = (width - padding.right - prevX) / (x - prevX);
-            var edgeY = prevY + t * (y - prevY);
-            ctx.lineTo(width - padding.right, edgeY);
-          }
-          prevX = x; prevY = y;
-          continue;
-        }
-
-        if (!started) { ctx.moveTo(x, y); started = true; }
-        else ctx.lineTo(x, y);
-        prevX = x; prevY = y;
-      }
-      ctx.stroke();
-
-      // Точки (только в видимой области)
-      for (var i = 0; i < series.length; i++) {
-        if (series[i] === null) continue;
-        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-        if (x < padding.left - 5 || x > width - padding.right + 5) continue;
-        if (y < padding.top - 5 || y > height - padding.bottom + 5) continue;
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = m.color; ctx.fill();
-        ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
-      }
-    }
-    ctx.restore();
+			// Точки рисуем только в видимой области
+			for (var i = 0; i < series.length; i++) {
+				if (series[i] === null) continue;
+				var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+				var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+				
+				// Проверяем видимость точки
+				if (x >= padding.left && x <= width - padding.right && y >= padding.top && y <= height - padding.bottom) {
+					ctx.beginPath();
+					ctx.arc(x, y, 4, 0, Math.PI * 2);
+					ctx.fillStyle = m.color;
+					ctx.fill();
+					ctx.strokeStyle = '#0a0a0f';
+					ctx.lineWidth = 2;
+					ctx.stroke();
+				}
+			}
+		}
+		ctx.restore();
 
     // Подписи X
     ctx.fillStyle = '#a0a0b0';
