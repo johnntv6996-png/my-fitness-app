@@ -13,8 +13,7 @@ const StatsModule = {
   lastMouseY: -1,
   _chartDataCache: null,
   _chartDataCacheKey: null,
-  _legendExpanded: false,
-  _initialized: false,
+  _zoomInitialized: false,
 
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль статистики инициализирован', 'info');
@@ -22,7 +21,6 @@ const StatsModule = {
       document.addEventListener('DOMContentLoaded', function() { StatsModule.setup(); });
     } else { this.setup(); }
   },
-
   setup: function() {
     this.createStatsScreen();
     if (typeof Core !== 'undefined') {
@@ -30,7 +28,6 @@ const StatsModule = {
       Core.registerScreen('stats', function() { StatsModule.createStatsScreen(); });
     }
   },
-
   getStats: function() {
     var defaults = {yes:0, later:0, no:0, xp:0, level:1, streak:0};
     if (typeof FTStorage !== 'undefined') {
@@ -40,7 +37,6 @@ const StatsModule = {
     }
     return defaults;
   },
-
   getHistory: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || []; },
   getSurveyConfig: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('survey_config') : null) || null; },
 
@@ -139,13 +135,11 @@ const StatsModule = {
     this.totalDays = totalDays;
 
     // Инициализация зума только один раз
-    if (!this._initialized) {
+    if (!this._zoomInitialized) {
       this.zoom.xMin = 0;
       this.zoom.xMax = totalDays - 1;
       this.zoom.yMin = 0;
-      this.zoom.yMax = this.findMaxY(data);
-      if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
-      this._initialized = true;
+      this._zoomInitialized = true;
     }
 
     this._chartDataCache = { data: data, labels: labels, totalDays: totalDays };
@@ -154,7 +148,7 @@ const StatsModule = {
   },
 
   findMaxY: function(data) {
-    var maxVal = 10;
+    var maxVal = 0;
     var metrics = this.allMetrics;
     for (var key in metrics) {
       if (!this.activeMetrics[key]) continue;
@@ -164,8 +158,8 @@ const StatsModule = {
         if (series[i] !== null && series[i] > maxVal) maxVal = series[i];
       }
     }
-    // Округляем до удобного значения
-    if (maxVal <= 10) maxVal = 10;
+    if (maxVal <= 0) maxVal = 10;
+    else if (maxVal <= 10) maxVal = 10;
     else if (maxVal <= 20) maxVal = 20;
     else if (maxVal <= 50) maxVal = 50;
     else if (maxVal <= 100) maxVal = 100;
@@ -198,7 +192,7 @@ const StatsModule = {
       else break;
     }
     var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
-    var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования.</div>' : '';
+    var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Колёсико — зум, перетаскивание — панорама, скроллбары — навигация</div>' : '';
 
     var css = '<style>' +
       '.stat-card { background:var(--bg-card); border-radius:14px; padding:18px; margin-bottom:16px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
@@ -210,6 +204,10 @@ const StatsModule = {
       '.chart-container { position:relative; border-radius:12px; background:var(--bg-primary); border:1px solid var(--border-subtle); overflow:hidden; }' +
       '.chart-canvas-wrap { position:relative; width:100%; height:420px; cursor:crosshair; }' +
       '.chart-canvas-wrap canvas { display:block; width:100%; height:100%; }' +
+      '.chart-h-scrollbar { position:absolute; bottom:4px; left:36px; right:20px; height:14px; }' +
+      '.chart-v-scrollbar { position:absolute; top:20px; right:4px; bottom:30px; width:14px; }' +
+      '.chart-h-scrollbar input, .chart-v-scrollbar input { width:100%; height:100%; accent-color:var(--accent-gold); cursor:pointer; }' +
+      '.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; }' +
       '.metrics-strip { display:flex; gap:6px; overflow-x:auto; padding:10px 4px; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; border-top:1px solid var(--border-subtle); }' +
       '.metrics-strip::-webkit-scrollbar { height: 6px; }' +
       '.metrics-strip::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
@@ -220,11 +218,11 @@ const StatsModule = {
       '.metric-chip .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }' +
       '.metric-chip .check { font-size:0.9em; opacity:0; transition:opacity 0.2s; }' +
       '.metric-chip.active .check { opacity:1; }' +
-      '.chart-zoom-info { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-primary); z-index:5; pointer-events:none; font-weight:600; }' +
+      '.chart-zoom-info { position:absolute; top:10px; right:30px; background:rgba(0,0,0,0.7); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-primary); z-index:5; pointer-events:none; font-weight:600; }' +
       'body.light-theme .chart-zoom-info { background:rgba(255,255,255,0.9); color:var(--text-primary); }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
-      '.chart-legend { position:absolute; top:40px; right:10px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
+      '.chart-legend { position:absolute; top:40px; right:30px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
       'body.light-theme .chart-legend { background:rgba(245,242,235,0.95); }' +
       '.chart-legend::-webkit-scrollbar { width:4px; }' +
       '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
@@ -239,12 +237,26 @@ const StatsModule = {
       '.tooltip-label { opacity:0.7; flex:1; }' +
       '.tooltip-value { font-weight:600; color:var(--accent-gold); }' +
       '.tooltip-date { font-weight:600; color:var(--accent-gold); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-subtle); }' +
-      '.chart-scrollbar-h { position:absolute; bottom:0; left:0; right:0; height:8px; background:rgba(0,0,0,0.2); cursor:pointer; }' +
-      '.chart-scrollbar-v { position:absolute; top:0; right:0; bottom:0; width:8px; background:rgba(0,0,0,0.2); cursor:pointer; }' +
-      '.chart-scrollbar-thumb { position:absolute; background:var(--accent-gold); border-radius:4px; opacity:0.6; }' +
-      '.chart-scrollbar-thumb:hover { opacity:1; }' +
+      '.calendar-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:2000; display:flex; justify-content:center; align-items:center; padding:20px; }' +
+      'body.light-theme .calendar-modal { background:rgba(245,242,235,0.9); }' +
+      '.calendar-content { background:var(--bg-secondary); padding:28px; border-radius:20px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
+      '.calendar-day { aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.85em; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-subtle); min-height:50px; position:relative; }' +
+      '.calendar-day:hover { transform:scale(1.1); z-index:5; }' +
+      '.calendar-day.full { background:rgba(74,222,128,0.2); border-color:var(--accent-success); }' +
+      '.calendar-day.partial { background:rgba(251,191,36,0.2); border-color:var(--accent-warning); }' +
+      '.calendar-day.skipped { background:rgba(248,113,113,0.2); border-color:var(--accent-error); }' +
+      '.calendar-day.empty { background:var(--bg-primary); opacity:0.5; }' +
+      '.calendar-day .day-num { font-weight:600; font-size:1.1em; }' +
+      '.calendar-day .day-icon { font-size:1.2em; margin-top:2px; }' +
+      '.calendar-tooltip { position:fixed; background:var(--bg-secondary); border:1px solid var(--border-gold); border-radius:8px; padding:10px 14px; font-size:0.8em; pointer-events:none; z-index:3000; box-shadow:0 4px 12px rgba(0,0,0,0.5); max-width:280px; display:none; }' +
+      '.calendar-tooltip .ct-date { font-weight:600; color:var(--accent-gold); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-subtle); }' +
+      '.calendar-tooltip .ct-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }' +
+      '.calendar-tooltip .ct-row:last-child { margin-bottom:0; }' +
+      '.calendar-tooltip .ct-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }' +
+      '.calendar-tooltip .ct-label { opacity:0.7; flex:1; }' +
+      '.calendar-tooltip .ct-value { font-weight:600; color:var(--accent-gold); }' +
       '@media (max-width: 600px) { .stat-metric-value { font-size:1.6em; } .stat-card { padding:14px; } .chart-canvas-wrap { height:320px; } }' +
-      '@media (prefers-reduced-motion: reduce) { .stat-card, .metric-chip { transition: none !important; } }' +
+      '@media (prefers-reduced-motion: reduce) { .stat-card, .metric-chip, .calendar-day { transition: none !important; } }' +
     '</style>';
 
     var metricsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:10px;margin-bottom:20px">';
@@ -264,9 +276,9 @@ const StatsModule = {
     chartHtml += '<canvas id="activityChart"></canvas>';
     chartHtml += '<button class="chart-reset-btn" onclick="StatsModule.resetZoom()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить</button>';
     chartHtml += '<div class="chart-zoom-info" id="zoomInfo">100%</div>';
+    chartHtml += '<div class="chart-h-scrollbar" id="hScrollbar"><input type="range" id="hScroll" min="0" max="100" value="0" step="1"></div>';
+    chartHtml += '<div class="chart-v-scrollbar" id="vScrollbar"><input type="range" id="vScroll" min="0" max="100" value="100" step="1"></div>';
     chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
-    chartHtml += '<div class="chart-scrollbar-h" id="scrollbarH"><div class="chart-scrollbar-thumb" id="scrollbarThumbH" style="height:100%"></div></div>';
-    chartHtml += '<div class="chart-scrollbar-v" id="scrollbarV"><div class="chart-scrollbar-thumb" id="scrollbarThumbV" style="width:100%"></div></div>';
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
     chartHtml += '</div></div>';
@@ -295,11 +307,11 @@ const StatsModule = {
     screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + streakHtml + '</div>';
     this.renderMetricChips();
     var self = this;
-    setTimeout(function() { self.setupChartInteractions(); self.drawChart(); self.updateScrollbars(); }, 50);
+    setTimeout(function() { self.setupChartInteractions(); self.setupScrollbars(); self.drawChart(); }, 50);
   },
 
   renderMetricChips: function() {
-    var esc = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.escapeHtml : function(t){return t;};
+    var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
     var strip = document.getElementById('metricsStrip');
     if (!strip) return;
     var html = '';
@@ -322,6 +334,57 @@ const StatsModule = {
     this.drawChart();
   },
 
+  setupScrollbars: function() {
+    var hScroll = document.getElementById('hScroll');
+    var vScroll = document.getElementById('vScroll');
+    if (!hScroll || !vScroll) return;
+    var self = this;
+    hScroll.oninput = function() {
+      var val = parseFloat(this.value);
+      var xRange = self.zoom.xMax - self.zoom.xMin;
+      var maxX = self.totalDays - 1 - xRange;
+      if (maxX < 0) maxX = 0;
+      self.zoom.xMin = (val / 100) * maxX;
+      self.zoom.xMax = self.zoom.xMin + xRange;
+      self.clampZoom();
+      self.drawChart();
+    };
+    vScroll.oninput = function() {
+      var val = parseFloat(this.value);
+      var yRange = self.zoom.yMax - self.zoom.yMin;
+      var maxY = self._currentMaxY - yRange;
+      if (maxY < 0) maxY = 0;
+      self.zoom.yMin = ((100 - val) / 100) * maxY;
+      self.zoom.yMax = self.zoom.yMin + yRange;
+      self.clampZoom();
+      self.drawChart();
+    };
+  },
+
+  updateScrollbars: function() {
+    var hScroll = document.getElementById('hScroll');
+    var vScroll = document.getElementById('vScroll');
+    if (!hScroll || !vScroll) return;
+    var xRange = this.zoom.xMax - this.zoom.xMin;
+    var maxX = this.totalDays - 1 - xRange;
+    if (maxX <= 0) {
+      hScroll.value = 0;
+      hScroll.disabled = true;
+    } else {
+      hScroll.disabled = false;
+      hScroll.value = (this.zoom.xMin / maxX) * 100;
+    }
+    var yRange = this.zoom.yMax - this.zoom.yMin;
+    var maxY = this._currentMaxY - yRange;
+    if (maxY <= 0) {
+      vScroll.value = 100;
+      vScroll.disabled = true;
+    } else {
+      vScroll.disabled = false;
+      vScroll.value = ((this._currentMaxY - this.zoom.yMax) / maxY) * 100;
+    }
+  },
+
   setupChartInteractions: function() {
     var wrap = document.getElementById('chartWrap');
     if (!wrap) return;
@@ -331,7 +394,6 @@ const StatsModule = {
     var self = this;
     var drawRaf = (typeof Core !== 'undefined' && Core.utils && Core.utils.throttleRaf) ? Core.utils.throttleRaf(function() { self.drawChart(); }) : function() { self.drawChart(); };
 
-    // Wheel zoom
     wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
       var rect = canvas.getBoundingClientRect();
@@ -341,10 +403,12 @@ const StatsModule = {
       self.zoomAtPoint(mouseX, mouseY, rect.width, rect.height, zoomFactor);
     }, { passive: false });
 
-    // Pan
     wrap.addEventListener('pointerdown', function(e) {
       if (e.target.closest('.chart-legend')) return;
       if (e.target.closest('.chart-reset-btn')) return;
+      if (e.target.closest('.chart-h-scrollbar')) return;
+      if (e.target.closest('.chart-v-scrollbar')) return;
+      if (e.target.closest('.chart-zoom-info')) return;
       if (e.button !== 0 && e.pointerType === 'mouse') return;
       self.isPanning = true;
       self.panStart = { x: e.clientX, y: e.clientY };
@@ -362,11 +426,10 @@ const StatsModule = {
       var yRange = self.panStartZoom.yMax - self.panStartZoom.yMin;
       self.zoom.xMin = self.panStartZoom.xMin - (dx / rect.width) * xRange;
       self.zoom.xMax = self.panStartZoom.xMax - (dx / rect.width) * xRange;
-      self.zoom.yMin = self.panStartZoom.yMin - (dy / rect.height) * yRange;
-      self.zoom.yMax = self.panStartZoom.yMax - (dy / rect.height) * yRange;
+      self.zoom.yMin = self.panStartZoom.yMin + (dy / rect.height) * yRange;
+      self.zoom.yMax = self.panStartZoom.yMax + (dy / rect.height) * yRange;
       self.clampZoom();
       drawRaf();
-      self.updateScrollbars();
     });
 
     wrap.addEventListener('pointerup', function(e) {
@@ -396,7 +459,6 @@ const StatsModule = {
       self.handlePointClick(e);
     });
 
-    // Touch pinch zoom
     var touchStartDist = 0;
     var touchStartZoom = null;
     wrap.addEventListener('touchstart', function(e) {
@@ -411,88 +473,19 @@ const StatsModule = {
         var dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         var scale = touchStartDist / dist;
         var cx = (touchStartZoom.xMin + touchStartZoom.xMax) / 2;
+        var cy = (touchStartZoom.yMin + touchStartZoom.yMax) / 2;
         var xRange = (touchStartZoom.xMax - touchStartZoom.xMin) * scale;
+        var yRange = (touchStartZoom.yMax - touchStartZoom.yMin) * scale;
         self.zoom.xMin = cx - xRange / 2;
         self.zoom.xMax = cx + xRange / 2;
+        self.zoom.yMin = cy - yRange / 2;
+        self.zoom.yMax = cy + yRange / 2;
         self.clampZoom();
         drawRaf();
-        self.updateScrollbars();
       }
     }, { passive: true });
 
     wrap.addEventListener('touchend', function() { touchStartZoom = null; });
-
-    // Scrollbars
-    var scrollbarH = document.getElementById('scrollbarH');
-    var scrollbarV = document.getElementById('scrollbarV');
-    var thumbH = document.getElementById('scrollbarThumbH');
-    var thumbV = document.getElementById('scrollbarThumbV');
-    var scrollState = { h: false, v: false, startX: 0, startY: 0, startZoomX: 0, startZoomY: 0 };
-
-    if (scrollbarH && thumbH) {
-      scrollbarH.addEventListener('pointerdown', function(e) {
-        scrollState.h = true;
-        scrollState.startX = e.clientX;
-        scrollState.startZoomX = { min: self.zoom.xMin, max: self.zoom.xMax };
-        scrollbarH.setPointerCapture && scrollbarH.setPointerCapture(e.pointerId);
-        e.stopPropagation();
-      });
-      scrollbarH.addEventListener('pointermove', function(e) {
-        if (!scrollState.h) return;
-        var rect = scrollbarH.getBoundingClientRect();
-        var dx = e.clientX - scrollState.startX;
-        var xRange = scrollState.startZoomX.max - scrollState.startZoomX.min;
-        var moveRatio = dx / (rect.width - xRange);
-        self.zoom.xMin = scrollState.startZoomX.min + moveRatio * (self.totalDays - 1 - xRange);
-        self.zoom.xMax = self.zoom.xMin + xRange;
-        self.clampZoom();
-        drawRaf();
-        self.updateScrollbars();
-      });
-      scrollbarH.addEventListener('pointerup', function() { scrollState.h = false; });
-    }
-
-    if (scrollbarV && thumbV) {
-      scrollbarV.addEventListener('pointerdown', function(e) {
-        scrollState.v = true;
-        scrollState.startY = e.clientY;
-        scrollState.startZoomY = { min: self.zoom.yMin, max: self.zoom.yMax };
-        scrollbarV.setPointerCapture && scrollbarV.setPointerCapture(e.pointerId);
-        e.stopPropagation();
-      });
-      scrollbarV.addEventListener('pointermove', function(e) {
-        if (!scrollState.v) return;
-        var rect = scrollbarV.getBoundingClientRect();
-        var dy = e.clientY - scrollState.startY;
-        var yRange = scrollState.startZoomY.max - scrollState.startZoomY.min;
-        var moveRatio = -dy / (rect.height - yRange);
-        self.zoom.yMin = scrollState.startZoomY.min + moveRatio * (self.zoom.yMax - yRange);
-        self.zoom.yMax = self.zoom.yMin + yRange;
-        self.clampZoom();
-        drawRaf();
-        self.updateScrollbars();
-      });
-      scrollbarV.addEventListener('pointerup', function() { scrollState.v = false; });
-    }
-  },
-
-  updateScrollbars: function() {
-    var thumbH = document.getElementById('scrollbarThumbH');
-    var thumbV = document.getElementById('scrollbarThumbV');
-    var wrap = document.getElementById('chartWrap');
-    if (!thumbH || !thumbV || !wrap) return;
-
-    var xRange = this.zoom.xMax - this.zoom.xMin;
-    var yRange = this.zoom.yMax - this.zoom.yMin;
-    var hPercent = Math.min(100, Math.max(10, (xRange / this.totalDays) * 100));
-    var vPercent = Math.min(100, Math.max(10, (yRange / this.zoom.yMax) * 100));
-    var hLeft = (this.zoom.xMin / this.totalDays) * 100;
-    var vBottom = (this.zoom.yMin / this.zoom.yMax) * 100;
-
-    thumbH.style.width = hPercent + '%';
-    thumbH.style.left = hLeft + '%';
-    thumbV.style.height = vPercent + '%';
-    thumbV.style.bottom = vBottom + '%';
   },
 
   handleTooltip: function(e) {
@@ -591,7 +584,7 @@ const StatsModule = {
     var historyMap = (typeof Core !== 'undefined' && Core.getHistoryMap) ? Core.getHistoryMap(history) : {};
     var dayRecord = historyMap[dateStr] || null;
     if (dayRecord) {
-      var info = ' ' + dateStr + '\n';
+      var info = '📅 ' + dateStr + '\n';
       if (dayRecord.exercises) info += 'Упражнений: ' + dayRecord.exercises.length + '\n';
       if (dayRecord.weight) info += 'Вес: ' + dayRecord.weight + ' кг\n';
       if (dayRecord.mood) info += 'Самочувствие: ' + dayRecord.mood + '/10\n';
@@ -600,7 +593,7 @@ const StatsModule = {
   },
 
   getPadding: function(width, height) {
-    return { left: width < 400 ? 28 : 36, right: width < 400 ? 12 : 20, top: 20, bottom: 30 };
+    return { left: width < 400 ? 36 : 44, right: width < 400 ? 20 : 28, top: 20, bottom: 30 };
   },
 
   zoomAtPoint: function(mouseX, mouseY, canvasWidth, canvasHeight, zoomFactor) {
@@ -621,42 +614,25 @@ const StatsModule = {
     this.zoom.yMax = yCenter + yRatio * newYRange;
     this.clampZoom();
     this.drawChart();
-    this.updateScrollbars();
   },
 
   clampZoom: function() {
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var yRange = this.zoom.yMax - this.zoom.yMin;
-    var minRange = Math.max(1, Math.floor(this.totalDays / 20));
-    var maxRange = this.totalDays;
+    var maxY = this._currentMaxY || 10;
 
-    if (xRange < minRange) {
-      var cx = (this.zoom.xMin + this.zoom.xMax) / 2;
-      this.zoom.xMin = cx - minRange / 2;
-      this.zoom.xMax = cx + minRange / 2;
-    }
-    if (xRange > maxRange) {
-      this.zoom.xMin = 0;
-      this.zoom.xMax = this.totalDays - 1;
-    }
-    if (yRange < 2) {
-      var cy = (this.zoom.yMin + this.zoom.yMax) / 2;
-      this.zoom.yMin = cy - 1;
-      this.zoom.yMax = cy + 1;
-    }
+    // Минимальный размер окна
+    if (xRange < 3) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 1.5; this.zoom.xMax = cx + 1.5; xRange = 3; }
+    if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; yRange = 2; }
 
-    if (this.zoom.xMin < 0) {
-      this.zoom.xMax -= this.zoom.xMin;
-      this.zoom.xMin = 0;
-    }
-    if (this.zoom.xMax > this.totalDays - 1) {
-      this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1);
-      this.zoom.xMax = this.totalDays - 1;
-    }
-    if (this.zoom.yMin < 0) {
-      this.zoom.yMax -= this.zoom.yMin;
-      this.zoom.yMin = 0;
-    }
+    // Ограничения по границам данных
+    if (xRange > this.totalDays) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays; }
+    if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
+
+    if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
+    if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
+    if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
+    if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
 
     var info = document.getElementById('zoomInfo');
     if (info) {
@@ -666,17 +642,16 @@ const StatsModule = {
   },
 
   resetZoom: function() {
-    this._initialized = false;
+    this._chartDataCache = null;
+    this._chartDataCacheKey = null;
+    this._zoomInitialized = false;
+    var chartData = this.buildChartData();
     this.zoom.xMin = 0;
     this.zoom.xMax = this.totalDays - 1;
     this.zoom.yMin = 0;
-    this.zoom.yMax = 10;
-    var chartData = this.buildChartData();
     this.zoom.yMax = this.findMaxY(chartData.data);
-    if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
     this.clampZoom();
     this.drawChart();
-    this.updateScrollbars();
   },
 
   drawChart: function() {
@@ -696,9 +671,11 @@ const StatsModule = {
     var labels = chartData.labels;
     this.totalDays = chartData.totalDays;
 
-    // Обновляем yMax на основе данных
+    // Y-ось: от 0 до max значения (пик упирается в верх)
     var maxY = this.findMaxY(data);
-    if (this.zoom.yMax < maxY || this.zoom.yMax === 0) {
+    this._currentMaxY = maxY;
+    if (this.zoom.yMax === 0 || this.zoom.yMax < maxY) {
+      this.zoom.yMin = 0;
       this.zoom.yMax = maxY;
     }
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
@@ -720,49 +697,78 @@ const StatsModule = {
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
-    // Линии метрик - рисуем через весь график
+    // Рисуем серии
     var metrics = this.allMetrics;
     for (var key in metrics) {
       var m = metrics[key];
       if (!this.activeMetrics[key]) continue;
       var series = data[key];
       if (!series) continue;
+
+      // Находим видимый диапазон индексов (с запасом по 1 точке с каждой стороны для линий)
+      var firstVisibleIdx = -1;
+      var lastVisibleIdx = series.length;
+      for (var i = 0; i < series.length; i++) {
+        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+        if (x >= padding.left - chartWidth && firstVisibleIdx === -1) firstVisibleIdx = Math.max(0, i - 1);
+        if (x <= width - padding.right + chartWidth) lastVisibleIdx = Math.min(series.length, i + 2);
+      }
+      if (firstVisibleIdx === -1) firstVisibleIdx = 0;
+
       ctx.strokeStyle = m.color;
       ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
       ctx.beginPath();
       var started = false;
       var prevX = null, prevY = null;
 
-      for (var i = 0; i < series.length; i++) {
-        if (series[i] === null) continue;
+      for (var i = firstVisibleIdx; i < lastVisibleIdx; i++) {
+        if (series[i] === null) { prevX = null; prevY = null; continue; }
         var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
         var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
 
-        // Рисуем линию даже если точка за пределами видимой области
-        if (!started) {
-          ctx.moveTo(x, y);
-          started = true;
-        } else {
-          ctx.lineTo(x, y);
+        // Обрезаем по краям canvas
+        if (x < padding.left) {
+          // Интерполяция к левому краю
+          if (prevX !== null && prevY !== null) {
+            var t = (padding.left - prevX) / (x - prevX);
+            var edgeY = prevY + t * (y - prevY);
+            if (!started) { ctx.moveTo(padding.left, edgeY); started = true; }
+            else ctx.lineTo(padding.left, edgeY);
+          }
+          prevX = x; prevY = y;
+          continue;
         }
-        prevX = x;
-        prevY = y;
+        if (x > width - padding.right) {
+          if (prevX !== null && prevY !== null) {
+            var t = (width - padding.right - prevX) / (x - prevX);
+            var edgeY = prevY + t * (y - prevY);
+            ctx.lineTo(width - padding.right, edgeY);
+          }
+          prevX = x; prevY = y;
+          continue;
+        }
+
+        if (!started) { ctx.moveTo(x, y); started = true; }
+        else ctx.lineTo(x, y);
+        prevX = x; prevY = y;
       }
       ctx.stroke();
 
       // Точки
-      for (var i = 0; i < series.length; i++) {
+      for (var i = firstVisibleIdx; i < lastVisibleIdx; i++) {
         if (series[i] === null) continue;
         var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
         var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-        if (x < padding.left - 10 || x > width - padding.right + 10) continue;
+        if (x < padding.left - 5 || x > width - padding.right + 5) continue;
         ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
         ctx.fillStyle = m.color; ctx.fill();
         ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
       }
     }
 
-    // Подписи осей
+    // Подписи X
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -773,6 +779,8 @@ const StatsModule = {
         ctx.fillText(labels[i], x, height - padding.bottom + 18);
       }
     }
+
+    // Подписи Y
     ctx.textAlign = 'right';
     var yStep = Math.max(1, Math.ceil(yRange / 5));
     for (var v = Math.ceil(this.zoom.yMin); v <= Math.floor(this.zoom.yMax); v += yStep) {
@@ -780,7 +788,7 @@ const StatsModule = {
       ctx.fillText(v, padding.left - 4, y + 4);
     }
 
-    // Легенда
+    // Легенда (сворачиваемая)
     var oldLegend = document.getElementById('chartLegend');
     if (oldLegend) oldLegend.remove();
     var legendDiv = document.createElement('div');
@@ -788,7 +796,7 @@ const StatsModule = {
     legendDiv.className = 'chart-legend';
     var hasAny = false;
     var itemsHtml = '';
-    var esc = (typeof Core !== 'undefined' && Core.utils) ? Core.utils.escapeHtml : function(t){return t;};
+    var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
     for (var key in metrics) {
       var m = metrics[key];
       if (!this.activeMetrics[key]) continue;
@@ -801,28 +809,185 @@ const StatsModule = {
       '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
       '<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
     '</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
+    var self = this;
     legendDiv.onclick = function(e) {
       e.stopPropagation();
-      StatsModule._legendExpanded = !StatsModule._legendExpanded;
-      StatsModule.drawChart();
+      self._legendExpanded = !self._legendExpanded;
+      self.drawChart();
     };
     if (hasAny) wrap.appendChild(legendDiv);
+
+    // Обновляем скроллбары
+    this.updateScrollbars();
   },
 
   openCalendar: function() {
-    // ... (оставляем как было)
+    var oldTooltip = document.getElementById('calendarTooltip');
+    if (oldTooltip) oldTooltip.remove();
+    var oldModal = document.getElementById('calendarModal');
+    if (oldModal) oldModal.remove();
+    var modal = document.createElement('div');
+    modal.className = 'calendar-modal';
+    modal.id = 'calendarModal';
+    var content = document.createElement('div');
+    content.className = 'calendar-content';
+    content.innerHTML =
+      '<button style="float:right;background:transparent;border:none;color:var(--text-secondary);font-size:1.5em;cursor:pointer" onclick="document.getElementById(\'calendarModal\').remove()" aria-label="Закрыть"><i class="ph ph-x"></i></button>' +
+      '<h2 style="font-family:var(--font-display);color:var(--accent-gold);margin-top:0;display:flex;align-items:center;gap:10px"><i class="ph ph-calendar"></i> Календарь тренировок</h2>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0">' +
+        '<button class="btn btn-secondary" style="padding:8px 12px" onclick="StatsModule.changeMonth(-1)" aria-label="Предыдущий месяц"><i class="ph ph-caret-left"></i></button>' +
+        '<div id="calendarTitle" style="font-weight:600;font-size:1.1em;color:var(--accent-gold)"></div>' +
+        '<button class="btn btn-secondary" style="padding:8px 12px" onclick="StatsModule.changeMonth(1)" aria-label="Следующий месяц"><i class="ph ph-caret-right"></i></button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Пн</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Вт</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Ср</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Чт</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Пт</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Сб</div>' +
+        '<div style="text-align:center;font-size:0.75em;opacity:0.6;padding:4px">Вс</div>' +
+      '</div>' +
+      '<div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>' +
+      '<div style="margin-top:16px;display:flex;gap:12px;font-size:0.8em;flex-wrap:wrap;justify-content:center">' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:rgba(74,222,128,0.3);border-radius:3px"></div> Полная</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:rgba(251,191,36,0.3);border-radius:3px"></div> Частичная</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:rgba(248,113,113,0.3);border-radius:3px"></div> Пропуск</div>' +
+      '</div>';
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    this.renderCalendar();
   },
 
   changeMonth: function(delta) {
-    // ... (оставляем как было)
+    this.calendarMonth += delta;
+    if (this.calendarMonth > 11) { this.calendarMonth = 0; this.calendarYear++; }
+    if (this.calendarMonth < 0) { this.calendarMonth = 11; this.calendarYear--; }
+    var now = new Date();
+    if (this.calendarYear > now.getFullYear() || (this.calendarYear === now.getFullYear() && this.calendarMonth > now.getMonth())) {
+      this.calendarMonth = now.getMonth();
+      this.calendarYear = now.getFullYear();
+    }
+    this.renderCalendar();
   },
 
   renderCalendar: function() {
-    // ... (оставляем как было)
+    var title = document.getElementById('calendarTitle');
+    var grid = document.getElementById('calendarGrid');
+    if (!title || !grid) return;
+    var monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    title.textContent = monthNames[this.calendarMonth] + ' ' + this.calendarYear;
+    var history = this.getHistory();
+    var historyMap = (typeof Core !== 'undefined' && Core.getHistoryMap) ? Core.getHistoryMap(history) : {};
+    var firstDay = new Date(this.calendarYear, this.calendarMonth, 1);
+    var lastDay = new Date(this.calendarYear, this.calendarMonth + 1, 0);
+    var daysInMonth = lastDay.getDate();
+    var startDay = (firstDay.getDay() + 6) % 7;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var html = '';
+    for (var i = 0; i < startDay; i++) html += '<div></div>';
+    var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
+    for (var d = 1; d <= daysInMonth; d++) {
+      var date = new Date(this.calendarYear, this.calendarMonth, d);
+      var dateStr = (typeof Core !== 'undefined' && Core.utils && Core.utils.formatLocalDate) ? Core.utils.formatLocalDate(date) : date.toISOString().slice(0, 10);
+      var dayRecord = historyMap[dateStr] || null;
+      var cls = 'empty';
+      var icon = '';
+      if (date > today) {
+        cls = 'empty';
+      } else if (dayRecord) {
+        if (dayRecord.skipped) {
+          cls = 'skipped';
+          icon = '<i class="ph ph-x" style="color:var(--accent-error)"></i>';
+        } else if (dayRecord.exercises && dayRecord.exercises.length > 0) {
+          var allDone = true, anyDone = false;
+          if (dayRecord.details) {
+            for (var k = 0; k < dayRecord.details.length; k++) {
+              var det = dayRecord.details[k];
+              if (det.sets) {
+                for (var s = 0; s < det.sets.length; s++) {
+                  if (det.sets[s] === 'done') anyDone = true;
+                  else if (det.sets[s] === 'partial') { allDone = false; anyDone = true; }
+                  else if (det.sets[s] === 'missed') { allDone = false; }
+                }
+              }
+            }
+          }
+          if (allDone && anyDone) { cls = 'full'; icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>'; }
+          else if (anyDone) { cls = 'partial'; icon = '<i class="ph ph-warning" style="color:var(--accent-warning)"></i>'; }
+          else { cls = 'full'; icon = '<i class="ph ph-check" style="color:var(--accent-success)"></i>'; }
+        }
+      }
+      var isToday = date.getTime() === today.getTime();
+      var dataAttrs = 'data-date="' + dateStr + '"';
+      if (dayRecord) {
+        if (dayRecord.exercises) dataAttrs += ' data-exercises="' + dayRecord.exercises.length + '"';
+        if (dayRecord.weight) dataAttrs += ' data-weight="' + dayRecord.weight + '"';
+        if (dayRecord.mood) dataAttrs += ' data-mood="' + dayRecord.mood + '"';
+      }
+      html += '<div class="calendar-day ' + cls + '" style="' + (isToday ? 'border:2px solid var(--accent-gold);' : '') + '" ' + dataAttrs + '>';
+      html += '<div class="day-num">' + d + '</div>';
+      html += '<div class="day-icon">' + icon + '</div>';
+      html += '</div>';
+    }
+    grid.innerHTML = html;
+    this.setupCalendarTooltips();
   },
 
   setupCalendarTooltips: function() {
-    // ... (оставляем как было)
+    var tooltip = document.getElementById('calendarTooltip');
+    if (!tooltip) {
+      tooltip = document.createElement('div');
+      tooltip.className = 'calendar-tooltip';
+      tooltip.id = 'calendarTooltip';
+      document.body.appendChild(tooltip);
+    }
+    var history = this.getHistory();
+    var historyMap = (typeof Core !== 'undefined' && Core.getHistoryMap) ? Core.getHistoryMap(history) : {};
+    var config = this.getSurveyConfig();
+    var days = document.querySelectorAll('.calendar-day');
+    days.forEach(function(dayEl) {
+      dayEl.addEventListener('mouseenter', function(e) {
+        var dateStr = dayEl.getAttribute('data-date');
+        if (!dateStr) return;
+        var html = '<div class="ct-date">📅 ' + dateStr + '</div>';
+        var dayRecord = historyMap[dateStr] || null;
+        if (dayRecord) {
+          if (dayRecord.skipped) html += '<div class="ct-row"><div class="ct-dot" style="background:var(--accent-error)"></div><div class="ct-label">Статус:</div><div class="ct-value">Пропуск</div></div>';
+          else if (dayRecord.exercises && dayRecord.exercises.length > 0) html += '<div class="ct-row"><div class="ct-dot" style="background:var(--accent-success)"></div><div class="ct-label">Упражнений:</div><div class="ct-value">' + dayRecord.exercises.length + '</div></div>';
+          if (dayRecord.weight) html += '<div class="ct-row"><div class="ct-dot" style="background:#4ade80"></div><div class="ct-label">Вес:</div><div class="ct-value">' + dayRecord.weight + ' кг</div></div>';
+          if (dayRecord.mood) html += '<div class="ct-row"><div class="ct-dot" style="background:#60a5fa"></div><div class="ct-label">Самочувствие:</div><div class="ct-value">' + dayRecord.mood + '/10</div></div>';
+          if (dayRecord && dayRecord.survey && config && config.questions) {
+            for (var i = 0; i < config.questions.length; i++) {
+              var q = config.questions[i];
+              var val = dayRecord.survey[q.id];
+              if (val !== undefined && val !== null) {
+                var displayVal = val;
+                if (q.type === 'emoji' && q.emojiSet && q.emojiSet[val]) displayVal = q.emojiSet[val];
+                var shortQ = q.text.length > 25 ? q.text.substring(0, 25) + '…' : q.text;
+                html += '<div class="ct-row"><div class="ct-dot" style="background:#f472b6"></div><div class="ct-label">' + (typeof Core !== 'undefined' && Core.utils ? Core.utils.escapeHtml(shortQ) : shortQ) + ':</div><div class="ct-value">' + (typeof Core !== 'undefined' && Core.utils ? Core.utils.escapeHtml(String(displayVal)) : displayVal) + '</div></div>';
+              }
+            }
+          }
+        } else {
+          html += '<div class="ct-row"><div class="ct-dot" style="background:var(--text-muted)"></div><div class="ct-label">Статус:</div><div class="ct-value">Нет данных</div></div>';
+        }
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+      });
+      dayEl.addEventListener('mousemove', function(e) {
+        var x = e.clientX + 15;
+        var y = e.clientY + 15;
+        if (x + 280 > window.innerWidth) x = e.clientX - 290;
+        if (y + 200 > window.innerHeight) y = e.clientY - 210;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+      });
+      dayEl.addEventListener('mouseleave', function() {
+        tooltip.style.display = 'none';
+      });
+    });
   }
 };
 window.StatsModule = StatsModule;
