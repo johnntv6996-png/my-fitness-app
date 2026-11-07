@@ -51,14 +51,17 @@ const CoreModule = {
       if (level >= 5) return 'ph-star-four';
       return 'ph-star';
     },
-    totalXp: function(stats) {
-      stats = stats || {};
-      var level = stats.level || 1;
-      var xp = stats.xp || 0;
-      // Исправлена математика: сумма арифметической прогрессии для уровней
-      var baseXp = (level - 1) * level / 2 * 100;
-      return baseXp + xp;
-    },
+		// В modules/core.js, внутри utils, замени totalXp на:
+		totalXp: function(stats) {
+			stats = stats || {};
+			var level = stats.level || 1;
+			var xp = stats.xp || 0;
+			var total = 0;
+			for (var i = 1; i < level; i++) {
+				total += Math.floor(100 * Math.pow(1.2, i - 1));
+			}
+			return total + xp;
+		},
     generateId: function(prefix) {
       prefix = prefix || 'id';
       var rnd = (typeof crypto !== 'undefined' && crypto.randomUUID)

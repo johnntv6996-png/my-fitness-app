@@ -14,6 +14,7 @@ const StatsModule = {
   _chartDataCache: null,
   _chartDataCacheKey: null,
   _legendExpanded: false,
+
   init: function() {
     if (typeof Logger !== 'undefined') Logger.log('Модуль статистики инициализирован', 'info');
     if (document.readyState === 'loading') {
@@ -38,6 +39,7 @@ const StatsModule = {
   },
   getHistory: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || []; },
   getSurveyConfig: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('survey_config') : null) || null; },
+
   buildMetrics: function() {
     var metrics = {};
     metrics['exercises'] = { id: 'exercises', label: 'Упражнения', color: '#d4af37', key: 'exCount', enabled: true, source: 'system', unit: '' };
@@ -67,14 +69,17 @@ const StatsModule = {
       for (var key in metrics) this.activeMetrics[key] = metrics[key].enabled;
     }
   },
+
   getMetricColor: function(index) {
     var colors = ['#d4af37', '#4ade80', '#60a5fa', '#f472b6', '#a78bfa', '#fb923c', '#2dd4bf', '#f87171', '#e879f9', '#38bdf8'];
     return colors[index % colors.length];
   },
+
   buildChartDataCacheKey: function(history) {
     if (!history || history.length === 0) return 'empty';
     return history.length + '_' + history[0].date + '_' + history[history.length - 1].date + '_' + (history[history.length - 1].timestamp || 0);
   },
+
   buildChartData: function() {
     var history = this.getHistory();
     var key = this.buildChartDataCacheKey(history);
@@ -128,7 +133,6 @@ const StatsModule = {
     }
 
     this.totalDays = totalDays;
-
     if (this.zoom.xMaxLimit === undefined || this.zoom.xMax > totalDays - 1) {
       this.zoom.xMin = 0;
       this.zoom.xMax = totalDays - 1;
@@ -140,6 +144,7 @@ const StatsModule = {
     this._chartDataCacheKey = key;
     return this._chartDataCache;
   },
+
   findMaxY: function(data) {
     var maxVal = 10;
     var metrics = this.allMetrics;
@@ -158,6 +163,7 @@ const StatsModule = {
     else maxVal = Math.ceil(maxVal / 50) * 50;
     return maxVal;
   },
+
   createStatsScreen: function() {
     var esc = Core.utils.escapeHtml;
     var screen = document.getElementById('screen-stats');
@@ -185,6 +191,7 @@ const StatsModule = {
     }
     var hintsEnabled = typeof shouldShowHints === 'function' ? shouldShowHints() : true;
     var hintHtml = hintsEnabled ? '<div class="hint" style="display:flex;align-items:center;gap:4px"><i class="ph ph-info"></i> Скролл колёсиком для зума. Перетаскивай для панорамирования.</div>' : '';
+    
     var css = '<style>' +
       '.stat-card { background:var(--bg-card); border-radius:14px; padding:18px; margin-bottom:16px; border:1px solid var(--border-subtle); transition:all 0.2s; }' +
       '.stat-card:hover { border-color:var(--border-gold); transform:translateY(-2px); }' +
@@ -196,8 +203,8 @@ const StatsModule = {
       '.chart-canvas-wrap { position:relative; width:100%; height:420px; cursor:crosshair; }' +
       '.chart-canvas-wrap canvas { display:block; width:100%; height:100%; }' +
       '.metrics-strip { display:flex; gap:6px; overflow-x:auto; padding:10px 4px; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; border-top:1px solid var(--border-subtle); }' +
-      '.metrics-strip::-webkit-scrollbar { height: 4px; }' +
-      '.metrics-strip::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
+      '.metrics-strip::-webkit-scrollbar { height: 6px; }' +
+      '.metrics-strip::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
       '.metric-chip { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:16px; cursor:pointer; transition:all 0.2s; user-select:none; white-space:nowrap; flex-shrink:0; font-size:0.85em; }' +
       '.metric-chip:hover { border-color:var(--border-gold); }' +
       '.metric-chip.active { border-color:var(--accent-gold); background:var(--accent-gold-dim); }' +
@@ -205,11 +212,12 @@ const StatsModule = {
       '.metric-chip .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }' +
       '.metric-chip .check { font-size:0.9em; opacity:0; transition:opacity 0.2s; }' +
       '.metric-chip.active .check { opacity:1; }' +
-      '.chart-zoom-info { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-secondary); z-index:5; pointer-events:none; }' +
+      '.chart-zoom-info { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-primary); z-index:5; pointer-events:none; }' +
+      'body.light-theme .chart-zoom-info { background:rgba(255,255,255,0.8); color:var(--text-primary); }' +
       '.chart-reset-btn { position:absolute; top:10px; left:10px; background:rgba(212,175,55,0.2); border:1px solid var(--border-gold); color:var(--accent-gold); padding:6px 10px; border-radius:6px; font-size:0.75em; cursor:pointer; z-index:5; display:flex; align-items:center; gap:4px; }' +
       '.chart-reset-btn:hover { background:rgba(212,175,55,0.3); }' +
       '.chart-legend { position:absolute; top:40px; right:10px; background:rgba(10,10,15,0.85); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:10px; padding:10px 14px; z-index:15; max-height:200px; overflow-y:auto; min-width:150px; pointer-events:auto; cursor:pointer; }' +
-      'body.light-theme .chart-legend { background:rgba(245,242,235,0.9); }' +
+      'body.light-theme .chart-legend { background:rgba(245,242,235,0.95); }' +
       '.chart-legend::-webkit-scrollbar { width:4px; }' +
       '.chart-legend::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:2px; }' +
       '.legend-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.8em; }' +
@@ -244,6 +252,7 @@ const StatsModule = {
       '@media (max-width: 600px) { .stat-metric-value { font-size:1.6em; } .stat-card { padding:14px; } .chart-canvas-wrap { height:320px; } }' +
       '@media (prefers-reduced-motion: reduce) { .stat-card, .metric-chip, .calendar-day { transition: none !important; } }' +
     '</style>';
+
     var metricsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:10px;margin-bottom:20px">';
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-star" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.level + '</div><div class="stat-metric-label">Уровень</div></div>';
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-flame" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + currentStreak + '</div><div class="stat-metric-label">Текущий стрик</div></div>';
@@ -251,6 +260,7 @@ const StatsModule = {
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-check-circle" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.yes + '</div><div class="stat-metric-label">Тренировок</div></div>';
     metricsHtml += '<div class="stat-card stat-metric"><i class="ph ph-lightning" style="font-size:1.5em;color:var(--accent-gold)"></i><div class="stat-metric-value">' + stats.xp + '</div><div class="stat-metric-label">XP</div></div>';
     metricsHtml += '</div>';
+
     var chartHtml = '<div class="stat-card" style="padding:0;overflow:hidden">';
     chartHtml += '<div style="padding:18px 18px 10px"><h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0 0 6px 0;display:flex;align-items:center;gap:10px"><i class="ph ph-chart-line-up"></i> Активность за весь период</h3>';
     chartHtml += hintHtml;
@@ -264,6 +274,7 @@ const StatsModule = {
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
     chartHtml += '</div></div>';
+
     var streakHtml = '<div class="stat-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
     streakHtml += '<h3 style="font-family:var(--font-display);color:var(--accent-gold);margin:0;display:flex;align-items:center;gap:10px"><i class="ph ph-flame"></i> Последние 14 дней</h3>';
     streakHtml += '<button class="btn btn-secondary" style="padding:8px 12px;font-size:0.85em" onclick="StatsModule.openCalendar()"><i class="ph ph-calendar"></i> Календарь</button>';
@@ -284,11 +295,13 @@ const StatsModule = {
       streakHtml += '<div style="background:' + bgColor + ';border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;border:1px solid ' + (bgColor === 'var(--bg-primary)' ? 'var(--border-subtle)' : 'transparent') + '" title="' + dateStr + '"><div style="font-size:0.7em;opacity:0.8;margin-bottom:2px;color:var(--text-secondary)">' + dayName + '</div><i class="ph ' + iconClass + '" style="font-size:1.2em;color:' + iconColor + '"></i></div>';
     }
     streakHtml += '</div></div>';
+
     screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + streakHtml + '</div>';
     this.renderMetricChips();
     var self = this;
     setTimeout(function() { self.setupChartInteractions(); self.drawChart(); }, 50);
   },
+
   renderMetricChips: function() {
     var esc = Core.utils.escapeHtml;
     var strip = document.getElementById('metricsStrip');
@@ -306,11 +319,13 @@ const StatsModule = {
     }
     strip.innerHTML = html;
   },
+
   toggleMetricChip: function(key) {
     this.activeMetrics[key] = !this.activeMetrics[key];
     this.renderMetricChips();
     this.drawChart();
   },
+
   setupChartInteractions: function() {
     var wrap = document.getElementById('chartWrap');
     if (!wrap) return;
@@ -319,6 +334,7 @@ const StatsModule = {
     var canvas = document.getElementById('activityChart');
     var self = this;
     var drawRaf = Core.utils.throttleRaf(function() { self.drawChart(); });
+
     wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
       var rect = canvas.getBoundingClientRect();
@@ -327,8 +343,8 @@ const StatsModule = {
       var zoomFactor = e.deltaY > 0 ? 1.15 : 0.87;
       self.zoomAtPoint(mouseX, mouseY, rect.width, rect.height, zoomFactor);
     }, { passive: false });
+
     wrap.addEventListener('pointerdown', function(e) {
-      if (e.target.closest('.chart-legend')) return;
       if (e.button !== 0 && e.pointerType === 'mouse') return;
       self.isPanning = true;
       self.panStart = { x: e.clientX, y: e.clientY };
@@ -336,6 +352,7 @@ const StatsModule = {
       wrap.style.cursor = 'grabbing';
       wrap.setPointerCapture && wrap.setPointerCapture(e.pointerId);
     });
+
     wrap.addEventListener('pointermove', function(e) {
       if (!self.isPanning) { self.handleTooltip(e); return; }
       var rect = canvas.getBoundingClientRect();
@@ -343,11 +360,18 @@ const StatsModule = {
       var dy = e.clientY - self.panStart.y;
       var xRange = self.panStartZoom.xMax - self.panStartZoom.xMin;
       var yRange = self.panStartZoom.yMax - self.panStartZoom.yMin;
+      
       self.zoom.xMin = self.panStartZoom.xMin - (dx / rect.width) * xRange;
       self.zoom.xMax = self.panStartZoom.xMax - (dx / rect.width) * xRange;
+      
+      // Вертикальный пан: движение мыши вниз (dy > 0) уменьшает yMin (показывает нижние значения)
+      self.zoom.yMin = self.panStartZoom.yMin - (dy / rect.height) * yRange;
+      self.zoom.yMax = self.panStartZoom.yMax - (dy / rect.height) * yRange;
+      
       self.clampZoom();
       drawRaf();
     });
+
     wrap.addEventListener('pointerup', function(e) {
       if (self.isPanning) {
         self.isPanning = false;
@@ -355,35 +379,17 @@ const StatsModule = {
         wrap.releasePointerCapture && e.pointerId && wrap.releasePointerCapture(e.pointerId);
       }
     });
+
     canvas.addEventListener('pointerleave', function() {
       self.lastMouseX = -1;
       self.lastMouseY = -1;
       var tooltip = document.getElementById('chartTooltip');
       if (tooltip) tooltip.style.display = 'none';
     });
+
     canvas.addEventListener('click', function(e) { self.handlePointClick(e); });
-    var touchStartDist = 0;
-    var touchStartZoom = null;
-    wrap.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 2) {
-        touchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        touchStartZoom = { xMin: self.zoom.xMin, xMax: self.zoom.xMax, yMin: self.zoom.yMin, yMax: self.zoom.yMax };
-      }
-    }, { passive: true });
-    wrap.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 2 && touchStartZoom) {
-        var dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        var scale = touchStartDist / dist;
-        var cx = (touchStartZoom.xMin + touchStartZoom.xMax) / 2;
-        var xRange = (touchStartZoom.xMax - touchStartZoom.xMin) * scale;
-        self.zoom.xMin = cx - xRange / 2;
-        self.zoom.xMax = cx + xRange / 2;
-        self.clampZoom();
-        drawRaf();
-      }
-    }, { passive: true });
-    wrap.addEventListener('touchend', function() { touchStartZoom = null; });
   },
+
   handleTooltip: function(e) {
     var canvas = document.getElementById('activityChart');
     var tooltip = document.getElementById('chartTooltip');
@@ -403,6 +409,7 @@ const StatsModule = {
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var dayIdx = Math.round(this.zoom.xMin + (x - padding.left) / chartWidth * xRange);
     if (dayIdx < 0 || dayIdx >= this.totalDays) { tooltip.style.display = 'none'; return; }
+    
     var history = this.getHistory();
     if (history.length === 0) { tooltip.style.display = 'none'; return; }
     var dates = history.map(function(h) { return h.date; }).sort();
@@ -413,6 +420,7 @@ const StatsModule = {
     var historyMap = Core.getHistoryMap(history);
     var dayRecord = historyMap[dateStr] || null;
     if (!dayRecord) { tooltip.style.display = 'none'; return; }
+
     var html = '<div class="tooltip-date">📅 ' + dateStr + '</div>';
     var metrics = this.allMetrics;
     for (var key in metrics) {
@@ -438,6 +446,7 @@ const StatsModule = {
     this.lastMouseX = x;
     this.lastMouseY = y;
   },
+
   getMetricValue: function(dayRecord, key, metric) {
     if (key === 'exercises') return dayRecord.exercises ? dayRecord.exercises.length : 0;
     if (key === 'weight') return dayRecord.weight || null;
@@ -448,6 +457,7 @@ const StatsModule = {
     }
     return null;
   },
+
   formatMetricValue: function(val, metric) {
     if (val === null || val === undefined) return '—';
     if (metric.questionType === 'emoji' && metric.emojiSet && metric.emojiSet[val]) {
@@ -455,6 +465,7 @@ const StatsModule = {
     }
     return val + (metric.unit ? ' ' + metric.unit : '');
   },
+
   handlePointClick: function(e) {
     var canvas = document.getElementById('activityChart');
     var rect = canvas.getBoundingClientRect();
@@ -482,9 +493,11 @@ const StatsModule = {
       alert(info);
     }
   },
+
   getPadding: function(width, height) {
     return { left: width < 400 ? 28 : 36, right: width < 400 ? 12 : 20, top: 20, bottom: 30 };
   },
+
   zoomAtPoint: function(mouseX, mouseY, canvasWidth, canvasHeight, zoomFactor) {
     var padding = this.getPadding(canvasWidth, canvasHeight);
     var chartWidth = canvasWidth - padding.left - padding.right;
@@ -504,27 +517,43 @@ const StatsModule = {
     this.clampZoom();
     this.drawChart();
   },
+
   clampZoom: function() {
     var xRange = this.zoom.xMax - this.zoom.xMin;
+    var yRange = this.zoom.yMax - this.zoom.yMin;
+    
     if (xRange < 5) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 2.5; this.zoom.xMax = cx + 2.5; }
     if (xRange > this.totalDays) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; }
+    
+    // Запрет ухода в минус по Y
+    if (this.zoom.yMin < 0) {
+      var shift = -this.zoom.yMin;
+      this.zoom.yMin = 0;
+      this.zoom.yMax += shift;
+    }
+    if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; }
+    
     if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
     if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
+    
     var info = document.getElementById('zoomInfo');
     if (info) {
       var xZoom = Math.round(this.totalDays / (this.zoom.xMax - this.zoom.xMin) * 100);
       info.textContent = xZoom + '%';
     }
   },
+
   resetZoom: function() {
     this.zoom.xMin = 0;
     this.zoom.xMax = this.totalDays - 1;
     this.zoom.yMin = 0;
+    this._chartDataCache = null; // Сброс кэша для пересчета Y
     var chartData = this.buildChartData();
     this.zoom.yMax = this.findMaxY(chartData.data);
     this.clampZoom();
     this.drawChart();
   },
+
   drawChart: function() {
     var canvas = document.getElementById('activityChart');
     if (!canvas) return;
@@ -536,24 +565,25 @@ const StatsModule = {
     var ctx = canvas.getContext('2d');
     var width = canvas.width, height = canvas.height;
     ctx.clearRect(0, 0, width, height);
+
     var chartData = this.buildChartData();
     var data = chartData.data;
     var labels = chartData.labels;
     this.totalDays = chartData.totalDays;
-    
+
     if (this.zoom.yMax === 0 || this.zoom.yMax < this.findMaxY(data)) {
       this.zoom.yMin = 0;
       this.zoom.yMax = this.findMaxY(data);
     }
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
-    
+
     var padding = this.getPadding(width, height);
     var chartWidth = width - padding.left - padding.right;
     var chartHeight = height - padding.top - padding.bottom;
     var xRange = this.zoom.xMax - this.zoom.xMin;
     var yRange = this.zoom.yMax - this.zoom.yMin;
     if (yRange <= 0) yRange = 10;
-    
+
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for (var i = 0; i <= 4; i++) {
@@ -562,7 +592,7 @@ const StatsModule = {
     }
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
-    
+
     var metrics = this.allMetrics;
     for (var key in metrics) {
       var m = metrics[key];
@@ -592,7 +622,7 @@ const StatsModule = {
         ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
       }
     }
-    
+
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -609,7 +639,7 @@ const StatsModule = {
       var y = height - padding.bottom - ((v - this.zoom.yMin) / yRange) * chartHeight;
       ctx.fillText(v, padding.left - 4, y + 4);
     }
-    
+
     var oldLegend = document.getElementById('chartLegend');
     if (oldLegend) oldLegend.remove();
     var legendDiv = document.createElement('div');
@@ -624,12 +654,11 @@ const StatsModule = {
       hasAny = true;
       itemsHtml += '<div class="legend-item"><div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + esc(m.label) + '</div></div>';
     }
-    var activeCount = 0;
-    for (var key in metrics) if (this.activeMetrics[key]) activeCount++;
     legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
-      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + activeCount + ')</div>' +
+      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + (this.activeMetrics ? Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]).length : 0) + ')</div>' +
       '<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
     '</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
+    
     legendDiv.onclick = function(e) {
       e.stopPropagation();
       StatsModule._legendExpanded = !StatsModule._legendExpanded;
@@ -637,8 +666,8 @@ const StatsModule = {
     };
     if (hasAny) wrap.appendChild(legendDiv);
   },
+
   openCalendar: function() {
-    var esc = Core.utils.escapeHtml;
     var oldTooltip = document.getElementById('calendarTooltip');
     if (oldTooltip) oldTooltip.remove();
     var oldModal = document.getElementById('calendarModal');
@@ -675,6 +704,7 @@ const StatsModule = {
     document.body.appendChild(modal);
     this.renderCalendar();
   },
+
   changeMonth: function(delta) {
     this.calendarMonth += delta;
     if (this.calendarMonth > 11) { this.calendarMonth = 0; this.calendarYear++; }
@@ -686,6 +716,7 @@ const StatsModule = {
     }
     this.renderCalendar();
   },
+
   renderCalendar: function() {
     var title = document.getElementById('calendarTitle');
     var grid = document.getElementById('calendarGrid');
@@ -752,6 +783,7 @@ const StatsModule = {
     grid.innerHTML = html;
     this.setupCalendarTooltips();
   },
+
   setupCalendarTooltips: function() {
     var self = this;
     var tooltip = document.getElementById('calendarTooltip');

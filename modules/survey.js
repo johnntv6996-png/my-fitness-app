@@ -503,48 +503,48 @@ const SurveyModule = {
     SurveyModule._currentQ = (SurveyModule._currentQ || 0) + 1;
     SurveyModule._renderQuestion();
   },
-  _saveSurveyAnswers: function() {
-    var todayStr = Core.utils.formatLocalDate(new Date());
-    var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
-    var dayRecord = null;
-    for (var i = 0; i < history.length; i++) {
-      if (history[i].date === todayStr) { dayRecord = history[i]; break; }
-    }
-    if (!dayRecord) {
-      dayRecord = {
-        date: todayStr,
-        dayName: Core.utils.getDayName(Core.utils.getTodayIndex()),
-        muscleGroup: '', exercises: [], details: [], duration: 0,
-        timestamp: Date.now(), survey: {}
-      };
-      history.push(dayRecord);
-    }
-    if (!dayRecord.survey) dayRecord.survey = {};
-    var alreadyHadSurvey = Object.keys(dayRecord.survey).length > 0;
-    for (var key in SurveyModule._answers) {
-      dayRecord.survey[key] = SurveyModule._answers[key];
-    }
-    if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
-    if (typeof Core !== 'undefined') Core._historyMapCache = null;
-    if (!alreadyHadSurvey) {
-      var stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
-      stats.xp = (stats.xp || 0) + 10;
-      var xpNeeded = stats.level * 100;
-      while (stats.xp >= xpNeeded) {
-        stats.xp -= xpNeeded;
-        stats.level++;
-        xpNeeded = stats.level * 100;
-      }
-      if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
-      if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
-      if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
-        AchievementsModule.checkAchievements();
-      }
-      if (typeof Notify !== 'undefined') Notify.success('Опрос сохранён! +10 XP'); else alert('✅ Опрос сохранён! +10 XP.');
-    } else {
-      if (typeof Notify !== 'undefined') Notify.success('Опрос обновлён'); else alert('✅ Опрос обновлён.');
-    }
-  }
+	_saveSurveyAnswers: function() {
+		var todayStr = Core.utils.formatLocalDate(new Date());
+		var history = (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || [];
+		var dayRecord = null;
+		for (var i = 0; i < history.length; i++) {
+			if (history[i].date === todayStr) { dayRecord = history[i]; break; }
+		}
+		if (!dayRecord) {
+			dayRecord = {
+				date: todayStr,
+				dayName: Core.utils.getDayName(Core.utils.getTodayIndex()),
+				muscleGroup: '', exercises: [], details: [], duration: 0,
+				timestamp: Date.now(), survey: {}
+			};
+			history.push(dayRecord);
+		}
+		if (!dayRecord.survey) dayRecord.survey = {};
+		var alreadyHadSurvey = Object.keys(dayRecord.survey).length > 0;
+		for (var key in SurveyModule._answers) {
+			dayRecord.survey[key] = SurveyModule._answers[key];
+		}
+		if (typeof FTStorage !== 'undefined') FTStorage.set('history', history);
+		if (typeof Core !== 'undefined') Core._historyMapCache = null;
+		if (!alreadyHadSurvey) {
+			var stats = (typeof FTStorage !== 'undefined' ? FTStorage.get('stats') : null) || {yes:0, later:0, no:0, xp:0, level:1, streak:0};
+			stats.xp = (stats.xp || 0) + 10;
+			var xpNeeded = Math.floor(100 * Math.pow(1.2, stats.level - 1));
+			while (stats.xp >= xpNeeded) {
+				stats.xp -= xpNeeded;
+				stats.level++;
+				xpNeeded = Math.floor(100 * Math.pow(1.2, stats.level - 1));
+			}
+			if (typeof FTStorage !== 'undefined') FTStorage.set('stats', stats);
+			if (typeof refreshHeaderAfterXP === 'function') refreshHeaderAfterXP();
+			if (typeof AchievementsModule !== 'undefined' && AchievementsModule.checkAchievements) {
+				AchievementsModule.checkAchievements();
+			}
+			if (typeof Notify !== 'undefined') Notify.success('Опрос сохранён! +10 XP'); else alert('✅ Опрос сохранён! +10 XP.');
+		} else {
+			if (typeof Notify !== 'undefined') Notify.success('Опрос обновлён'); else alert('✅ Опрос обновлён.');
+		}
+	}
 };
 window.SurveyModule = SurveyModule;
 module.exports = SurveyModule;

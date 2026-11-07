@@ -26,49 +26,78 @@ const AchievementsModule = {
   getHistory: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('history') : null) || []; },
   getUnlockedAchievements: function() { return (typeof FTStorage !== 'undefined' ? FTStorage.get('unlocked_achievements') : null) || []; },
   saveUnlockedAchievements: function(a) { if (typeof FTStorage !== 'undefined') FTStorage.set('unlocked_achievements', a); },
+  
   getAllAchievements: function() {
     if (this._allCache) return this._allCache;
-    var achievements = [
-      { id: 'first_workout', name: 'Первый шаг', description: 'Заверши первую тренировку', icon: 'ph-shoe-prints', condition: function(stats) { return stats.yes >= 1; } },
-      { id: 'streak_3', name: 'Разогрев', description: 'Серия из 3 дней подряд', icon: 'ph-flame', condition: function(stats) { return stats.streak >= 3; } },
-      { id: 'streak_7', name: 'Неделя силы', description: 'Серия из 7 дней подряд', icon: 'ph-fire', condition: function(stats) { return stats.streak >= 7; } },
-      { id: 'streak_30', name: 'Месяц дисциплины', description: 'Серия из 30 дней подряд', icon: 'ph-calendar-check', condition: function(stats) { return stats.streak >= 30; } },
-      { id: 'level_5', name: 'Продвинутый', description: 'Достигни 5 уровня', icon: 'ph-star', condition: function(stats) { return stats.level >= 5; } },
-      { id: 'level_10', name: 'Эксперт', description: 'Достигни 10 уровня', icon: 'ph-star-four', condition: function(stats) { return stats.level >= 10; } },
-      { id: 'level_20', name: 'Мастер', description: 'Достигни 20 уровня', icon: 'ph-crown', condition: function(stats) { return stats.level >= 20; } },
-      { id: 'level_50', name: 'Легенда', description: 'Достигни 50 уровня', icon: 'ph-diamond', condition: function(stats) { return stats.level >= 50; } },
-      { id: 'workouts_10', name: 'Десяточка', description: 'Заверши 10 тренировок', icon: 'ph-check-circle', condition: function(stats) { return stats.yes >= 10; } },
-      { id: 'workouts_50', name: 'Полтинник', description: 'Заверши 50 тренировок', icon: 'ph-medal', condition: function(stats) { return stats.yes >= 50; } },
-      { id: 'workouts_100', name: 'Сотня', description: 'Заверши 100 тренировок', icon: 'ph-trophy', condition: function(stats) { return stats.yes >= 100; } },
-      { id: 'xp_1000', name: 'Тысячник', description: 'Набери 1000 XP всего', icon: 'ph-lightning', condition: function(stats) { return Core.utils.totalXp(stats) >= 1000; } },
-      { id: 'exercises_added', name: 'Коллекционер', description: 'Добавь 5 упражнений в базу', icon: 'ph-books', condition: function(stats) {
-        var db = (typeof FTStorage !== 'undefined' ? FTStorage.get('db') : null) || [];
-        return db.length >= 5;
-      }},
-      { id: 'plan_filled', name: 'Планомерный', description: 'Заполни план на 5 дней', icon: 'ph-calendar', condition: function(stats) {
-        var plan = (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || [];
-        var filled = 0;
-        for (var i = 0; i < plan.length; i++) {
-          if (plan[i].exercises && plan[i].exercises.length > 0) filled++;
-        }
-        return filled >= 5;
-      }},
-      { id: 'survey_completed', name: 'Аналитик', description: 'Пройди опрос после тренировки', icon: 'ph-clipboard-text', condition: function(stats, history) {
-        for (var i = 0; i < history.length; i++) {
-          if (history[i].survey && Object.keys(history[i].survey).length > 0) return true;
-        }
-        return false;
-      }}
-    ];
+    var achievements = [];
+    
+    // Базовые
+    achievements.push({ id: 'first_workout', name: 'Первый шаг', description: 'Заверши первую тренировку', icon: 'ph-shoe-prints', condition: function(s) { return s.yes >= 1; } });
+    achievements.push({ id: 'exercises_added', name: 'Коллекционер', description: 'Добавь 5 упражнений в базу', icon: 'ph-books', condition: function() {
+      var db = (typeof FTStorage !== 'undefined' ? FTStorage.get('db') : null) || [];
+      return db.length >= 5;
+    }});
+    achievements.push({ id: 'plan_filled', name: 'Планомерный', description: 'Заполни план на 5 дней', icon: 'ph-calendar', condition: function() {
+      var plan = (typeof FTStorage !== 'undefined' ? FTStorage.get('plan') : null) || [];
+      var filled = 0;
+      for (var i = 0; i < plan.length; i++) { if (plan[i].exercises && plan[i].exercises.length > 0) filled++; }
+      return filled >= 5;
+    }});
+    achievements.push({ id: 'survey_completed', name: 'Аналитик', description: 'Пройди опрос после тренировки', icon: 'ph-clipboard-text', condition: function(s, history) {
+      for (var i = 0; i < history.length; i++) { if (history[i].survey && Object.keys(history[i].survey).length > 0) return true; }
+      return false;
+    }});
+
+    // Бесконечные вехи для тренировок
+    var workoutTiers = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
+    for (var i = 0; i < workoutTiers.length; i++) {
+      var t = workoutTiers[i];
+      achievements.push({
+        id: 'workouts_' + t,
+        name: 'Марафонец (' + t + ')',
+        description: 'Заверши ' + t + ' тренировок',
+        icon: 'ph-medal',
+        condition: function(target) { return function(s) { return s.yes >= target; }; }(t)
+      });
+    }
+
+    // Бесконечные вехи для уровней
+    var levelTiers = [5, 10, 20, 30, 50, 75, 100];
+    for (var i = 0; i < levelTiers.length; i++) {
+      var lv = levelTiers[i];
+      achievements.push({
+        id: 'level_' + lv,
+        name: 'Мастер уровня ' + lv,
+        description: 'Достигни ' + lv + ' уровня',
+        icon: lv >= 50 ? 'ph-crown' : 'ph-star',
+        condition: function(target) { return function(s) { return s.level >= target; }; }(lv)
+      });
+    }
+
+    // Бесконечные вехи для стрика
+    var streakTiers = [3, 7, 14, 30, 60, 100, 365, 1000];
+    for (var i = 0; i < streakTiers.length; i++) {
+      var st = streakTiers[i];
+      achievements.push({
+        id: 'streak_' + st,
+        name: 'Непрерывность (' + st + ')',
+        description: 'Серия из ' + st + ' дней подряд',
+        icon: 'ph-fire',
+        condition: function(target) { return function(s) { return s.streak >= target; }; }(st)
+      });
+    }
+
     this._allCache = achievements;
     return achievements;
   },
+
   checkAchievements: function() {
     var stats = this.getStats();
     var history = this.getHistory();
     var unlocked = this.getUnlockedAchievements();
     var all = this.getAllAchievements();
     var newUnlocked = [];
+    
     for (var i = 0; i < all.length; i++) {
       var ach = all[i];
       if (unlocked.indexOf(ach.id) === -1 && ach.condition(stats, history)) {
@@ -76,6 +105,7 @@ const AchievementsModule = {
         newUnlocked.push(ach);
       }
     }
+    
     if (newUnlocked.length > 0) {
       this.saveUnlockedAchievements(unlocked);
       for (var i = 0; i < newUnlocked.length; i++) {
@@ -92,6 +122,7 @@ const AchievementsModule = {
     }
     return newUnlocked;
   },
+
   createAchievementsScreen: function() {
     var esc = Core.utils.escapeHtml;
     var screen = document.getElementById('screen-achievements');
@@ -103,6 +134,7 @@ const AchievementsModule = {
     }
     var unlocked = this.getUnlockedAchievements();
     var all = this.getAllAchievements();
+    
     var css = '<style>' +
       '.ach-card { background:var(--bg-card); border-radius:14px; padding:18px; margin-bottom:12px; border:1px solid var(--border-subtle); transition:all 0.2s; display:flex; align-items:center; gap:16px; }' +
       '.ach-card.unlocked { border-color:var(--border-gold); background:var(--accent-gold-dim); }' +
@@ -119,17 +151,20 @@ const AchievementsModule = {
       '.progress-fill { height:100%; background:linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light)); border-radius:3px; transition:width 0.5s; }' +
       '@media (prefers-reduced-motion: reduce) { .ach-card, .progress-fill { transition: none !important; } }' +
     '</style>';
+    
     var html = css + '<div style="padding:16px;max-width:700px;margin:0 auto">';
     html += '<h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:10px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-trophy"></i> Достижения</h2>';
     html += '<div style="background:var(--accent-gold-dim);border:1px solid var(--border-gold);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:0.9em;display:flex;align-items:center;gap:10px">';
     html += '<i class="ph ph-medal" style="color:var(--accent-gold);font-size:1.3em"></i>';
     html += '<div><strong style="color:var(--accent-gold)">' + unlocked.length + ' из ' + all.length + '</strong> достижений разблокировано</div>';
     html += '</div>';
+    
     var progressPercent = all.length > 0 ? Math.round((unlocked.length / all.length) * 100) : 0;
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;justify-content:space-between;font-size:0.85em;margin-bottom:6px"><span style="color:var(--text-secondary)">Общий прогресс</span><span style="color:var(--accent-gold);font-weight:600">' + progressPercent + '%</span></div>';
     html += '<div class="progress-bar"><div class="progress-fill" style="width:' + progressPercent + '%"></div></div>';
     html += '</div>';
+    
     var sorted = all.slice().sort(function(a, b) {
       var aU = unlocked.indexOf(a.id) !== -1;
       var bU = unlocked.indexOf(b.id) !== -1;
@@ -137,6 +172,7 @@ const AchievementsModule = {
       if (!aU && bU) return 1;
       return 0;
     });
+    
     for (var i = 0; i < sorted.length; i++) {
       var ach = sorted[i];
       var isUnlocked = unlocked.indexOf(ach.id) !== -1;

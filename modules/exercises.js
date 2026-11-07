@@ -84,9 +84,9 @@ const ExercisesModule = {
       '.ex-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(15px); z-index:1000; display:flex; justify-content:center; align-items:center; padding:15px; }' +
       '.ex-modal-content { background:var(--bg-secondary); padding:28px; border-radius:24px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; border:1px solid var(--border-gold); box-shadow:0 0 40px rgba(212,175,55,0.2); }' +
       '.hint { font-size:0.75em; opacity:0.6; margin-top:3px; }' +
-      '.cat-scroll-container { display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:8px 4px; scrollbar-width:none; cursor:grab; user-select:none; -webkit-overflow-scrolling:touch; }' +
-      '.cat-scroll-container:active { cursor:grabbing; }' +
-      '.cat-scroll-container::-webkit-scrollbar { display:none; }' +
+			'.cat-scroll-container { display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth; padding:8px 4px; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; }' +
+			'.cat-scroll-container::-webkit-scrollbar { height: 6px; display: block; }' +
+			'.cat-scroll-container::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
       '.cat-btn { padding:8px 14px; font-size:0.85em; border:1px solid var(--border-subtle); border-radius:20px; cursor:pointer; transition:all 0.2s; background:var(--bg-card); color:var(--text-secondary); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0; }' +
       '.cat-btn.active { background:linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); color:#000; border-color:var(--accent-gold); font-weight:600; }' +
       '.cat-btn:not(.active):hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }' +
@@ -466,27 +466,45 @@ const ExercisesModule = {
       content.appendChild(descDiv);
     }
 
-    if (ex.imageUrl) {
-      var imgDiv = document.createElement('div');
-      imgDiv.className = 'ex-view-section';
-      var imgTitle = document.createElement('h3');
-      imgTitle.innerHTML = '<i class="ph ph-image"></i> Изображение';
-      imgDiv.appendChild(imgTitle);
-      var imgWrap = document.createElement('div');
-      imgWrap.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:100px';
-      var img = document.createElement('img');
-      img.src = ex.imageUrl;
-      img.alt = ex.name;
-      img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block';
-      img.onerror = function() {
-        imgWrap.innerHTML = '<div style="padding:30px;text-align:center;opacity:0.6"><i class="ph ph-image-broken" style="font-size:2em;color:var(--accent-warning);display:block;margin-bottom:8px"></i><div style="font-size:0.9em">Не удалось загрузить изображение</div></div>';
-      };
-      imgWrap.appendChild(img);
-      imgDiv.appendChild(imgWrap);
-      content.appendChild(imgDiv);
-    }
-
-    if (ex.videoUrl) {
+		if (ex.imageUrl) {
+			var imgDiv = document.createElement('div');
+			imgDiv.className = 'ex-view-section';
+			var imgTitle = document.createElement('h3');
+			imgTitle.innerHTML = '<i class="ph ph-image"></i> Изображение';
+			imgDiv.appendChild(imgTitle);
+			
+			var imgWrap = document.createElement('div');
+			imgWrap.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:100px';
+			
+			var img = document.createElement('img');
+			img.src = ex.imageUrl;
+			img.alt = ex.name;
+			img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block';
+			img.onerror = function() {
+				imgWrap.innerHTML = '<div style="padding:30px;text-align:center;opacity:0.6"><i class="ph ph-image-broken" style="font-size:2em;color:var(--accent-warning);display:block;margin-bottom:8px"></i><div style="font-size:0.9em">Не удалось загрузить изображение</div></div>';
+			};
+			imgWrap.appendChild(img);
+			
+			// Кнопка удаления/изменения картинки
+			var imgControls = document.createElement('div');
+			imgControls.style.cssText = 'position:absolute;top:8px;right:8px;display:flex;gap:6px';
+			var editImgBtn = document.createElement('button');
+			editImgBtn.className = 'btn btn-secondary';
+			editImgBtn.style.cssText = 'padding:4px 8px;font-size:0.8em';
+			editImgBtn.innerHTML = '<i class="ph ph-pencil-simple"></i>';
+			editImgBtn.onclick = function(e) { 
+				e.stopPropagation(); 
+				modal.remove(); 
+				self.editExercise(ex.id); 
+			};
+			imgControls.appendChild(editImgBtn);
+			
+			imgWrap.appendChild(imgControls);
+			imgDiv.appendChild(imgWrap);
+			content.appendChild(imgDiv);
+		}
+    
+		if (ex.videoUrl) {
       var videoDiv = document.createElement('div');
       videoDiv.className = 'ex-view-section';
       var videoTitle = document.createElement('h3');
