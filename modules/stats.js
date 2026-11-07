@@ -639,12 +639,12 @@ const StatsModule = {
     this.totalDays = chartData.totalDays;
 
     // Y-ось: от 0 до max значения (пик упирается в верх)
-		var computedMaxY = this.findMaxY(data);
-		this._currentMaxY = computedMaxY;
-		if (this.zoom.yMax === 0 || this.zoom.yMax < computedMaxY) {
-			this.zoom.yMin = 0;
-			this.zoom.yMax = computedMaxY;
-		}
+    var computedMaxY = this.findMaxY(data);
+    this._currentMaxY = computedMaxY;
+    if (this.zoom.yMax === 0 || this.zoom.yMax < computedMaxY) {
+      this.zoom.yMin = 0;
+      this.zoom.yMax = computedMaxY;
+    }
     if (this.zoom.yMax <= 0) this.zoom.yMax = 10;
 
     var padding = this.getPadding(width, height);
@@ -654,16 +654,7 @@ const StatsModule = {
     var yRange = this.zoom.yMax - this.zoom.yMin;
     if (yRange <= 0) yRange = 10;
 
-    // ИСПРАВЛЕНИЕ: clip region для обрезки кривых по границам осей
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
-    ctx.clip();
-
-    // Сетка (рисуется ДО clip, чтобы быть видимой)
-    // Перемещаем сетку после restore
-    ctx.restore();
-
+    // 1. Сетка (рисуется БЕЗ clip, чтобы быть видимой везде)
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for (var i = 0; i <= 4; i++) {
@@ -673,65 +664,66 @@ const StatsModule = {
     ctx.strokeStyle = 'rgba(212,175,55,0.3)';
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
-    // Рисуем серии с clip
-		// Рисуем серии с clip
-		// Рисуем серии с clip
-		ctx.save();
-		ctx.beginPath();
-		ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
-		ctx.clip();
+    // 2. Рисуем серии с clip (чтобы линии не вылезали за оси)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
+    ctx.clip();
 
-		var metrics = this.allMetrics;
-		for (var key in metrics) {
-				var m = metrics[key];
-				if (!this.activeMetrics[key]) continue;
-				var series = data[key];
-				if (!series) continue;
+    var metrics = this.allMetrics;
+    for (var key in metrics) {
+      var m = metrics[key];
+      if (!this.activeMetrics[key]) continue;
+      var series = data[key];
+      if (!series) continue;
 
-				ctx.strokeStyle = m.color;
-				ctx.lineWidth = 2.5;
-				ctx.lineJoin = 'round';
-				ctx.lineCap = 'round';
-				ctx.beginPath();
-				var started = false;
+      ctx.strokeStyle = m.color;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      
+      var lastValidX = null;
+      var lastValidY = null;
 
-				// Рисуем линию через ВСЕ точки (даже за пределами видимости)
-				for (var i = 0; i < series.length; i++) {
-						if (series[i] === null || series[i] === undefined) {
-								started = false;  // Разрыв линии при пропуске
-								continue;
-						}
-						var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-						var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-						
-						if (!started) { ctx.moveTo(x, y); started = true; }
-						else ctx.lineTo(x, y);
-				}
-				ctx.stroke();
+      // ИСПРАВЛЕНИЕ: соединяем все НЕ null точки непрерывно, игнорируя пропуски
+      for (var i = 0; i < series.length; i++) {
+        if (series[i] === null || series[i] === undefined) continue;
+        
+        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+        
+        if (lastValidX === null) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+        lastValidX = x;
+        lastValidY = y;
+      }
+      ctx.stroke();
 
-				// Точки рисуем отдельным циклом (только видимые)
-				for (var i = 0; i < series.length; i++) {
-						if (series[i] === null || series[i] === undefined) continue;
-						var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-						var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-						
-						// Проверяем видимость точки
-						if (x >= padding.left && x <= width - padding.right && 
-								y >= padding.top && y <= height - padding.bottom) {
-								ctx.beginPath();
-								ctx.arc(x, y, 4, 0, Math.PI * 2);
-								ctx.fillStyle = m.color;
-								ctx.fill();
-								ctx.strokeStyle = '#0a0a0f';
-								ctx.lineWidth = 2;
-								ctx.stroke();
-						}
-				}
-		}
-		ctx.restore();
-		ctx.restore();
+      // Точки рисуем отдельным циклом (только видимые)
+      for (var i = 0; i < series.length; i++) {
+        if (series[i] === null || series[i] === undefined) continue;
+        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+        
+        if (x >= padding.left && x <= width - padding.right && 
+            y >= padding.top && y <= height - padding.bottom) {
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = m.color;
+          ctx.fill();
+          ctx.strokeStyle = '#0a0a0f';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore(); // Один restore для clip
 
-    // Подписи X
+    // 3. Подписи X
     ctx.fillStyle = '#a0a0b0';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -743,7 +735,7 @@ const StatsModule = {
       }
     }
 
-    // Подписи Y
+    // 4. Подписи Y
     ctx.textAlign = 'right';
     var yStep = Math.max(1, Math.ceil(yRange / 5));
     for (var v = Math.ceil(this.zoom.yMin); v <= Math.floor(this.zoom.yMax); v += yStep) {
@@ -751,8 +743,7 @@ const StatsModule = {
       ctx.fillText(v, padding.left - 4, y + 4);
     }
 
-    // Легенда (сворачиваемая)
-    // Легенда (компактная кнопка + раскрывающаяся панель)
+    // 5. Легенда (компактная кнопка + раскрывающаяся панель)
     var oldLegend = document.getElementById('chartLegend');
     if (oldLegend) oldLegend.remove();
 
@@ -774,7 +765,6 @@ const StatsModule = {
       itemsHtml += '</div>';
     }
 
-    // Квадратная кнопка-триггер (всегда видна)
     var toggleBtn = document.createElement('div');
     toggleBtn.className = 'legend-toggle';
     toggleBtn.innerHTML = '<i class="ph ph-list"></i>';
@@ -787,7 +777,6 @@ const StatsModule = {
     };
     legendDiv.appendChild(toggleBtn);
 
-    // Раскрытая панель (только если expanded и есть метрики)
     if (this._legendExpanded && hasAny) {
       var panel = document.createElement('div');
       panel.className = 'legend-panel';
@@ -797,8 +786,8 @@ const StatsModule = {
 
     if (hasAny) wrap.appendChild(legendDiv);
   },
-
-  openCalendar: function() {
+  
+	openCalendar: function() {
     var oldTooltip = document.getElementById('calendarTooltip');
     if (oldTooltip) oldTooltip.remove();
     var oldModal = document.getElementById('calendarModal');
