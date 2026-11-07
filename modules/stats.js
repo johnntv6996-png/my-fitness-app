@@ -618,30 +618,31 @@ const StatsModule = {
     this.drawChart();
   },
 
-  clampZoom: function() {
-    var xRange = this.zoom.xMax - this.zoom.xMin;
-    var yRange = this.zoom.yMax - this.zoom.yMin;
-    var maxY = this._currentMaxY || 10;
+	clampZoom: function() {
+		var xRange = this.zoom.xMax - this.zoom.xMin;
+		var yRange = this.zoom.yMax - this.zoom.yMin;
+		var maxY = this._currentMaxY || 10;
 
-    // Минимальный размер окна
-    if (xRange < 3) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 1.5; this.zoom.xMax = cx + 1.5; xRange = 3; }
-    if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; yRange = 2; }
+		// Минимальный размер окна
+		if (xRange < 4) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 2; this.zoom.xMax = cx + 2; xRange = 4; }
+		if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; yRange = 2; }
 
-    // ИСПРАВЛЕНИЕ: Ограничение максимального диапазона — не давать уйти в бесконечность
-    if (xRange > this.totalDays) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays; }
-    if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
+		// Ограничения по границам данных
+		if (xRange > this.totalDays - 1) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays - 1; }
+		if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
 
-    if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
-    if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
-    if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
-    if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
+		if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
+		if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
+		if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
+		if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
 
-    var info = document.getElementById('zoomInfo');
-    if (info) {
-      var xZoom = Math.round(this.totalDays / (this.zoom.xMax - this.zoom.xMin) * 100);
-      info.textContent = xZoom + '%';
-    }
-  },
+		var info = document.getElementById('zoomInfo');
+		if (info) {
+			// ИСПРАВЛЕНИЕ: формула даёт ровно 100% при полном виде и 1500% при макс зуме
+			var xZoom = Math.round((this.totalDays - 1) / xRange * 100);
+			info.textContent = xZoom + '%';
+		}
+	},
 
   resetZoom: function() {
     this._chartDataCache = null;
