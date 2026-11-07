@@ -694,33 +694,32 @@ const StatsModule = {
 			ctx.beginPath();
 			var started = false;
 
-			// Рисуем линию через ВСЕ точки (даже за пределами видимости)
 			for (var i = 0; i < series.length; i++) {
-				if (series[i] === null) { started = false; continue; }
+				if (series[i] === null || series[i] === undefined) {
+					started = false;  // Разрыв линии при пропуске
+					continue;
+				}
 				var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
 				var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-				
+				if (x < padding.left - 5 || x > width - padding.right + 5) continue;
 				if (!started) { ctx.moveTo(x, y); started = true; }
 				else ctx.lineTo(x, y);
 			}
 			ctx.stroke();
 
-			// Точки рисуем только в видимой области
+			// Точки рисуем отдельным циклом
 			for (var i = 0; i < series.length; i++) {
-				if (series[i] === null) continue;
+				if (series[i] === null || series[i] === undefined) continue;
 				var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
 				var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-				
-				// Проверяем видимость точки
-				if (x >= padding.left && x <= width - padding.right && y >= padding.top && y <= height - padding.bottom) {
-					ctx.beginPath();
-					ctx.arc(x, y, 4, 0, Math.PI * 2);
-					ctx.fillStyle = m.color;
-					ctx.fill();
-					ctx.strokeStyle = '#0a0a0f';
-					ctx.lineWidth = 2;
-					ctx.stroke();
-				}
+				if (x < padding.left - 5 || x > width - padding.right + 5) continue;
+				ctx.beginPath();
+				ctx.arc(x, y, 4, 0, Math.PI * 2);
+				ctx.fillStyle = m.color;
+				ctx.fill();
+				ctx.strokeStyle = '#0a0a0f';
+				ctx.lineWidth = 2;
+				ctx.stroke();
 			}
 		}
 		ctx.restore();
