@@ -205,10 +205,6 @@ const StatsModule = {
       '.chart-container { position:relative; border-radius:12px; background:var(--bg-primary); border:1px solid var(--border-subtle); overflow:hidden; }' +
       '.chart-canvas-wrap { position:relative; width:100%; height:420px; cursor:crosshair; }' +
       '.chart-canvas-wrap canvas { display:block; width:100%; height:100%; }' +
-      '.chart-h-scrollbar { position:absolute; bottom:4px; left:36px; right:20px; height:14px; }' +
-      '.chart-v-scrollbar { position:absolute; top:20px; right:4px; bottom:30px; width:14px; }' +
-      '.chart-h-scrollbar input, .chart-v-scrollbar input { width:100%; height:100%; accent-color:var(--accent-gold); cursor:pointer; margin:0; }' +
-      '.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; }' +
       '.metrics-strip { display:flex; gap:6px; overflow-x:auto; padding:10px 4px; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; border-top:1px solid var(--border-subtle); }' +
       '.metrics-strip::-webkit-scrollbar { height: 6px; }' +
       '.metrics-strip::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
@@ -277,8 +273,6 @@ const StatsModule = {
     chartHtml += '<canvas id="activityChart"></canvas>';
     chartHtml += '<button class="chart-reset-btn" onclick="StatsModule.resetZoom()"><i class="ph ph-arrows-counter-clockwise"></i> Сбросить</button>';
     chartHtml += '<div class="chart-zoom-info" id="zoomInfo">100%</div>';
-    chartHtml += '<div class="chart-h-scrollbar" id="hScrollbar"><input type="range" id="hScroll" min="0" max="100" value="0" step="1"></div>';
-    chartHtml += '<div class="chart-v-scrollbar" id="vScrollbar"><input type="range" id="vScroll" min="0" max="100" value="100" step="1"></div>';
     chartHtml += '<div class="tooltip" id="chartTooltip" style="display:none"></div>';
     chartHtml += '</div>';
     chartHtml += '<div class="metrics-strip" id="metricsStrip"></div>';
@@ -308,7 +302,7 @@ const StatsModule = {
     screen.innerHTML = css + '<div style="padding:16px;max-width:900px;margin:0 auto"><h2 style="font-family:var(--font-display);font-size:2em;margin-bottom:20px;color:var(--accent-gold);display:flex;align-items:center;gap:12px"><i class="ph ph-chart-line-up"></i> Статистика</h2>' + metricsHtml + chartHtml + streakHtml + '</div>';
     this.renderMetricChips();
     var self = this;
-    setTimeout(function() { self.setupChartInteractions(); self.setupScrollbars(); self.drawChart(); }, 50);
+		setTimeout(function() { self.setupChartInteractions(); self.drawChart(); }, 50);
   },
 
   renderMetricChips: function() {
@@ -333,58 +327,6 @@ const StatsModule = {
     this.activeMetrics[key] = !this.activeMetrics[key];
     this.renderMetricChips();
     this.drawChart();
-  },
-
-  setupScrollbars: function() {
-    var hScroll = document.getElementById('hScroll');
-    var vScroll = document.getElementById('vScroll');
-    if (!hScroll || !vScroll) return;
-    var self = this;
-    hScroll.oninput = function() {
-      var val = parseFloat(this.value);
-      var xRange = self.zoom.xMax - self.zoom.xMin;
-      var maxX = self.totalDays - 1 - xRange;
-      if (maxX < 0) maxX = 0;
-      self.zoom.xMin = (val / 100) * maxX;
-      self.zoom.xMax = self.zoom.xMin + xRange;
-      self.clampZoom();
-      self.drawChart();
-    };
-    vScroll.oninput = function() {
-      var val = parseFloat(this.value);
-      var yRange = self.zoom.yMax - self.zoom.yMin;
-      var maxY = self._currentMaxY - yRange;
-      if (maxY < 0) maxY = 0;
-      // val=100 → yMin=0 (низ), val=0 → yMin=maxY (верх)
-      self.zoom.yMin = ((100 - val) / 100) * maxY;
-      self.zoom.yMax = self.zoom.yMin + yRange;
-      self.clampZoom();
-      self.drawChart();
-    };
-  },
-
-  updateScrollbars: function() {
-    var hScroll = document.getElementById('hScroll');
-    var vScroll = document.getElementById('vScroll');
-    if (!hScroll || !vScroll) return;
-    var xRange = this.zoom.xMax - this.zoom.xMin;
-    var maxX = this.totalDays - 1 - xRange;
-    if (maxX <= 0) {
-      hScroll.value = 0;
-      hScroll.disabled = true;
-    } else {
-      hScroll.disabled = false;
-      hScroll.value = (this.zoom.xMin / maxX) * 100;
-    }
-    var yRange = this.zoom.yMax - this.zoom.yMin;
-    var maxY = this._currentMaxY - yRange;
-    if (maxY <= 0) {
-      vScroll.value = 100;
-      vScroll.disabled = true;
-    } else {
-      vScroll.disabled = false;
-      vScroll.value = ((this._currentMaxY - this.zoom.yMax) / maxY) * 100;
-    }
   },
 
   setupChartInteractions: function() {
@@ -842,8 +784,6 @@ const StatsModule = {
     };
     if (hasAny) wrap.appendChild(legendDiv);
 
-    // Обновляем скроллбары
-    this.updateScrollbars();
   },
 
   openCalendar: function() {
