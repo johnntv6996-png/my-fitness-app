@@ -623,23 +623,42 @@ const StatsModule = {
 		var yRange = this.zoom.yMax - this.zoom.yMin;
 		var maxY = this._currentMaxY || 10;
 
-		// Минимальный размер окна
-		if (xRange < 4) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 2; this.zoom.xMax = cx + 2; xRange = 4; }
-		if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; yRange = 2; }
+		// Максимальное приближение 500% = диапазон не меньше 1/5 от полного
+		var minXRange = (this.totalDays - 1) / 5;
+		var minYRange = maxY / 5;
+		if (minXRange < 3) minXRange = 3;
+		if (minYRange < 2) minYRange = 2;
 
-		// Ограничения по границам данных
+		// Ограничиваем минимальный размер окна (максимальный зум)
+		if (xRange < minXRange) {
+			var cx = (this.zoom.xMin + this.zoom.xMax) / 2;
+			this.zoom.xMin = cx - minXRange / 2;
+			this.zoom.xMax = cx + minXRange / 2;
+			xRange = minXRange;
+		}
+		if (yRange < minYRange) {
+			var cy = (this.zoom.yMin + this.zoom.yMax) / 2;
+			this.zoom.yMin = cy - minYRange / 2;
+			this.zoom.yMax = cy + minYRange / 2;
+			yRange = minYRange;
+		}
+
+		// Ограничения по границам данных (максимальное отдаление)
 		if (xRange > this.totalDays - 1) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays - 1; }
 		if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
 
+		// Запрет ухода за границы
 		if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
 		if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
 		if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
 		if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
 
+		// Отображение процента (максимум 500%)
 		var info = document.getElementById('zoomInfo');
 		if (info) {
-			// ИСПРАВЛЕНИЕ: формула даёт ровно 100% при полном виде и 1500% при макс зуме
-			var xZoom = Math.round((this.totalDays - 1) / xRange * 100);
+			var xZoom = Math.round((this.totalDays - 1) / (this.zoom.xMax - this.zoom.xMin) * 100);
+			if (xZoom > 500) xZoom = 500;
+			if (xZoom < 100) xZoom = 100;
 			info.textContent = xZoom + '%';
 		}
 	},
