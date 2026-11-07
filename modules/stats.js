@@ -217,7 +217,7 @@ const StatsModule = {
       '.metric-chip.active .check { opacity:1; }' +
       '.chart-zoom-info { position:absolute; top:10px; right:30px; background:rgba(0,0,0,0.7); padding:6px 10px; border-radius:6px; font-size:0.75em; color:var(--text-primary); z-index:5; pointer-events:none; font-weight:600; }' +
       'body.light-theme .chart-zoom-info { background:rgba(255,255,255,0.9); color:var(--text-primary); }' +
-			'.chart-reset-btn { position:absolute; top:10px; left:10px; width:32px; height:32px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; z-index:5; flex-shrink:0; }' +
+			'.chart-reset-btn { position:absolute; top:80px; right:30px; width:32px; height:32px; background:rgba(10,10,15,0.9); backdrop-filter:blur(10px); border:1px solid var(--border-gold); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; z-index:4; flex-shrink:0; }' +
 			'.chart-reset-btn:hover { background:rgba(212,175,55,0.2); border-color:var(--accent-gold); }' +
 			'.chart-reset-btn i { color:var(--accent-gold); font-size:1.1em; }' +
       '.chart-legend { position:absolute; top:40px; right:30px; z-index:15; pointer-events:auto; display:flex; flex-direction:row-reverse; align-items:flex-start; gap:8px; }' +
