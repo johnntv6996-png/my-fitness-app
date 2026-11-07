@@ -205,14 +205,10 @@ const StatsModule = {
       '.chart-container { position:relative; border-radius:12px; background:var(--bg-primary); border:1px solid var(--border-subtle); overflow:hidden; }' +
       '.chart-canvas-wrap { position:relative; width:100%; height:420px; cursor:crosshair; }' +
       '.chart-canvas-wrap canvas { display:block; width:100%; height:100%; }' +
-			'.chart-h-scrollbar { position:absolute; bottom:4px; left:36px; right:20px; height:12px; }' +
-			'.chart-v-scrollbar { position:absolute; top:20px; right:4px; bottom:30px; width:12px; }' +
-			'.chart-h-scrollbar input, .chart-v-scrollbar input { width:100%; height:100%; -webkit-appearance:none; appearance:none; background:transparent; cursor:pointer; margin:0; }' +
-			'.chart-h-scrollbar input::-webkit-slider-runnable-track { height:4px; background:rgba(212,175,55,0.2); border-radius:2px; }' +
-			'.chart-h-scrollbar input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:12px; height:12px; background:var(--accent-gold); border-radius:50%; cursor:pointer; margin-top:-4px; box-shadow:0 0 6px rgba(212,175,55,0.5); }' +
-			'.chart-v-scrollbar input::-webkit-slider-runnable-track { width:4px; background:rgba(212,175,55,0.2); border-radius:2px; }' +
-			'.chart-v-scrollbar input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:12px; height:12px; background:var(--accent-gold); border-radius:50%; cursor:pointer; margin-left:-4px; box-shadow:0 0 6px rgba(212,175,55,0.5); }' +
-			'.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; }' +
+      '.chart-h-scrollbar { position:absolute; bottom:4px; left:36px; right:20px; height:14px; }' +
+      '.chart-v-scrollbar { position:absolute; top:20px; right:4px; bottom:30px; width:14px; }' +
+      '.chart-h-scrollbar input, .chart-v-scrollbar input { width:100%; height:100%; accent-color:var(--accent-gold); cursor:pointer; margin:0; }' +
+      '.chart-v-scrollbar input { writing-mode:vertical-lr; direction:rtl; }' +
       '.metrics-strip { display:flex; gap:6px; overflow-x:auto; padding:10px 4px; scrollbar-width:thin; scrollbar-color:var(--accent-gold) transparent; border-top:1px solid var(--border-subtle); }' +
       '.metrics-strip::-webkit-scrollbar { height: 6px; }' +
       '.metrics-strip::-webkit-scrollbar-thumb { background:var(--accent-gold); border-radius:3px; }' +
@@ -622,31 +618,30 @@ const StatsModule = {
     this.drawChart();
   },
 
-	clampZoom: function() {
-		var xRange = this.zoom.xMax - this.zoom.xMin;
-		var yRange = this.zoom.yMax - this.zoom.yMin;
-		var maxY = this._currentMaxY || 10;
+  clampZoom: function() {
+    var xRange = this.zoom.xMax - this.zoom.xMin;
+    var yRange = this.zoom.yMax - this.zoom.yMin;
+    var maxY = this._currentMaxY || 10;
 
-		// Минимальный размер окна
-		if (xRange < 4) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 2; this.zoom.xMax = cx + 2; xRange = 4; }
-		if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; yRange = 2; }
+    // Минимальный размер окна
+    if (xRange < 3) { var cx = (this.zoom.xMin + this.zoom.xMax) / 2; this.zoom.xMin = cx - 1.5; this.zoom.xMax = cx + 1.5; xRange = 3; }
+    if (yRange < 2) { var cy = (this.zoom.yMin + this.zoom.yMax) / 2; this.zoom.yMin = cy - 1; this.zoom.yMax = cy + 1; yRange = 2; }
 
-		// Ограничения по границам данных
-		if (xRange > this.totalDays - 1) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays - 1; }
-		if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
+    // ИСПРАВЛЕНИЕ: Ограничение максимального диапазона — не давать уйти в бесконечность
+    if (xRange > this.totalDays) { this.zoom.xMin = 0; this.zoom.xMax = this.totalDays - 1; xRange = this.totalDays; }
+    if (yRange > maxY) { this.zoom.yMin = 0; this.zoom.yMax = maxY; yRange = maxY; }
 
-		if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
-		if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
-		if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
-		if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
+    if (this.zoom.xMin < 0) { this.zoom.xMax -= this.zoom.xMin; this.zoom.xMin = 0; }
+    if (this.zoom.xMax > this.totalDays - 1) { this.zoom.xMin -= (this.zoom.xMax - this.totalDays + 1); this.zoom.xMax = this.totalDays - 1; }
+    if (this.zoom.yMin < 0) { this.zoom.yMax -= this.zoom.yMin; this.zoom.yMin = 0; }
+    if (this.zoom.yMax > maxY) { this.zoom.yMin -= (this.zoom.yMax - maxY); this.zoom.yMax = maxY; }
 
-		var info = document.getElementById('zoomInfo');
-		if (info) {
-			// ИСПРАВЛЕНИЕ: формула даёт ровно 100% при полном виде и 1500% при макс зуме
-			var xZoom = Math.round((this.totalDays - 1) / xRange * 100);
-			info.textContent = xZoom + '%';
-		}
-	},
+    var info = document.getElementById('zoomInfo');
+    if (info) {
+      var xZoom = Math.round(this.totalDays / (this.zoom.xMax - this.zoom.xMin) * 100);
+      info.textContent = xZoom + '%';
+    }
+  },
 
   resetZoom: function() {
     this._chartDataCache = null;
@@ -696,56 +691,89 @@ const StatsModule = {
     if (yRange <= 0) yRange = 10;
 
     // ИСПРАВЛЕНИЕ: clip region для обрезки кривых по границам осей
-		// Рисуем серии с clip
-		ctx.save();
-		ctx.beginPath();
-		ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
-		ctx.clip();
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
+    ctx.clip();
 
-		var metrics = this.allMetrics;
-		for (var key in metrics) {
-			var m = metrics[key];
-			if (!this.activeMetrics[key]) continue;
-			var series = data[key];
-			if (!series) continue;
+    // Сетка (рисуется ДО clip, чтобы быть видимой)
+    // Перемещаем сетку после restore
+    ctx.restore();
 
-			ctx.strokeStyle = m.color;
-			ctx.lineWidth = 2.5;
-			ctx.lineJoin = 'round';
-			ctx.lineCap = 'round';
-			ctx.beginPath();
-			var started = false;
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (var i = 0; i <= 4; i++) {
+      var y = padding.top + (i / 4) * chartHeight;
+      ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(width - padding.right, y); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(212,175,55,0.3)';
+    ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
-			// Рисуем линию через ВСЕ точки (даже за пределами видимости)
-			for (var i = 0; i < series.length; i++) {
-				if (series[i] === null) { started = false; continue; }
-				var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-				var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-				
-				if (!started) { ctx.moveTo(x, y); started = true; }
-				else ctx.lineTo(x, y);
-			}
-			ctx.stroke();
+    // Рисуем серии с clip
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
+    ctx.clip();
 
-			// Точки рисуем только в видимой области
-			for (var i = 0; i < series.length; i++) {
-				if (series[i] === null) continue;
-				var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-				var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-				
-				// Проверяем видимость точки
-				if (x >= padding.left && x <= width - padding.right && y >= padding.top && y <= height - padding.bottom) {
-					ctx.beginPath();
-					ctx.arc(x, y, 4, 0, Math.PI * 2);
-					ctx.fillStyle = m.color;
-					ctx.fill();
-					ctx.strokeStyle = '#0a0a0f';
-					ctx.lineWidth = 2;
-					ctx.stroke();
-				}
-			}
-		}
-		ctx.restore();
+    var metrics = this.allMetrics;
+    for (var key in metrics) {
+      var m = metrics[key];
+      if (!this.activeMetrics[key]) continue;
+      var series = data[key];
+      if (!series) continue;
+
+      ctx.strokeStyle = m.color;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      var started = false;
+      var prevX = null, prevY = null;
+
+      for (var i = 0; i < series.length; i++) {
+        if (series[i] === null) { prevX = null; prevY = null; continue; }
+        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+
+        if (x < padding.left) {
+          if (prevX !== null && prevY !== null) {
+            var t = (padding.left - prevX) / (x - prevX);
+            var edgeY = prevY + t * (y - prevY);
+            if (!started) { ctx.moveTo(padding.left, edgeY); started = true; }
+            else ctx.lineTo(padding.left, edgeY);
+          }
+          prevX = x; prevY = y;
+          continue;
+        }
+        if (x > width - padding.right) {
+          if (prevX !== null && prevY !== null) {
+            var t = (width - padding.right - prevX) / (x - prevX);
+            var edgeY = prevY + t * (y - prevY);
+            ctx.lineTo(width - padding.right, edgeY);
+          }
+          prevX = x; prevY = y;
+          continue;
+        }
+
+        if (!started) { ctx.moveTo(x, y); started = true; }
+        else ctx.lineTo(x, y);
+        prevX = x; prevY = y;
+      }
+      ctx.stroke();
+
+      // Точки (только в видимой области)
+      for (var i = 0; i < series.length; i++) {
+        if (series[i] === null) continue;
+        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+        if (x < padding.left - 5 || x > width - padding.right + 5) continue;
+        if (y < padding.top - 5 || y > height - padding.bottom + 5) continue;
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = m.color; ctx.fill();
+        ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
+      }
+    }
+    ctx.restore();
 
     // Подписи X
     ctx.fillStyle = '#a0a0b0';
@@ -768,46 +796,31 @@ const StatsModule = {
     }
 
     // Легенда (сворачиваемая)
-		// Компактная кнопка метрик
-		var oldLegend = document.getElementById('chartLegend');
-		if (oldLegend) oldLegend.remove();
-
-		var legendDiv = document.createElement('div');
-		legendDiv.id = 'chartLegend';
-		legendDiv.className = 'chart-legend';
-
-		var hasAny = false;
-		var itemsHtml = '';
-		var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
-		for (var key in metrics) {
-			var m = metrics[key];
-			if (!this.activeMetrics[key]) continue;
-			hasAny = true;
-			itemsHtml += '<div class="legend-item" style="cursor:pointer;padding:4px 8px;border-radius:4px;transition:background 0.2s" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="StatsModule.toggleMetricChip(\'' + esc(key) + '\')">';
-			itemsHtml += '<div class="legend-color" style="background:' + m.color + '"></div>';
-			itemsHtml += '<div class="legend-label">' + esc(m.label) + '</div>';
-			itemsHtml += '<i class="ph ' + (this.activeMetrics[key] ? 'ph-check-square' : 'ph-square') + '" style="color:var(--accent-gold);font-size:1em"></i>';
-			itemsHtml += '</div>';
-		}
-
-// Компактная кнопка-иконка
-var btnSize = '32px';
-legendDiv.innerHTML = 
-  '<div style="width:' + btnSize + ';height:' + btnSize + ';background:rgba(10,10,15,0.9);border:1px solid var(--border-gold);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\'rgba(212,175,55,0.2)\'" onmouseout="this.style.background=\'rgba(10,10,15,0.9)\'">' +
-    '<i class="ph ph-list" style="color:var(--accent-gold);font-size:1.2em"></i>' +
-  '</div>' +
-  (this._legendExpanded && hasAny ? '<div style="position:absolute;top:' + (parseInt(btnSize) + 8) + 'px;right:0;background:rgba(10,10,15,0.95);backdrop-filter:blur(10px);border:1px solid var(--border-gold);border-radius:8px;padding:8px;min-width:180px;max-height:250px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5)">' + itemsHtml + '</div>' : '');
-
-legendDiv.style.cssText = 'position:absolute;top:40px;right:30px;z-index:15;pointer-events:auto;';
-
-var self = this;
-legendDiv.querySelector('div').onclick = function(e) {
-  e.stopPropagation();
-  self._legendExpanded = !self._legendExpanded;
-  self.drawChart();
-};
-
-if (hasAny) wrap.appendChild(legendDiv);
+    var oldLegend = document.getElementById('chartLegend');
+    if (oldLegend) oldLegend.remove();
+    var legendDiv = document.createElement('div');
+    legendDiv.id = 'chartLegend';
+    legendDiv.className = 'chart-legend';
+    var hasAny = false;
+    var itemsHtml = '';
+    var esc = (typeof Core !== 'undefined' && Core.utils && Core.utils.escapeHtml) ? Core.utils.escapeHtml : function(t){return t;};
+    for (var key in metrics) {
+      var m = metrics[key];
+      if (!this.activeMetrics[key]) continue;
+      hasAny = true;
+      itemsHtml += '<div class="legend-item"><div class="legend-color" style="background:' + m.color + '"></div><div class="legend-label">' + esc(m.label) + '</div></div>';
+    }
+    legendDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+      '<div style="font-size:0.8em;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><i class="ph ph-list"></i> Метрики (' + (this.activeMetrics ? Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]).length : 0) + ')</div>' +
+      '<i class="ph ' + (this._legendExpanded ? 'ph-caret-up' : 'ph-caret-down') + '" style="color:var(--accent-gold);font-size:0.9em"></i>' +
+    '</div>' + (this._legendExpanded && hasAny ? '<div style="margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:8px;max-height:180px;overflow-y:auto">' + itemsHtml + '</div>' : '');
+    var self = this;
+    legendDiv.onclick = function(e) {
+      e.stopPropagation();
+      self._legendExpanded = !self._legendExpanded;
+      self.drawChart();
+    };
+    if (hasAny) wrap.appendChild(legendDiv);
 
     // Обновляем скроллбары
     this.updateScrollbars();
