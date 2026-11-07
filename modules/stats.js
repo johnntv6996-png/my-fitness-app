@@ -665,63 +665,60 @@ const StatsModule = {
     ctx.beginPath(); ctx.moveTo(padding.left, padding.top); ctx.lineTo(padding.left, height - padding.bottom); ctx.lineTo(width - padding.right, height - padding.bottom); ctx.stroke();
 
     // 2. Рисуем серии с clip (чтобы линии не вылезали за оси)
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
-    ctx.clip();
+		// Рисуем серии с clip
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(padding.left, padding.top, chartWidth, chartHeight);
+		ctx.clip();
 
-    var metrics = this.allMetrics;
-    for (var key in metrics) {
-      var m = metrics[key];
-      if (!this.activeMetrics[key]) continue;
-      var series = data[key];
-      if (!series) continue;
+		var metrics = this.allMetrics;
+		for (var key in metrics) {
+				var m = metrics[key];
+				if (!this.activeMetrics[key]) continue;
+				var series = data[key];
+				if (!series) continue;
 
-      ctx.strokeStyle = m.color;
-      ctx.lineWidth = 2.5;
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      
-      var lastValidX = null;
-      var lastValidY = null;
+				ctx.strokeStyle = m.color;
+				ctx.lineWidth = 2.5;
+				ctx.lineJoin = 'round';
+				ctx.lineCap = 'round';
+				ctx.beginPath();
+				var started = false;
 
-      // ИСПРАВЛЕНИЕ: соединяем все НЕ null точки непрерывно, игнорируя пропуски
-      for (var i = 0; i < series.length; i++) {
-        if (series[i] === null || series[i] === undefined) continue;
-        
-        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-        
-        if (lastValidX === null) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-        lastValidX = x;
-        lastValidY = y;
-      }
-      ctx.stroke();
+				// Рисуем линию через ВСЕ точки (даже за пределами видимости)
+				for (var i = 0; i < series.length; i++) {
+						if (series[i] === null || series[i] === undefined) {
+								started = false;  // Разрыв линии при пропуске
+								continue;
+						}
+						var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+						var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+						
+						if (!started) { ctx.moveTo(x, y); started = true; }
+						else ctx.lineTo(x, y);
+				}
+				ctx.stroke();
 
-      // Точки рисуем отдельным циклом (только видимые)
-      for (var i = 0; i < series.length; i++) {
-        if (series[i] === null || series[i] === undefined) continue;
-        var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
-        var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
-        
-        if (x >= padding.left && x <= width - padding.right && 
-            y >= padding.top && y <= height - padding.bottom) {
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
-          ctx.fillStyle = m.color;
-          ctx.fill();
-          ctx.strokeStyle = '#0a0a0f';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-      }
-    }
-    ctx.restore(); // Один restore для clip
+				// Точки рисуем отдельным циклом (только видимые)
+				for (var i = 0; i < series.length; i++) {
+						if (series[i] === null || series[i] === undefined) continue;
+						var x = padding.left + ((i - this.zoom.xMin) / xRange) * chartWidth;
+						var y = height - padding.bottom - ((series[i] - this.zoom.yMin) / yRange) * chartHeight;
+						
+						// Проверяем видимость точки
+						if (x >= padding.left && x <= width - padding.right && 
+								y >= padding.top && y <= height - padding.bottom) {
+								ctx.beginPath();
+								ctx.arc(x, y, 4, 0, Math.PI * 2);
+								ctx.fillStyle = m.color;
+								ctx.fill();
+								ctx.strokeStyle = '#0a0a0f';
+								ctx.lineWidth = 2;
+								ctx.stroke();
+						}
+				}
+		}
+		ctx.restore();
 
     // 3. Подписи X
     ctx.fillStyle = '#a0a0b0';
